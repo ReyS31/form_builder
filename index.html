@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowBuilder Pro - Process Analysis</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0b0d; --bg-secondary: #111318; --bg-tertiary: #1a1d24; --bg-elevated: #22262f;
+            --border-subtle: #2a2f3a; --border-default: #3d444d;
+            --text-primary: #e6edf3; --text-secondary: #8b949e; --text-muted: #6e7681;
+            --accent: #3b82f6; --accent-hover: #2563eb;
+            --green: #22c55e; --green-dim: rgba(34, 197, 94, 0.15);
+            --orange: #f97316; --orange-dim: rgba(249, 115, 22, 0.15);
+            --red: #ef4444; --red-dim: rgba(239, 68, 68, 0.15);
+            --purple: #a855f7; --purple-dim: rgba(168, 85, 247, 0.15);
+            --cyan: #06b6d4; --cyan-dim: rgba(6, 182, 212, 0.15);
+            --yellow: #eab308;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; height: 100vh; }
+        .app { display: flex; flex-direction: column; height: 100vh; }
+        
+        .header { height: 52px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; }
+        .logo { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+        .logo span { background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .header-divider { width: 1px; height: 24px; background: var(--border-subtle); }
+        
+        .flow-selector { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; cursor: pointer; min-width: 160px; }
+        .flow-selector:hover { border-color: var(--border-default); }
+        .flow-selector-name { font-size: 12px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .mode-toggle { display: flex; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 2px; }
+        .mode-btn { font-family: inherit; font-size: 11px; font-weight: 500; padding: 4px 10px; border: none; background: transparent; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .mode-btn:hover { color: var(--text-primary); }
+        .mode-btn.active { background: var(--accent); color: white; }
+        .mode-btn svg { width: 12px; height: 12px; }
+        
+        .header-spacer { flex: 1; }
+        .header-actions { display: flex; gap: 6px; }
+        .btn { font-family: inherit; font-size: 11px; font-weight: 500; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .btn:hover { background: var(--bg-elevated); border-color: var(--border-default); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn svg { width: 12px; height: 12px; }
+
+        .main { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar-left { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
+        .sidebar-section { padding: 10px; border-bottom: 1px solid var(--border-subtle); }
+        .sidebar-section-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+        
+        .search-box { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 5px; }
+        .search-box svg { width: 12px; height: 12px; color: var(--text-muted); }
+        .search-box input { flex: 1; background: none; border: none; color: var(--text-primary); font-family: inherit; font-size: 11px; outline: none; }
+        
+        .minimap { height: 100px; background: var(--bg-tertiary); border-radius: 5px; position: relative; overflow: hidden; }
+        .minimap-block { position: absolute; background: var(--text-muted); border-radius: 1px; }
+        .minimap-block.issue { background: var(--red); }
+        .minimap-block.fix { background: var(--green); }
+        
+        .block-list { flex: 1; overflow-y: auto; padding: 6px; }
+        .block-list::-webkit-scrollbar { width: 4px; }
+        .block-list::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
+        .block-list-item { padding: 6px 8px; margin-bottom: 3px; background: var(--bg-tertiary); border: 1px solid transparent; border-radius: 5px; cursor: pointer; }
+        .block-list-item:hover { border-color: var(--border-subtle); }
+        .block-list-item.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+        .block-list-item.has-issue { border-left: 2px solid var(--red); }
+        .block-list-item.has-fix { border-left: 2px solid var(--green); }
+        .block-list-item-name { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .block-list-item-meta { font-size: 9px; color: var(--text-muted); }
+        .block-list-pane-label { font-size: 9px; font-weight: 600; color: var(--text-muted); padding: 6px 8px 3px; text-transform: uppercase; }
+
+        .validation-list { max-height: 150px; overflow-y: auto; }
+        .validation-item { display: flex; align-items: flex-start; gap: 6px; padding: 6px; margin-bottom: 3px; background: var(--bg-tertiary); border-radius: 5px; font-size: 10px; cursor: pointer; }
+        .validation-item:hover { background: var(--bg-elevated); }
+        .validation-item svg { width: 12px; height: 12px; flex-shrink: 0; }
+        .validation-item.error svg { color: var(--red); }
+        .validation-item.warning svg { color: var(--orange); }
+        .validation-item.success svg { color: var(--green); }
+
+        .canvas-split { display: flex; flex: 1; overflow: hidden; }
+        .canvas-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .canvas-pane:first-child { border-right: 2px solid var(--border-subtle); }
+        
+        .pane-header { height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; flex-shrink: 0; }
+        .pane-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .pane-indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .pane-indicator.current { background: var(--orange); }
+        .pane-indicator.proposed { background: var(--green); }
+        .pane-actions { display: flex; gap: 5px; }
+        .pane-btn { font-family: inherit; font-size: 10px; padding: 4px 7px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 3px; }
+        .pane-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .pane-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .pane-btn svg { width: 10px; height: 10px; }
+
+        .canvas-area { flex: 1; position: relative; overflow: hidden; }
+        .canvas-container { position: absolute; inset: 0; overflow: hidden; }
+        .canvas { position: absolute; width: 6000px; height: 6000px; background-image: radial-gradient(circle, var(--border-subtle) 1px, transparent 1px); background-size: 24px 24px; transform-origin: 0 0; }
+        .canvas-svg { position: absolute; inset: 0; width: 6000px; height: 6000px; pointer-events: none; overflow: visible; }
+        
+        .connection { fill: none; stroke: var(--border-default); stroke-width: 2; stroke-linecap: round; pointer-events: stroke; cursor: pointer; }
+        .connection:hover { stroke: var(--accent); stroke-width: 3; }
+        .temp-connection { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; fill: none; opacity: 0.7; }
+
+        .block { position: absolute; width: 260px; background: var(--bg-secondary); border: 2px solid var(--border-subtle); border-radius: 10px; cursor: move; user-select: none; z-index: 10; }
+        .block:hover { border-color: var(--border-default); z-index: 20; }
+        .block.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); z-index: 30; }
+        .block.issue-error { border-color: var(--red); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(239, 68, 68, 0.06) 100%); }
+        .block.issue-warning { border-color: var(--orange); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(249, 115, 22, 0.06) 100%); }
+        .block.change-fix { border-color: var(--green); background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(34, 197, 94, 0.06) 100%); }
+        .block.change-new { border-color: var(--cyan); border-style: dashed; }
+        .block.change-removed { opacity: 0.5; border-style: dashed; border-color: var(--red); }
+        .block.linked { box-shadow: 0 0 0 2px var(--purple), 0 0 10px rgba(168, 85, 247, 0.3); }
+        
+        .block-header { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 6px; }
+        .block-icon { width: 24px; height: 24px; background: var(--bg-tertiary); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .block-icon svg { width: 12px; height: 12px; color: var(--text-secondary); }
+        .block-title { font-size: 12px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .block-badges { display: flex; gap: 2px; flex-shrink: 0; }
+        .block-badge { font-size: 7px; font-weight: 600; text-transform: uppercase; padding: 2px 4px; border-radius: 3px; }
+        .block-badge.issue { background: var(--red-dim); color: var(--red); }
+        .block-badge.warning { background: var(--orange-dim); color: var(--orange); }
+        .block-badge.fix { background: var(--green-dim); color: var(--green); }
+        .block-badge.new { background: var(--cyan-dim); color: var(--cyan); }
+        .block-badge.linked { background: var(--purple-dim); color: var(--purple); }
+        .block-badge.status { background: var(--bg-tertiary); color: var(--text-muted); }
+        
+        .block-body { padding: 8px 10px; }
+        .block-description { font-size: 11px; color: var(--text-secondary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .block-description.empty { color: var(--text-muted); font-style: italic; }
+        
+        .block-annotation { margin-top: 6px; padding: 6px 8px; border-radius: 5px; font-size: 10px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .block-annotation.issue { background: var(--red-dim); color: #fca5a5; border-left: 2px solid var(--red); }
+        .block-annotation.warning { background: var(--orange-dim); color: #fdba74; border-left: 2px solid var(--orange); }
+        .block-annotation.fix { background: var(--green-dim); color: #86efac; border-left: 2px solid var(--green); }
+
+        .block-meta { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 6px; font-size: 9px; color: var(--text-muted); }
+        .block-meta-item { display: flex; align-items: center; gap: 2px; }
+        .block-meta-item svg { width: 9px; height: 9px; }
+
+        .port-in, .port-out { position: absolute; width: 10px; height: 10px; background: var(--bg-secondary); border: 2px solid var(--border-default); border-radius: 50%; cursor: crosshair; z-index: 10; }
+        .port-in { left: -5px; top: 50%; transform: translateY(-50%); }
+        .port-in:hover, .port-out:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-50%) scale(1.3); }
+        .block-outputs { position: absolute; right: -5px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; }
+        .block-outputs .port-out { position: relative; right: auto; top: auto; transform: none; }
+        .block-outputs .port-out:hover { transform: scale(1.3); }
+        .add-output { position: absolute; right: -5px; bottom: 8px; width: 10px; height: 10px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .add-output:hover { border-color: var(--accent); border-style: solid; background: var(--accent); }
+        .add-output svg { width: 6px; height: 6px; color: var(--text-muted); }
+        .add-output:hover svg { color: white; }
+
+        .panel { width: 320px; background: var(--bg-secondary); border-left: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
+        .panel-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
+        .panel-tab { flex: 1; padding: 10px; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; }
+        .panel-tab:hover { color: var(--text-secondary); }
+        .panel-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .panel-content { flex: 1; overflow-y: auto; padding: 12px; }
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
+        
+        .form-group { margin-bottom: 12px; }
+        .form-label { display: block; font-size: 10px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+        .form-row { display: flex; gap: 6px; }
+        .form-row > * { flex: 1; }
+        .form-input, .form-select { width: 100%; padding: 6px 8px; font-family: inherit; font-size: 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 5px; color: var(--text-primary); outline: none; }
+        .form-input:focus, .form-select:focus { border-color: var(--accent); }
+        textarea.form-input { resize: vertical; min-height: 60px; line-height: 1.4; }
+
+        .section-divider { margin: 12px 0; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+        .section-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .section-title .dot { width: 5px; height: 5px; border-radius: 50%; }
+
+        .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+        .option-item { padding: 8px 6px; border-radius: 5px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); cursor: pointer; text-align: center; }
+        .option-item:hover { border-color: var(--border-default); }
+        .option-item.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+        .option-item.selected.error { border-color: var(--red); background: var(--red-dim); }
+        .option-item.selected.warning { border-color: var(--orange); background: var(--orange-dim); }
+        .option-item.selected.fix { border-color: var(--green); background: var(--green-dim); }
+        .option-item.selected.new { border-color: var(--cyan); background: var(--cyan-dim); }
+        .option-item-icon { font-size: 16px; margin-bottom: 2px; }
+        .option-item-icon svg { width: 18px; height: 18px; }
+        .option-item-label { font-size: 9px; font-weight: 500; color: var(--text-secondary); }
+
+        .link-selector { padding: 8px; background: var(--bg-tertiary); border-radius: 5px; border: 1px solid var(--border-subtle); }
+        .link-selector-label { font-size: 10px; color: var(--text-muted); margin-bottom: 6px; }
+        .link-selector-current { display: flex; align-items: center; justify-content: space-between; padding: 6px; background: var(--bg-elevated); border-radius: 4px; }
+        .link-selector-current span { font-size: 11px; }
+        .link-selector-btn { font-size: 10px; color: var(--accent); background: none; border: none; cursor: pointer; }
+        .link-selector-list { max-height: 120px; overflow-y: auto; margin-top: 6px; }
+        .link-selector-item { padding: 6px; margin-bottom: 3px; background: var(--bg-elevated); border-radius: 3px; cursor: pointer; font-size: 11px; }
+        .link-selector-item:hover { background: var(--border-subtle); }
+
+        .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .type-option { padding: 8px 4px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 5px; cursor: pointer; text-align: center; }
+        .type-option:hover { border-color: var(--border-default); }
+        .type-option.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+        .type-option-icon { width: 24px; height: 24px; margin: 0 auto 3px; border-radius: 5px; display: flex; align-items: center; justify-content: center; }
+        .type-option-icon svg { width: 12px; height: 12px; color: white; }
+        .type-option-name { font-size: 8px; font-weight: 500; }
+
+        .comments-list { max-height: 150px; overflow-y: auto; margin-bottom: 8px; }
+        .comment-item { padding: 8px; margin-bottom: 6px; background: var(--bg-tertiary); border-radius: 5px; border-left: 2px solid var(--border-default); }
+        .comment-header { display: flex; justify-content: space-between; margin-bottom: 3px; }
+        .comment-author { font-size: 10px; font-weight: 600; }
+        .comment-date { font-size: 9px; color: var(--text-muted); }
+        .comment-text { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+        .comment-input-row { display: flex; gap: 5px; }
+        .comment-input-row .form-input { flex: 1; }
+
+        .zoom-controls { position: absolute; bottom: 10px; left: 10px; display: flex; align-items: center; gap: 2px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 2px; z-index: 50; }
+        .zoom-btn { width: 24px; height: 24px; border: none; background: transparent; color: var(--text-secondary); border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .zoom-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .zoom-btn svg { width: 12px; height: 12px; }
+        .zoom-level { font-size: 9px; font-weight: 500; color: var(--text-secondary); padding: 0 4px; min-width: 32px; text-align: center; }
+
+        .canvas-instructions { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; color: var(--text-muted); pointer-events: none; z-index: 5; }
+        .canvas-instructions.hidden { display: none; }
+        .canvas-instructions svg { width: 36px; height: 36px; margin-bottom: 8px; opacity: 0.3; }
+        .canvas-instructions p { font-size: 11px; line-height: 1.4; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay.show { display: flex; }
+        .modal { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; width: 460px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .modal.lg { width: 640px; }
+        .modal-header { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; }
+        .modal-title { font-size: 14px; font-weight: 600; }
+        .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
+        .modal-close:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .modal-body { padding: 16px; overflow-y: auto; flex: 1; }
+        .modal-footer { padding: 12px 16px; border-top: 1px solid var(--border-subtle); display: flex; justify-content: flex-end; gap: 6px; }
+
+        .flow-list { display: flex; flex-direction: column; gap: 5px; }
+        .flow-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; cursor: pointer; }
+        .flow-item:hover { border-color: var(--border-default); background: var(--bg-elevated); }
+        .flow-item.active { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
+        .flow-item-info { flex: 1; min-width: 0; }
+        .flow-item-name { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+        .flow-item-meta { font-size: 10px; color: var(--text-muted); }
+        .flow-item-actions { display: flex; gap: 3px; opacity: 0; }
+        .flow-item:hover .flow-item-actions { opacity: 1; }
+        .flow-item-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 3px; border-radius: 3px; }
+        .flow-item-btn:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+        .flow-item-btn.danger:hover { color: var(--red); }
+
+        .template-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .template-item { padding: 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; cursor: pointer; }
+        .template-item:hover { border-color: var(--border-default); background: var(--bg-elevated); }
+        .template-item-icon { font-size: 20px; margin-bottom: 6px; }
+        .template-item-name { font-size: 12px; font-weight: 500; margin-bottom: 2px; }
+        .template-item-desc { font-size: 10px; color: var(--text-muted); }
+
+        .export-options { display: flex; flex-direction: column; gap: 8px; }
+        .export-option { display: flex; align-items: center; gap: 10px; padding: 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; cursor: pointer; }
+        .export-option:hover { border-color: var(--border-default); background: var(--bg-elevated); }
+        .export-option-icon { width: 36px; height: 36px; background: var(--bg-elevated); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+        .export-option-icon svg { width: 18px; height: 18px; color: var(--accent); }
+        .export-option-info { flex: 1; }
+        .export-option-name { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+        .export-option-desc { font-size: 11px; color: var(--text-muted); }
+
+        .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 12px; }
+        .summary-stat { padding: 8px; background: var(--bg-tertiary); border-radius: 5px; text-align: center; }
+        .summary-stat-value { font-size: 16px; font-weight: 700; margin-bottom: 1px; }
+        .summary-stat-value.issues { color: var(--red); }
+        .summary-stat-value.warnings { color: var(--orange); }
+        .summary-stat-value.fixes { color: var(--green); }
+        .summary-stat-value.new { color: var(--cyan); }
+        .summary-stat-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; }
+
+        .toast-container { position: fixed; bottom: 16px; right: 16px; z-index: 1001; }
+        .toast { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; margin-top: 6px; display: flex; align-items: center; gap: 8px; min-width: 200px; animation: slideIn 0.2s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .toast.success { border-left: 3px solid var(--green); }
+        .toast.error { border-left: 3px solid var(--red); }
+        .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .toast.success svg { color: var(--green); }
+        .toast.error svg { color: var(--red); }
+        .toast span { font-size: 12px; }
+
+        @media print { .header, .sidebar-left, .panel, .zoom-controls, .pane-actions { display: none !important; } }
+        .hidden { display: none !important; }
+        
+        .diff-section { margin-bottom: 16px; }
+        .diff-section-title { font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .diff-section-title .count { background: var(--bg-elevated); padding: 2px 6px; border-radius: 10px; font-size: 10px; }
+        .diff-item { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: var(--bg-tertiary); border-radius: 5px; margin-bottom: 4px; font-size: 11px; }
+        .diff-item.added { border-left: 3px solid var(--green); background: var(--green-dim); }
+        .diff-item.removed { border-left: 3px solid var(--red); background: var(--red-dim); }
+        .diff-item.changed { border-left: 3px solid var(--orange); background: var(--orange-dim); }
+        .diff-item-icon { font-size: 14px; }
+        .diff-item-name { font-weight: 500; flex: 1; }
+        .diff-item-detail { font-size: 10px; color: var(--text-muted); }
+        .diff-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; padding: 12px; background: var(--bg-tertiary); border-radius: 6px; }
+        .diff-stat { text-align: center; }
+        .diff-stat-value { font-size: 20px; font-weight: 700; }
+        .diff-stat-value.added { color: var(--green); }
+        .diff-stat-value.changed { color: var(--orange); }
+        .diff-stat-value.removed { color: var(--red); }
+        .diff-stat-label { font-size: 9px; color: var(--text-muted); text-transform: uppercase; }
+        .import-info { padding: 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 16px; }
+        .import-info-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
+        .import-info-row:last-child { margin-bottom: 0; }
+        .import-info-label { color: var(--text-muted); }
+        .btn-merge { background: var(--purple); border-color: var(--purple); }
+        .btn-merge:hover { background: #9333ea; }
+        
+        .form-hint { font-size: 9px; color: var(--text-muted); margin-top: 4px; line-height: 1.3; }
+        
+        .google-auth { display: flex; align-items: center; }
+        .google-user { display: flex; align-items: center; gap: 8px; padding: 4px 8px; background: var(--bg-tertiary); border-radius: 6px; }
+        .google-user img { width: 20px; height: 20px; border-radius: 50%; }
+        .google-user span { font-size: 11px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .btn-icon { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 2px; border-radius: 3px; display: flex; align-items: center; }
+        .btn-icon:hover { color: var(--text-primary); background: var(--bg-elevated); }
+        
+        .storage-toggle { display: flex; gap: 4px; margin-bottom: 12px; padding: 3px; background: var(--bg-tertiary); border-radius: 6px; }
+        .storage-btn { flex: 1; font-family: inherit; font-size: 11px; font-weight: 500; padding: 6px 10px; border: none; background: transparent; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .storage-btn:hover { color: var(--text-primary); }
+        .storage-btn.active { background: var(--bg-elevated); color: var(--text-primary); box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+        .storage-btn svg { width: 14px; height: 14px; }
+        .storage-btn.drive svg { color: #4285f4; }
+        
+        .drive-status { padding: 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 12px; text-align: center; }
+        .drive-status-icon { font-size: 24px; margin-bottom: 6px; }
+        .drive-status-text { font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; }
+        .drive-folder { display: flex; align-items: center; gap: 6px; padding: 8px 10px; background: var(--bg-elevated); border-radius: 5px; font-size: 11px; margin-top: 8px; }
+        .drive-folder svg { color: #4285f4; }
+        
+        .flow-item .drive-badge { font-size: 8px; background: rgba(66, 133, 244, 0.15); color: #4285f4; padding: 2px 5px; border-radius: 3px; margin-left: 6px; }
+        .saving-indicator { display: none; align-items: center; gap: 6px; font-size: 10px; color: var(--text-muted); }
+        .saving-indicator.active { display: flex; }
+        .saving-indicator .spinner { width: 12px; height: 12px; border: 2px solid var(--border-subtle); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="logo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M12 3L4 9v12h16V9l-8-6z"/><path d="M9 14l2 2 4-4"/></svg><span>FlowBuilder Pro</span></div>
+            <div class="header-divider"></div>
+            <div class="flow-selector" id="flowSelector">
+                <span class="flow-selector-name" id="currentFlowName">Select analysis...</span>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="header-divider"></div>
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="sketchModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Sketch</button>
+                <button class="mode-btn" id="configureModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>Configure</button>
+                <button class="mode-btn" id="detailModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Detail</button>
+            </div>
+            <div class="header-spacer"></div>
+            <div class="header-actions">
+                <div class="google-auth" id="googleAuth">
+                    <button class="btn" id="googleSignInBtn"><svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>Sign in</button>
+                    <div class="google-user hidden" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span><button class="btn-icon" id="googleSignOutBtn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+                </div>
+                <div class="header-divider"></div>
+                <button class="btn" id="validateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validate</button>
+                <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                <button class="btn btn-primary" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>Save</button>
+            </div>
+        </header>
+        <main class="main">
+            <aside class="sidebar-left" id="sidebarLeft">
+                <div class="sidebar-section">
+                    <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="searchInput" placeholder="Search steps..." /></div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Minimap</div>
+                    <div class="minimap" id="minimap"></div>
+                </div>
+                <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+                    <div class="sidebar-section-title">Steps</div>
+                    <div class="block-list" id="blockList"></div>
+                </div>
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Validation</div>
+                    <div class="validation-list" id="validationList"></div>
+                </div>
+            </aside>
+            <div class="canvas-split">
+                <div class="canvas-pane" id="currentPane">
+                    <div class="pane-header">
+                        <div class="pane-title"><span class="pane-indicator current"></span>Current State (AS-IS)</div>
+                        <div class="pane-actions">
+                            <button class="pane-btn primary" id="addCurrentBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
+                        </div>
+                    </div>
+                    <div class="canvas-area" id="currentCanvasArea">
+                        <div class="canvas-container"><div class="canvas" id="currentCanvas"><svg class="canvas-svg" id="currentConnectionsSvg"></svg><div id="currentBlocksContainer"></div></div></div>
+                        <div class="canvas-instructions" id="currentInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Add steps to document<br/>the current process</p></div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" data-action="out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <span class="zoom-level" id="currentZoomLevel">100%</span>
+                            <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+                <div class="canvas-pane" id="proposedPane">
+                    <div class="pane-header">
+                        <div class="pane-title"><span class="pane-indicator proposed"></span>Proposed State (TO-BE)</div>
+                        <div class="pane-actions">
+                            <button class="pane-btn" id="copyFromCurrentBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy from Current</button>
+                            <button class="pane-btn primary" id="addProposedBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
+                        </div>
+                    </div>
+                    <div class="canvas-area" id="proposedCanvasArea">
+                        <div class="canvas-container"><div class="canvas" id="proposedCanvas"><svg class="canvas-svg" id="proposedConnectionsSvg"></svg><div id="proposedBlocksContainer"></div></div></div>
+                        <div class="canvas-instructions" id="proposedInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Copy from current or build<br/>the improved process</p></div>
+                        <div class="zoom-controls">
+                            <button class="zoom-btn" data-action="out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <span class="zoom-level" id="proposedZoomLevel">100%</span>
+                            <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <aside class="panel" id="panel">
+                <div class="panel-tabs">
+                    <button class="panel-tab active" data-tab="details">Details</button>
+                    <button class="panel-tab" data-tab="comments">Comments</button>
+                    <button class="panel-tab" data-tab="history">History</button>
+                </div>
+                <div class="panel-content" id="panelContent"></div>
+            </aside>
+        </main>
+    </div>
+    <div class="modal-overlay" id="flowModal"><div class="modal"><div class="modal-header"><span class="modal-title">Process Analyses</span><button class="modal-close" id="closeFlowModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="storage-toggle" id="storageToggle"><button class="storage-btn local active" data-storage="local"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>Local</button><button class="storage-btn drive" data-storage="drive"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7.71 3.5L1.15 15l3.43 6 6.55-11.5L7.71 3.5zm1.73 0l6.55 11.5H22L15.45 3.5H9.44zm6.47 12.5H3.33l3.42 6h12.9l-3.44-6z"/></svg>Google Drive</button></div><div id="driveStatus" class="drive-status hidden"><div class="drive-status-icon">🔗</div><div class="drive-status-text">Sign in to access shared flows</div><button class="btn" id="driveSignInPrompt"><svg viewBox="0 0 24 24" width="12" height="12"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/></svg>Sign in with Google</button></div><div id="localFlowsSection"><div class="form-group"><label class="form-label">Create New</label><div class="form-row"><input type="text" class="form-input" id="newFlowName" placeholder="Process name..." /><button class="btn btn-primary" id="createFlowBtn" style="flex-shrink:0;">Create</button></div></div><div class="section-divider"><div class="section-title">Templates</div><div class="template-grid" id="templateGrid"></div></div><div class="section-divider"><div class="section-title">Recent</div><div class="flow-list" id="flowList"></div></div></div></div><div class="modal-footer"><span class="saving-indicator" id="savingIndicator"><span class="spinner"></span>Saving...</span><button class="btn" id="importFlowBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import JSON</button></div></div></div>
+    <div class="modal-overlay" id="exportModal"><div class="modal"><div class="modal-header"><span class="modal-title">Export Analysis</span><button class="modal-close" id="closeExportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="export-options"><div class="export-option" data-export="json"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">JSON Data</div><div class="export-option-desc">Full data export for backup or import</div></div></div><div class="export-option" data-export="report"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="export-option-info"><div class="export-option-name">Change Report (HTML)</div><div class="export-option-desc">Detailed report of all issues and fixes</div></div></div><div class="export-option" data-export="summary"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="export-option-info"><div class="export-option-name">Executive Summary</div><div class="export-option-desc">High-level overview for stakeholders</div></div></div><div class="export-option" data-export="print"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><div class="export-option-info"><div class="export-option-name">Print View</div><div class="export-option-desc">Print-friendly layout</div></div></div></div></div></div></div>
+    <div class="modal-overlay" id="validationModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Validation Results</span><button class="modal-close" id="closeValidationModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="validationModalBody"></div></div></div>
+    <div class="modal-overlay" id="importModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Import Analysis</span><button class="modal-close" id="closeImportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="importModalBody"></div><div class="modal-footer" id="importModalFooter"></div></div></div>
+    <input type="file" id="importFileInput" accept=".json" style="display:none;" />
+    <div class="toast-container" id="toastContainer"></div>
+    <script>
+    const STEP_TYPES = {
+        action: { name: 'Action', color: '#3b82f6', icon: '<rect x="6" y="6" width="12" height="12" rx="2" fill="currentColor"/>' },
+        decision: { name: 'Decision', color: '#f97316', icon: '<path d="M12 4L4 12l8 8 8-8-8-8z" fill="currentColor"/>' },
+        api: { name: 'API', color: '#a855f7', icon: '<circle cx="12" cy="12" r="4" fill="currentColor"/>' },
+        email: { name: 'Email', color: '#ec4899', icon: '<rect x="2" y="4" width="20" height="16" rx="2" fill="currentColor"/>' },
+        form: { name: 'Form', color: '#8b5cf6', icon: '<rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>' },
+        data: { name: 'Data', color: '#22c55e', icon: '<ellipse cx="12" cy="6" rx="8" ry="3" fill="currentColor"/>' },
+        delay: { name: 'Delay', color: '#06b6d4', icon: '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>' },
+        webhook: { name: 'Webhook', color: '#eab308', icon: '<path d="M10 13a5 5 0 007.54.54l3-3" stroke="currentColor" stroke-width="2" fill="none"/>' }
+    };
+    const TEMPLATES = [
+        { id: 'blank', name: 'Blank', desc: 'Start from scratch', icon: '📄' },
+        { id: 'journey', name: 'User Journey', desc: 'Customer flow', icon: '🚶' },
+        { id: 'approval', name: 'Approval', desc: 'Multi-step approval', icon: '✅' },
+        { id: 'onboarding', name: 'Onboarding', desc: 'New user flow', icon: '👋' }
+    ];
+    const PRIORITIES = ['critical', 'high', 'medium', 'low'];
+    const STATUSES = ['todo', 'in-progress', 'review', 'done'];
+
+    const GOOGLE_CLIENT_ID = '131879736877-21fqkvlpnf12csi73qgv1c9j5jf9lk10.apps.googleusercontent.com';
+    const GOOGLE_API_KEY = ''; // Not needed for OAuth
+    const DRIVE_FOLDER_NAME = 'FlowBuilder';
+    
+    class FlowBuilder {
+        constructor() {
+            this.flows = {};
+            this.currentFlowId = null;
+            this.currentFlowIsDrive = false;
+            this.mode = 'sketch';
+            this.activeTab = 'details';
+            this.current = { blocks: new Map(), connections: [], zoom: 1, panX: 0, panY: 0 };
+            this.proposed = { blocks: new Map(), connections: [], zoom: 1, panX: 0, panY: 0 };
+            this.activePane = 'current';
+            this.selectedBlock = null;
+            this.blockIdCounter = 0;
+            this.isDragging = false;
+            this.isPanning = false;
+            this.isConnecting = false;
+            this.issueFixLinks = [];
+            this.versionHistory = [];
+            // Google Drive
+            this.googleUser = null;
+            this.driveFlows = {};
+            this.driveFolderId = null;
+            this.storageMode = 'local'; // 'local' or 'drive'
+            this.tokenClient = null;
+            this.gapiInited = false;
+            this.gisInited = false;
+            this.init();
+        }
+
+        init() {
+            this.loadFlows();
+            this.bindEvents();
+            this.renderTemplates();
+            this.renderPanel();
+            this.updateValidation();
+            this.initGoogleApi();
+            const lastFlowId = localStorage.getItem('fb_pro_lastFlow');
+            if (lastFlowId && this.flows[lastFlowId]) this.loadFlow(lastFlowId);
+            else this.showFlowModal();
+        }
+        
+        async initGoogleApi() {
+            // Load Google API scripts dynamically
+            await this.loadScript('https://apis.google.com/js/api.js');
+            await this.loadScript('https://accounts.google.com/gsi/client');
+            
+            // Init gapi
+            await new Promise((resolve) => {
+                gapi.load('client', async () => {
+                    await gapi.client.init({});
+                    await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                    this.gapiInited = true;
+                    resolve();
+                });
+            });
+            
+            // Init Google Identity Services
+            this.tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: (response) => {
+                    if (response.access_token) {
+                        this.onGoogleSignIn(response);
+                    }
+                },
+            });
+            this.gisInited = true;
+            
+            // Check for existing token
+            const savedToken = localStorage.getItem('fb_google_token');
+            if (savedToken) {
+                try {
+                    gapi.client.setToken({ access_token: savedToken });
+                    // Test if token is still valid
+                    await gapi.client.drive.about.get({ fields: 'user' });
+                    const userInfo = JSON.parse(localStorage.getItem('fb_google_user') || '{}');
+                    this.googleUser = userInfo;
+                    this.updateGoogleAuthUI();
+                } catch (e) {
+                    localStorage.removeItem('fb_google_token');
+                    localStorage.removeItem('fb_google_user');
+                }
+            }
+        }
+        
+        loadScript(src) {
+            return new Promise((resolve, reject) => {
+                if (document.querySelector(`script[src="${src}"]`)) { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+        
+        googleSignIn() {
+            if (!this.gisInited) { this.toast('Google not ready, try again', 'error'); return; }
+            this.tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+        
+        async onGoogleSignIn(response) {
+            localStorage.setItem('fb_google_token', response.access_token);
+            
+            // Get user info
+            try {
+                const aboutResp = await gapi.client.drive.about.get({ fields: 'user' });
+                this.googleUser = aboutResp.result.user;
+                localStorage.setItem('fb_google_user', JSON.stringify(this.googleUser));
+                this.updateGoogleAuthUI();
+                this.toast('Signed in as ' + this.googleUser.displayName, 'success');
+                
+                // Find or create FlowBuilder folder
+                await this.ensureDriveFolder();
+                
+                // If in drive mode, load flows
+                if (this.storageMode === 'drive') {
+                    await this.loadDriveFlows();
+                    this.renderFlowList();
+                }
+            } catch (e) {
+                console.error('Sign in error:', e);
+                this.toast('Sign in failed', 'error');
+            }
+        }
+        
+        googleSignOut() {
+            const token = gapi.client.getToken();
+            if (token) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken(null);
+            }
+            localStorage.removeItem('fb_google_token');
+            localStorage.removeItem('fb_google_user');
+            this.googleUser = null;
+            this.driveFlows = {};
+            this.driveFolderId = null;
+            this.updateGoogleAuthUI();
+            if (this.storageMode === 'drive') {
+                this.setStorageMode('local');
+            }
+            this.toast('Signed out', 'success');
+        }
+        
+        updateGoogleAuthUI() {
+            const signInBtn = document.getElementById('googleSignInBtn');
+            const userDiv = document.getElementById('googleUser');
+            const userPhoto = document.getElementById('googleUserPhoto');
+            const userName = document.getElementById('googleUserName');
+            
+            if (this.googleUser) {
+                signInBtn.classList.add('hidden');
+                userDiv.classList.remove('hidden');
+                userPhoto.src = this.googleUser.photoLink || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236e7681"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
+                userName.textContent = this.googleUser.displayName || this.googleUser.emailAddress;
+            } else {
+                signInBtn.classList.remove('hidden');
+                userDiv.classList.add('hidden');
+            }
+            
+            this.updateDriveStatusUI();
+        }
+        
+        updateDriveStatusUI() {
+            const driveStatus = document.getElementById('driveStatus');
+            const localSection = document.getElementById('localFlowsSection');
+            
+            if (this.storageMode === 'drive') {
+                if (this.googleUser) {
+                    driveStatus.classList.add('hidden');
+                    localSection.classList.remove('hidden');
+                } else {
+                    driveStatus.classList.remove('hidden');
+                    localSection.classList.add('hidden');
+                }
+            } else {
+                driveStatus.classList.add('hidden');
+                localSection.classList.remove('hidden');
+            }
+        }
+        
+        setStorageMode(mode) {
+            this.storageMode = mode;
+            document.querySelectorAll('.storage-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.storage === mode);
+            });
+            this.updateDriveStatusUI();
+            this.renderFlowList();
+        }
+        
+        async ensureDriveFolder() {
+            if (this.driveFolderId) return this.driveFolderId;
+            
+            // Search for existing folder
+            const searchResp = await gapi.client.drive.files.list({
+                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                fields: 'files(id, name)',
+                spaces: 'drive'
+            });
+            
+            if (searchResp.result.files && searchResp.result.files.length > 0) {
+                this.driveFolderId = searchResp.result.files[0].id;
+            } else {
+                // Create folder
+                const createResp = await gapi.client.drive.files.create({
+                    resource: { name: DRIVE_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
+                    fields: 'id'
+                });
+                this.driveFolderId = createResp.result.id;
+            }
+            
+            return this.driveFolderId;
+        }
+        
+        async loadDriveFlows() {
+            if (!this.googleUser || !this.driveFolderId) return;
+            
+            try {
+                const resp = await gapi.client.drive.files.list({
+                    q: `'${this.driveFolderId}' in parents and mimeType='application/json' and trashed=false`,
+                    fields: 'files(id, name, modifiedTime)',
+                    orderBy: 'modifiedTime desc',
+                    spaces: 'drive'
+                });
+                
+                this.driveFlows = {};
+                for (const file of (resp.result.files || [])) {
+                    // Load file content
+                    const contentResp = await gapi.client.drive.files.get({
+                        fileId: file.id,
+                        alt: 'media'
+                    });
+                    try {
+                        const flowData = typeof contentResp.body === 'string' ? JSON.parse(contentResp.body) : contentResp.body;
+                        flowData.driveFileId = file.id;
+                        flowData.isDrive = true;
+                        this.driveFlows[flowData.id || file.id] = flowData;
+                    } catch (e) {
+                        console.error('Failed to parse flow:', file.name, e);
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load drive flows:', e);
+                this.toast('Failed to load Drive flows', 'error');
+            }
+        }
+        
+        async saveToDrive(flow) {
+            if (!this.googleUser) { this.toast('Sign in to save to Drive', 'error'); return; }
+            
+            await this.ensureDriveFolder();
+            
+            const fileName = (flow.name || 'Untitled').replace(/[^a-zA-Z0-9\s-_]/g, '') + '.json';
+            const fileContent = JSON.stringify(flow, null, 2);
+            const blob = new Blob([fileContent], { type: 'application/json' });
+            
+            document.getElementById('savingIndicator').classList.add('active');
+            
+            try {
+                if (flow.driveFileId) {
+                    // Update existing file
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${flow.driveFileId}?uploadType=media`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': 'Bearer ' + gapi.client.getToken().access_token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: fileContent
+                    });
+                } else {
+                    // Create new file
+                    const metadata = {
+                        name: fileName,
+                        mimeType: 'application/json',
+                        parents: [this.driveFolderId]
+                    };
+                    
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', blob);
+                    
+                    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + gapi.client.getToken().access_token },
+                        body: form
+                    });
+                    
+                    const result = await resp.json();
+                    flow.driveFileId = result.id;
+                }
+                
+                flow.isDrive = true;
+                this.driveFlows[flow.id] = flow;
+                this.toast('Saved to Drive', 'success');
+            } catch (e) {
+                console.error('Save to drive failed:', e);
+                this.toast('Failed to save to Drive', 'error');
+            } finally {
+                document.getElementById('savingIndicator').classList.remove('active');
+            }
+        }
+        
+        async deleteFromDrive(flowId) {
+            const flow = this.driveFlows[flowId];
+            if (!flow || !flow.driveFileId) return;
+            
+            try {
+                await gapi.client.drive.files.delete({ fileId: flow.driveFileId });
+                delete this.driveFlows[flowId];
+                this.toast('Deleted from Drive', 'success');
+            } catch (e) {
+                console.error('Delete failed:', e);
+                this.toast('Failed to delete', 'error');
+            }
+        }
+
+        getPane(paneId) { return paneId === 'current' ? this.current : this.proposed; }
+        
+        getPaneElements(paneId) {
+            return {
+                canvas: document.getElementById(`${paneId}Canvas`),
+                canvasArea: document.getElementById(`${paneId}CanvasArea`),
+                blocksContainer: document.getElementById(`${paneId}BlocksContainer`),
+                connectionsSvg: document.getElementById(`${paneId}ConnectionsSvg`),
+                zoomLevel: document.getElementById(`${paneId}ZoomLevel`),
+                instructions: document.getElementById(`${paneId}Instructions`)
+            };
+        }
+
+        toast(msg, type = 'success') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div');
+            t.className = 'toast ' + type;
+            t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${type === 'success' ? '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 2500);
+        }
+
+        bindEvents() {
+            document.getElementById('flowSelector').addEventListener('click', () => this.showFlowModal());
+            document.getElementById('closeFlowModal').addEventListener('click', () => this.hideModal('flowModal'));
+            document.getElementById('createFlowBtn').addEventListener('click', () => this.createFlow());
+            document.getElementById('newFlowName').addEventListener('keypress', e => { if (e.key === 'Enter') this.createFlow(); });
+            document.getElementById('importFlowBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
+            document.getElementById('importFileInput').addEventListener('change', e => this.importFlow(e));
+            document.getElementById('sketchModeBtn').addEventListener('click', () => this.setMode('sketch'));
+            document.getElementById('configureModeBtn').addEventListener('click', () => this.setMode('configure'));
+            document.getElementById('detailModeBtn').addEventListener('click', () => this.setMode('detail'));
+            document.querySelectorAll('.panel-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    this.activeTab = tab.dataset.tab;
+                    this.renderPanelContent();
+                });
+            });
+            document.getElementById('addCurrentBlockBtn').addEventListener('click', () => this.addBlock('current'));
+            document.getElementById('addProposedBlockBtn').addEventListener('click', () => this.addBlock('proposed'));
+            document.getElementById('copyFromCurrentBtn').addEventListener('click', () => this.copyCurrentToProposed());
+            ['current', 'proposed'].forEach(paneId => {
+                const els = this.getPaneElements(paneId);
+                els.canvasArea.addEventListener('mousedown', e => this.onCanvasMouseDown(e, paneId));
+                els.canvasArea.addEventListener('mousemove', e => this.onCanvasMouseMove(e, paneId));
+                els.canvasArea.addEventListener('mouseup', e => this.onCanvasMouseUp(e, paneId));
+                els.canvasArea.addEventListener('wheel', e => this.onCanvasWheel(e, paneId), { passive: false });
+                els.canvasArea.addEventListener('click', e => {
+                    if (e.target === els.canvasArea || e.target.closest('.canvas-container')) this.selectBlock(null, paneId);
+                });
+                els.canvasArea.querySelectorAll('.zoom-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const action = btn.dataset.action;
+                        const pane = this.getPane(paneId);
+                        if (action === 'in') this.setZoom(pane.zoom + 0.1, paneId);
+                        else if (action === 'out') this.setZoom(pane.zoom - 0.1, paneId);
+                        else if (action === 'fit') this.zoomToFit(paneId);
+                    });
+                });
+            });
+            document.getElementById('exportBtn').addEventListener('click', () => this.showExportModal());
+            document.getElementById('closeExportModal').addEventListener('click', () => this.hideModal('exportModal'));
+            document.querySelectorAll('.export-option').forEach(opt => opt.addEventListener('click', () => this.doExport(opt.dataset.export)));
+            document.getElementById('validateBtn').addEventListener('click', () => this.showValidationModal());
+            document.getElementById('closeValidationModal').addEventListener('click', () => this.hideModal('validationModal'));
+            document.getElementById('closeImportModal').addEventListener('click', () => this.hideModal('importModal'));
+            document.getElementById('saveBtn').addEventListener('click', () => this.saveCurrentFlow());
+            document.getElementById('searchInput').addEventListener('input', e => this.filterBlocks(e.target.value));
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) this.deleteSelectedBlock();
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
+                if (e.key === 'Escape') { this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.selectBlock(null, this.activePane); }
+            });
+            // Google Drive events
+            document.getElementById('googleSignInBtn').addEventListener('click', () => this.googleSignIn());
+            document.getElementById('googleSignOutBtn').addEventListener('click', () => this.googleSignOut());
+            document.getElementById('driveSignInPrompt')?.addEventListener('click', () => this.googleSignIn());
+            document.querySelectorAll('.storage-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const mode = btn.dataset.storage;
+                    if (mode === 'drive' && !this.googleUser) {
+                        this.setStorageMode('drive');
+                        return;
+                    }
+                    if (mode === 'drive' && this.googleUser) {
+                        await this.loadDriveFlows();
+                    }
+                    this.setStorageMode(mode);
+                });
+            });
+        }
+
+        setMode(mode) {
+            this.mode = mode;
+            document.getElementById('sketchModeBtn').classList.toggle('active', mode === 'sketch');
+            document.getElementById('configureModeBtn').classList.toggle('active', mode === 'configure');
+            document.getElementById('detailModeBtn').classList.toggle('active', mode === 'detail');
+            this.renderPanelContent();
+            ['current', 'proposed'].forEach(paneId => this.getPane(paneId).blocks.forEach(block => this.updateBlockElement(block, paneId)));
+        }
+
+        loadFlows() { const saved = localStorage.getItem('fb_pro_flows'); this.flows = saved ? JSON.parse(saved) : {}; }
+        saveFlows() { localStorage.setItem('fb_pro_flows', JSON.stringify(this.flows)); }
+
+        async createFlow(templateId = 'blank') {
+            const nameInput = document.getElementById('newFlowName');
+            const name = nameInput.value.trim() || 'Untitled Analysis';
+            const id = 'flow_' + Date.now();
+            const newFlow = { id, name, description: '', current: { blocks: [], connections: [] }, proposed: { blocks: [], connections: [] }, issueFixLinks: [], createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+            
+            if (this.storageMode === 'drive' && this.googleUser) {
+                // Save to Drive
+                if (templateId !== 'blank') {
+                    this.driveFlows[id] = newFlow;
+                    this.applyTemplate(id, templateId, true);
+                } else {
+                    this.driveFlows[id] = newFlow;
+                }
+                await this.saveToDrive(this.driveFlows[id]);
+                this.loadFlow(id, true);
+            } else {
+                // Save locally
+                this.flows[id] = newFlow;
+                if (templateId !== 'blank') this.applyTemplate(id, templateId, false);
+                this.saveFlows();
+                this.loadFlow(id, false);
+            }
+            
+            this.hideModal('flowModal');
+            nameInput.value = '';
+            this.toast('Analysis created', 'success');
+        }
+
+        applyTemplate(flowId, templateId, isDrive = false) {
+            const flow = isDrive ? this.driveFlows[flowId] : this.flows[flowId];
+            const templates = {
+                'journey': { blocks: [{ name: 'User arrives', description: 'User lands on page', x: 100, y: 100 }, { name: 'View content', description: 'User browses', x: 100, y: 240 }, { name: 'Take action', description: 'Main action', x: 100, y: 380 }, { name: 'Confirmation', description: 'Success shown', x: 100, y: 520 }] },
+                'approval': { blocks: [{ name: 'Submit request', description: 'User submits', x: 100, y: 100 }, { name: 'Manager review', description: 'Manager decides', x: 100, y: 240 }, { name: 'Final approval', description: 'Authority approves', x: 100, y: 380 }, { name: 'Complete', description: 'Request done', x: 100, y: 520 }] },
+                'onboarding': { blocks: [{ name: 'Registration', description: 'Create account', x: 100, y: 100 }, { name: 'Verification', description: 'Email verify', x: 100, y: 240 }, { name: 'Profile setup', description: 'Complete profile', x: 100, y: 380 }, { name: 'Welcome', description: 'Onboarding done', x: 100, y: 520 }] }
+            };
+            const template = templates[templateId];
+            if (template) {
+                flow.current.blocks = template.blocks.map((b, i) => ({ id: `block_${i + 1}`, ...b, outputs: 1, issueType: null, issueText: '', owner: '', systems: '', timeEstimate: '', priority: '', comments: [] }));
+                flow.current.connections = template.blocks.slice(0, -1).map((_, i) => ({ id: `conn_${i}`, from: `block_${i + 1}`, portIndex: 0, to: `block_${i + 2}` }));
+            }
+        }
+
+        loadFlow(flowId, isDrive = false) {
+            const flow = isDrive ? this.driveFlows[flowId] : this.flows[flowId];
+            if (!flow) return;
+            this.currentFlowId = flowId;
+            this.currentFlowIsDrive = isDrive;
+            if (!isDrive) localStorage.setItem('fb_pro_lastFlow', flowId);
+            ['current', 'proposed'].forEach(paneId => {
+                const pane = this.getPane(paneId);
+                const els = this.getPaneElements(paneId);
+                els.blocksContainer.innerHTML = '';
+                pane.blocks.clear();
+                pane.connections = [];
+                pane.zoom = 1;
+                pane.panX = 0;
+                pane.panY = 0;
+            });
+            this.blockIdCounter = 0;
+            this.selectedBlock = null;
+            this.issueFixLinks = flow.issueFixLinks || [];
+            (flow.current?.blocks || []).forEach(block => {
+                const b = { ...block, comments: block.comments || [] };
+                this.current.blocks.set(b.id, b);
+                this.renderBlock(b, 'current');
+                const num = parseInt(b.id.split('_')[1]) || 0;
+                if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
+            });
+            this.current.connections = [...(flow.current?.connections || [])];
+            (flow.proposed?.blocks || []).forEach(block => {
+                const b = { ...block, comments: block.comments || [] };
+                this.proposed.blocks.set(b.id, b);
+                this.renderBlock(b, 'proposed');
+                const num = parseInt(b.id.split('_')[1]) || 0;
+                if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
+            });
+            this.proposed.connections = [...(flow.proposed?.connections || [])];
+            this.updateConnections('current');
+            this.updateConnections('proposed');
+            this.updateFlowSelector();
+            this.renderPanel();
+            this.updateBlockList();
+            this.updateMinimap();
+            this.updateValidation();
+            this.updateInstructions();
+            setTimeout(() => { this.zoomToFit('current'); this.zoomToFit('proposed'); }, 100);
+        }
+
+        saveCurrentFlow() {
+            if (!this.currentFlowId) { this.showFlowModal(); return; }
+            this.addToHistory();
+            
+            const isDrive = this.currentFlowIsDrive;
+            const flow = isDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            
+            flow.current = { blocks: Array.from(this.current.blocks.values()), connections: this.current.connections };
+            flow.proposed = { blocks: Array.from(this.proposed.blocks.values()), connections: this.proposed.connections };
+            flow.issueFixLinks = this.issueFixLinks;
+            flow.updatedAt = new Date().toISOString();
+            
+            if (isDrive) {
+                this.saveToDrive(flow);
+            } else {
+                this.saveFlows();
+                this.toast('Saved', 'success');
+            }
+        }
+
+        addToHistory() {
+            const snapshot = { timestamp: new Date().toISOString(), current: { blocks: Array.from(this.current.blocks.values()), connections: [...this.current.connections] }, proposed: { blocks: Array.from(this.proposed.blocks.values()), connections: [...this.proposed.connections] } };
+            this.versionHistory.push(snapshot);
+            if (this.versionHistory.length > 20) this.versionHistory.shift();
+        }
+
+        async deleteFlow(flowId, isDrive = false) {
+            if (!confirm('Delete this analysis?')) return;
+            
+            if (isDrive) {
+                await this.deleteFromDrive(flowId);
+            } else {
+                delete this.flows[flowId];
+                this.saveFlows();
+            }
+            
+            if (this.currentFlowId === flowId) {
+                this.currentFlowId = null;
+                this.currentFlowIsDrive = false;
+                ['current', 'proposed'].forEach(paneId => { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); els.blocksContainer.innerHTML = ''; pane.blocks.clear(); pane.connections = []; });
+                this.updateFlowSelector();
+                this.updateInstructions();
+                this.renderPanel();
+            }
+            this.renderFlowList();
+            this.toast('Deleted', 'success');
+        }
+
+        importFlow(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    this.pendingImport = data;
+                    this.showImportDiffModal(data, file.name);
+                } catch (err) { this.toast('Invalid JSON file', 'error'); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        showImportDiffModal(data, filename) {
+            const body = document.getElementById('importModalBody');
+            const footer = document.getElementById('importModalFooter');
+            
+            // Check if we have a matching flow by name (without timestamp suffix)
+            const baseName = data.name?.replace(/\s*\(imported\)\s*$/, '').trim();
+            const existingFlow = Object.values(this.flows).find(f => f.name === baseName || f.name === data.name?.replace(/\s*\(imported\)\s*$/, ''));
+            
+            // Build import info
+            const importedBlocks = [...(data.current?.blocks || []), ...(data.proposed?.blocks || [])];
+            const importedCurrentCount = (data.current?.blocks || []).length;
+            const importedProposedCount = (data.proposed?.blocks || []).length;
+            const importedIssues = (data.current?.blocks || []).filter(b => b.issueType).length;
+            const exportedAt = data.exportedAt ? new Date(data.exportedAt).toLocaleString() : 'Unknown';
+            
+            let diffHtml = '';
+            let canMerge = false;
+            let added = [], changed = [], removed = [];
+            
+            if (existingFlow && this.currentFlowId) {
+                // Compare with current loaded flow
+                canMerge = true;
+                const currentBlocks = Array.from(this.current.blocks.values());
+                const proposedBlocks = Array.from(this.proposed.blocks.values());
+                const existingBlocksMap = new Map([...currentBlocks, ...proposedBlocks].map(b => [b.id, b]));
+                const importBlocksMap = new Map(importedBlocks.map(b => [b.id, b]));
+                
+                // Find added blocks (in import but not in existing)
+                importedBlocks.forEach(b => {
+                    if (!existingBlocksMap.has(b.id)) {
+                        added.push(b);
+                    }
+                });
+                
+                // Find removed blocks (in existing but not in import)
+                [...currentBlocks, ...proposedBlocks].forEach(b => {
+                    if (!importBlocksMap.has(b.id)) {
+                        removed.push(b);
+                    }
+                });
+                
+                // Find changed blocks
+                importedBlocks.forEach(b => {
+                    const existing = existingBlocksMap.get(b.id);
+                    if (existing) {
+                        const changes = [];
+                        if (b.name !== existing.name) changes.push('name');
+                        if (b.description !== existing.description) changes.push('description');
+                        if (b.issueType !== existing.issueType) changes.push('issue');
+                        if (b.issueText !== existing.issueText) changes.push('issue text');
+                        if (b.changeType !== existing.changeType) changes.push('change type');
+                        if (b.fixText !== existing.fixText) changes.push('fix text');
+                        if ((b.comments?.length || 0) !== (existing.comments?.length || 0)) changes.push('comments');
+                        if (changes.length > 0) {
+                            changed.push({ block: b, changes });
+                        }
+                    }
+                });
+                
+                // New comments count
+                let newComments = 0;
+                importedBlocks.forEach(b => {
+                    const existing = existingBlocksMap.get(b.id);
+                    if (existing && b.comments?.length > (existing.comments?.length || 0)) {
+                        newComments += b.comments.length - (existing.comments?.length || 0);
+                    }
+                });
+                
+                diffHtml = `
+                    <div class="import-info">
+                        <div class="import-info-row"><span class="import-info-label">File:</span><span>${filename}</span></div>
+                        <div class="import-info-row"><span class="import-info-label">Exported:</span><span>${exportedAt}</span></div>
+                        <div class="import-info-row"><span class="import-info-label">Comparing to:</span><span>${this.flows[this.currentFlowId]?.name || 'Current flow'}</span></div>
+                    </div>
+                    <div class="diff-summary">
+                        <div class="diff-stat"><div class="diff-stat-value added">${added.length}</div><div class="diff-stat-label">Added</div></div>
+                        <div class="diff-stat"><div class="diff-stat-value changed">${changed.length}</div><div class="diff-stat-label">Changed</div></div>
+                        <div class="diff-stat"><div class="diff-stat-value removed">${removed.length}</div><div class="diff-stat-label">Removed</div></div>
+                    </div>
+                `;
+                
+                if (added.length > 0) {
+                    diffHtml += `<div class="diff-section"><div class="diff-section-title">➕ New Blocks <span class="count">${added.length}</span></div>`;
+                    added.forEach(b => { diffHtml += `<div class="diff-item added"><span class="diff-item-icon">✨</span><span class="diff-item-name">${b.name}</span></div>`; });
+                    diffHtml += '</div>';
+                }
+                
+                if (changed.length > 0) {
+                    diffHtml += `<div class="diff-section"><div class="diff-section-title">📝 Modified Blocks <span class="count">${changed.length}</span></div>`;
+                    changed.forEach(c => { diffHtml += `<div class="diff-item changed"><span class="diff-item-icon">✏️</span><span class="diff-item-name">${c.block.name}</span><span class="diff-item-detail">${c.changes.join(', ')}</span></div>`; });
+                    diffHtml += '</div>';
+                }
+                
+                if (removed.length > 0) {
+                    diffHtml += `<div class="diff-section"><div class="diff-section-title">🗑️ Removed Blocks <span class="count">${removed.length}</span></div>`;
+                    removed.forEach(b => { diffHtml += `<div class="diff-item removed"><span class="diff-item-icon">❌</span><span class="diff-item-name">${b.name}</span></div>`; });
+                    diffHtml += '</div>';
+                }
+                
+                if (added.length === 0 && changed.length === 0 && removed.length === 0) {
+                    diffHtml += '<div style="text-align:center;padding:20px;color:var(--text-muted);"><div style="font-size:24px;margin-bottom:8px;">✓</div>No differences found</div>';
+                }
+                
+            } else {
+                // No matching flow - just show import info
+                diffHtml = `
+                    <div class="import-info">
+                        <div class="import-info-row"><span class="import-info-label">File:</span><span>${filename}</span></div>
+                        <div class="import-info-row"><span class="import-info-label">Name:</span><span>${data.name || 'Untitled'}</span></div>
+                        <div class="import-info-row"><span class="import-info-label">Exported:</span><span>${exportedAt}</span></div>
+                    </div>
+                    <div class="diff-summary">
+                        <div class="diff-stat"><div class="diff-stat-value">${importedCurrentCount}</div><div class="diff-stat-label">Current Steps</div></div>
+                        <div class="diff-stat"><div class="diff-stat-value">${importedProposedCount}</div><div class="diff-stat-label">Proposed Steps</div></div>
+                        <div class="diff-stat"><div class="diff-stat-value" style="color:var(--red);">${importedIssues}</div><div class="diff-stat-label">Issues</div></div>
+                    </div>
+                    <div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;">This will be imported as a new analysis.</div>
+                `;
+            }
+            
+            body.innerHTML = diffHtml;
+            
+            // Footer with action buttons
+            this.importDiffData = { added, changed, removed, canMerge };
+            footer.innerHTML = `
+                <button class="btn" id="importCancelBtn">Cancel</button>
+                ${canMerge && (added.length > 0 || changed.length > 0) ? '<button class="btn btn-merge" id="importMergeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M8 6v6m0 0v6m0-6h8m-8 0H0"/></svg>Merge Changes</button>' : ''}
+                <button class="btn btn-primary" id="importReplaceBtn">${canMerge ? 'Replace All' : 'Import'}</button>
+            `;
+            
+            footer.querySelector('#importCancelBtn').addEventListener('click', () => this.hideModal('importModal'));
+            footer.querySelector('#importReplaceBtn').addEventListener('click', () => this.doImport('replace'));
+            footer.querySelector('#importMergeBtn')?.addEventListener('click', () => this.doImport('merge'));
+            
+            this.hideModal('flowModal');
+            this.showModal('importModal');
+        }
+
+        doImport(mode) {
+            const data = this.pendingImport;
+            if (!data) return;
+            
+            if (mode === 'merge' && this.currentFlowId && this.importDiffData?.canMerge) {
+                // Merge: add new blocks, update changed blocks, keep removed blocks
+                const { added, changed } = this.importDiffData;
+                
+                // Add new blocks
+                added.forEach(b => {
+                    const isCurrentPane = (data.current?.blocks || []).some(cb => cb.id === b.id);
+                    const pane = isCurrentPane ? this.current : this.proposed;
+                    const paneId = isCurrentPane ? 'current' : 'proposed';
+                    pane.blocks.set(b.id, { ...b, comments: b.comments || [] });
+                    this.renderBlock(b, paneId);
+                    const num = parseInt(b.id.split('_')[1]) || 0;
+                    if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
+                });
+                
+                // Update changed blocks
+                changed.forEach(c => {
+                    const b = c.block;
+                    let pane = this.current.blocks.has(b.id) ? this.current : this.proposed;
+                    let paneId = this.current.blocks.has(b.id) ? 'current' : 'proposed';
+                    const existing = pane.blocks.get(b.id);
+                    if (existing) {
+                        // Merge: keep position, merge comments
+                        const mergedComments = [...(existing.comments || [])];
+                        (b.comments || []).forEach(newComment => {
+                            if (!mergedComments.some(ec => ec.date === newComment.date && ec.text === newComment.text)) {
+                                mergedComments.push(newComment);
+                            }
+                        });
+                        const merged = { ...b, x: existing.x, y: existing.y, comments: mergedComments };
+                        pane.blocks.set(b.id, merged);
+                        this.updateBlockElement(merged, paneId);
+                    }
+                });
+                
+                // Merge connections
+                ['current', 'proposed'].forEach(paneKey => {
+                    const importConns = data[paneKey]?.connections || [];
+                    const pane = paneKey === 'current' ? this.current : this.proposed;
+                    importConns.forEach(ic => {
+                        if (!pane.connections.some(c => c.from === ic.from && c.to === ic.to && c.portIndex === ic.portIndex)) {
+                            pane.connections.push(ic);
+                        }
+                    });
+                    this.updateConnections(paneKey);
+                });
+                
+                // Merge issue-fix links
+                (data.issueFixLinks || []).forEach(link => {
+                    if (!this.issueFixLinks.some(l => l.issueId === link.issueId && l.fixId === link.fixId)) {
+                        this.issueFixLinks.push(link);
+                    }
+                });
+                
+                this.updateBlockList();
+                this.updateMinimap();
+                this.updateValidation();
+                this.updateInstructions();
+                this.hideModal('importModal');
+                this.toast(`Merged: ${added.length} added, ${changed.length} updated`, 'success');
+                
+            } else {
+                // Replace: create new flow or replace current
+                const id = 'flow_' + Date.now();
+                data.id = id;
+                data.name = data.name + ' (imported)';
+                this.flows[id] = data;
+                this.saveFlows();
+                this.loadFlow(id);
+                this.hideModal('importModal');
+                this.toast('Flow imported', 'success');
+            }
+            
+            this.pendingImport = null;
+        }
+
+        updateFlowSelector() { 
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            document.getElementById('currentFlowName').textContent = this.currentFlowId ? (flow?.name || 'Untitled') + (this.currentFlowIsDrive ? ' ☁️' : '') : 'Select analysis...'; 
+        }
+        showFlowModal() { this.renderFlowList(); this.showModal('flowModal'); document.getElementById('newFlowName').focus(); }
+
+        renderTemplates() {
+            const grid = document.getElementById('templateGrid');
+            grid.innerHTML = TEMPLATES.map(t => `<div class="template-item" data-template="${t.id}"><div class="template-item-icon">${t.icon}</div><div class="template-item-name">${t.name}</div><div class="template-item-desc">${t.desc}</div></div>`).join('');
+            grid.querySelectorAll('.template-item').forEach(item => item.addEventListener('click', () => { const nameInput = document.getElementById('newFlowName'); if (!nameInput.value.trim()) nameInput.value = item.querySelector('.template-item-name').textContent; this.createFlow(item.dataset.template); }));
+        }
+
+        renderFlowList() {
+            const list = document.getElementById('flowList');
+            const flows = this.storageMode === 'drive' ? this.driveFlows : this.flows;
+            const flowIds = Object.keys(flows).sort((a, b) => new Date(flows[b].updatedAt || 0) - new Date(flows[a].updatedAt || 0));
+            
+            if (flowIds.length === 0) { 
+                list.innerHTML = `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:12px;">${this.storageMode === 'drive' ? 'No flows in Drive folder' : 'No analyses yet'}</div>`; 
+                return; 
+            }
+            
+            list.innerHTML = flowIds.map(id => {
+                const flow = flows[id];
+                const date = flow.updatedAt ? new Date(flow.updatedAt).toLocaleDateString() : '';
+                const issueCount = (flow.current?.blocks || []).filter(b => b.issueType).length;
+                const isDrive = flow.isDrive;
+                return `<div class="flow-item ${id === this.currentFlowId ? 'active' : ''}" data-id="${id}" data-drive="${isDrive || false}"><div class="flow-item-info"><div class="flow-item-name">${flow.name}${isDrive ? '<span class="drive-badge">Drive</span>' : ''}</div><div class="flow-item-meta">${(flow.current?.blocks || []).length} steps${issueCount > 0 ? ` • ${issueCount} issues` : ''}${date ? ` • ${date}` : ''}</div></div><div class="flow-item-actions"><button class="flow-item-btn danger" data-action="delete" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button></div></div>`;
+            }).join('');
+            
+            list.querySelectorAll('.flow-item').forEach(item => item.addEventListener('click', e => { 
+                if (e.target.closest('[data-action="delete"]')) { 
+                    e.stopPropagation(); 
+                    const isDrive = item.dataset.drive === 'true';
+                    if (isDrive) {
+                        this.deleteFlow(item.dataset.id, true);
+                    } else {
+                        this.deleteFlow(item.dataset.id, false); 
+                    }
+                } else { 
+                    this.loadFlow(item.dataset.id, item.dataset.drive === 'true'); 
+                    this.hideModal('flowModal'); 
+                } 
+            }));
+        }
+
+        copyCurrentToProposed() {
+            if (this.proposed.blocks.size > 0 && !confirm('Replace proposed flow?')) return;
+            const els = this.getPaneElements('proposed');
+            els.blocksContainer.innerHTML = '';
+            this.proposed.blocks.clear();
+            this.proposed.connections = [];
+            const idMap = new Map();
+            this.current.blocks.forEach(block => {
+                const newId = 'block_' + (++this.blockIdCounter);
+                idMap.set(block.id, newId);
+                const newBlock = { ...JSON.parse(JSON.stringify(block)), id: newId, changeType: block.issueType ? 'fix' : null, fixText: '', status: block.issueType ? 'todo' : null, linkedIssueId: block.issueType ? block.id : null };
+                delete newBlock.issueType;
+                delete newBlock.issueText;
+                this.proposed.blocks.set(newId, newBlock);
+                this.renderBlock(newBlock, 'proposed');
+            });
+            this.proposed.connections = this.current.connections.map(conn => ({ ...conn, id: 'conn_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), from: idMap.get(conn.from), to: idMap.get(conn.to) }));
+            this.current.blocks.forEach(block => { if (block.issueType) { const fixBlockId = idMap.get(block.id); this.issueFixLinks.push({ issueId: block.id, fixId: fixBlockId }); } });
+            this.updateConnections('proposed');
+            this.updateInstructions();
+            this.updateBlockList();
+            this.updateMinimap();
+            this.updateValidation();
+            this.renderPanel();
+            setTimeout(() => this.zoomToFit('proposed'), 100);
+            this.toast('Copied to proposed', 'success');
+        }
+
+        updateInstructions() {
+            document.getElementById('currentInstructions').classList.toggle('hidden', this.current.blocks.size > 0);
+            document.getElementById('proposedInstructions').classList.toggle('hidden', this.proposed.blocks.size > 0);
+        }
+
+        renderPanel() { if (this.selectedBlock) this.renderPanelContent(); else this.renderOverviewPanel(); }
+
+        renderOverviewPanel() {
+            const content = document.getElementById('panelContent');
+            if (!this.currentFlowId) { content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">Select or create an analysis</div>'; return; }
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            if (!flow) { content.innerHTML = '<div style="text-align:center;padding:30px;color:var(--text-muted);font-size:12px;">Flow not found</div>'; return; }
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            const issues = currentBlocks.filter(b => b.issueType === 'error').length;
+            const warnings = currentBlocks.filter(b => b.issueType === 'warning').length;
+            const fixes = proposedBlocks.filter(b => b.changeType === 'fix' || b.fixText).length;
+            const newSteps = proposedBlocks.filter(b => b.changeType === 'new').length;
+            const storageInfo = this.currentFlowIsDrive ? '<div style="display:flex;align-items:center;gap:4px;font-size:10px;color:#4285f4;margin-bottom:12px;"><svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M7.71 3.5L1.15 15l3.43 6 6.55-11.5L7.71 3.5zm1.73 0l6.55 11.5H22L15.45 3.5H9.44zm6.47 12.5H3.33l3.42 6h12.9l-3.44-6z"/></svg>Saved in Google Drive</div>' : '';
+            content.innerHTML = `${storageInfo}<div class="form-group"><label class="form-label">Analysis Name</label><input type="text" class="form-input" id="flowNameInput" value="${flow.name || ''}" /></div><div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="flowDescInput" placeholder="Describe the process...">${flow.description || ''}</textarea></div><div class="section-divider"><div class="section-title">Summary</div><div class="summary-grid"><div class="summary-stat"><div class="summary-stat-value issues">${issues}</div><div class="summary-stat-label">Issues</div></div><div class="summary-stat"><div class="summary-stat-value warnings">${warnings}</div><div class="summary-stat-label">Warnings</div></div><div class="summary-stat"><div class="summary-stat-value fixes">${fixes}</div><div class="summary-stat-label">Fixes</div></div><div class="summary-stat"><div class="summary-stat-value new">${newSteps}</div><div class="summary-stat-label">New</div></div></div></div><div class="section-divider"><div class="section-title"><span class="dot" style="background:var(--orange);"></span>Current: ${currentBlocks.length} steps</div><div class="section-title"><span class="dot" style="background:var(--green);"></span>Proposed: ${proposedBlocks.length} steps</div></div>`;
+            content.querySelector('#flowNameInput')?.addEventListener('input', e => { 
+                const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+                if (flow) flow.name = e.target.value;
+                this.updateFlowSelector(); 
+            });
+            content.querySelector('#flowDescInput')?.addEventListener('input', e => { 
+                const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+                if (flow) flow.description = e.target.value; 
+            });
+        }
+
+        renderPanelContent() {
+            if (!this.selectedBlock) { this.renderOverviewPanel(); return; }
+            const content = document.getElementById('panelContent');
+            const block = this.selectedBlock;
+            const paneId = this.activePane;
+            if (this.activeTab === 'details') { content.innerHTML = this.getDetailsTabHtml(block, paneId); this.bindDetailsTabEvents(block, paneId); }
+            else if (this.activeTab === 'comments') { content.innerHTML = this.getCommentsTabHtml(block); this.bindCommentsTabEvents(block, paneId); }
+            else if (this.activeTab === 'history') { content.innerHTML = this.getHistoryTabHtml(); }
+        }
+
+        getDetailsTabHtml(block, paneId) {
+            const isCurrentPane = paneId === 'current';
+            let html = `<div class="form-group"><label class="form-label">Step Name</label><input type="text" class="form-input" id="blockNameInput" value="${block.name || ''}" /></div><div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="blockDescInput" placeholder="What does this step do?">${block.description || ''}</textarea></div>`;
+            
+            if (this.mode === 'sketch') {
+                // Sketch mode: metadata + issue/change marking
+                html += `<div class="section-divider"><div class="section-title">Metadata</div><div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input type="text" class="form-input" id="ownerInput" value="${block.owner || ''}" placeholder="Team/Person" /></div><div class="form-group"><label class="form-label">Time</label><input type="text" class="form-input" id="timeInput" value="${block.timeEstimate || ''}" placeholder="5 min" /></div></div><div class="form-row"><div class="form-group"><label class="form-label">Systems</label><input type="text" class="form-input" id="systemsInput" value="${block.systems || ''}" placeholder="CRM, API..." /></div><div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="prioritySelect"><option value="">None</option>${PRIORITIES.map(p => `<option value="${p}" ${block.priority === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}</select></div></div></div>`;
+                if (isCurrentPane) {
+                    html += `<div class="section-divider"><div class="section-title"><span class="dot" style="background:var(--red);"></span>Issue Marking</div><div class="option-grid"><div class="option-item ${block.issueType === 'error' ? 'selected error' : ''}" data-issue="error"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'error' ? 'var(--red)' : 'currentColor'}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="option-item-label">Issue</div></div><div class="option-item ${block.issueType === 'warning' ? 'selected warning' : ''}" data-issue="warning"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'warning' ? 'var(--orange)' : 'currentColor'}" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="option-item-label">Warning</div></div></div><div class="form-group" style="margin-top:8px;"><label class="form-label">What's wrong?</label><textarea class="form-input" id="issueTextInput" placeholder="Describe the problem...">${block.issueText || ''}</textarea></div>${block.issueType ? '<button class="btn" id="clearIssueBtn" style="width:100%;font-size:10px;">Clear Issue</button>' : ''}</div>`;
+                } else {
+                    const linkedIssue = this.getLinkedIssue(block.id);
+                    html += `<div class="section-divider"><div class="section-title"><span class="dot" style="background:var(--green);"></span>Change Type</div><div class="option-grid"><div class="option-item ${block.changeType === 'fix' ? 'selected fix' : ''}" data-change="fix"><div class="option-item-icon">🔧</div><div class="option-item-label">Fix</div></div><div class="option-item ${block.changeType === 'new' ? 'selected new' : ''}" data-change="new"><div class="option-item-icon">✨</div><div class="option-item-label">New</div></div><div class="option-item ${block.changeType === 'modified' ? 'selected' : ''}" data-change="modified"><div class="option-item-icon">📝</div><div class="option-item-label">Modified</div></div><div class="option-item ${block.changeType === 'removed' ? 'selected' : ''}" data-change="removed"><div class="option-item-icon">🗑️</div><div class="option-item-label">Remove</div></div></div></div><div class="section-divider"><div class="section-title">Fix Description</div><textarea class="form-input" id="fixTextInput" placeholder="Explain the fix...">${block.fixText || ''}</textarea></div><div class="section-divider"><div class="section-title">Link to Issue</div><div class="link-selector">${linkedIssue ? `<div class="link-selector-current"><span>🔗 ${linkedIssue.name}</span><button class="link-selector-btn" id="unlinkIssueBtn">Unlink</button></div>` : `<div class="link-selector-label">Connect to an issue</div><div class="link-selector-list" id="issueLinkList">${this.getIssueLinkListHtml()}</div>`}</div></div><div class="section-divider"><div class="section-title">Status</div><select class="form-select" id="statusSelect"><option value="">None</option>${STATUSES.map(s => `<option value="${s}" ${block.status === s ? 'selected' : ''}>${s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>`).join('')}</select></div>`;
+                }
+            } else if (this.mode === 'configure') {
+                // Configure mode: step type selection
+                html += `<div class="section-divider"><div class="section-title">Step Type</div><div class="type-grid" id="typeGrid">${Object.entries(STEP_TYPES).map(([key, type]) => `<div class="type-option ${block.stepType === key ? 'selected' : ''}" data-type="${key}"><div class="type-option-icon" style="background:${type.color}"><svg viewBox="0 0 24 24">${type.icon}</svg></div><div class="type-option-name">${type.name}</div></div>`).join('')}</div></div>`;
+            } else if (this.mode === 'detail') {
+                // Detail mode: technical specs
+                html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Preconditions</div><textarea class="form-input" id="preconditionsInput" placeholder="What must be true before this step?&#10;• Customer has billing identity&#10;• VAT number validated">${block.preconditions || ''}</textarea><div class="form-hint">Conditions that MUST be met before this step runs</div></div>`;
+                html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validation Rules</div><textarea class="form-input" id="validationInput" placeholder="What checks should happen?&#10;• Email format: name@domain.com&#10;• Amount > 0&#10;• Country in EU list">${block.validation || ''}</textarea><div class="form-hint">Exact rules to validate inputs/outputs</div></div>`;
+                html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>On Failure</div><input type="text" class="form-input" id="errorPathInput" value="${block.errorPath || ''}" placeholder="What happens when this fails? → Go to step X, Retry, Alert admin..." /><div class="form-hint">Where to go or what to do when this step fails</div></div>`;
+                html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>System Links</div><input type="text" class="form-input" id="systemLinkInput" value="${block.systemLink || ''}" placeholder="URL to screen, docs, or code..." /><div class="form-hint">Link to the actual screen, API endpoint, or documentation</div></div>`;
+            }
+            html += `<div class="section-divider"><button class="btn" id="deleteBlockBtn" style="width:100%;justify-content:center;color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete Step</button></div>`;
+            return html;
+        }
+
+        getIssueLinkListHtml() {
+            const issues = Array.from(this.current.blocks.values()).filter(b => b.issueType);
+            if (issues.length === 0) return '<div style="font-size:10px;color:var(--text-muted);padding:6px;">No issues in Current State</div>';
+            return issues.map(b => `<div class="link-selector-item" data-issue-id="${b.id}"><span style="color:${b.issueType === 'error' ? 'var(--red)' : 'var(--orange)'};">●</span> ${b.name}</div>`).join('');
+        }
+
+        getLinkedIssue(fixBlockId) { const link = this.issueFixLinks.find(l => l.fixId === fixBlockId); return link ? this.current.blocks.get(link.issueId) : null; }
+        getLinkedFix(issueBlockId) { const link = this.issueFixLinks.find(l => l.issueId === issueBlockId); return link ? this.proposed.blocks.get(link.fixId) : null; }
+
+        bindDetailsTabEvents(block, paneId) {
+            const content = document.getElementById('panelContent');
+            content.querySelector('#blockNameInput')?.addEventListener('input', e => { block.name = e.target.value; this.updateBlockElement(block, paneId); this.updateBlockList(); });
+            content.querySelector('#blockDescInput')?.addEventListener('input', e => { block.description = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelector('#deleteBlockBtn')?.addEventListener('click', () => this.deleteSelectedBlock());
+            content.querySelector('#ownerInput')?.addEventListener('input', e => { block.owner = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelector('#systemsInput')?.addEventListener('input', e => { block.systems = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelector('#timeInput')?.addEventListener('input', e => { block.timeEstimate = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelector('#prioritySelect')?.addEventListener('change', e => { block.priority = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelectorAll('[data-issue]').forEach(opt => opt.addEventListener('click', () => { block.issueType = block.issueType === opt.dataset.issue ? null : opt.dataset.issue; this.updateBlockElement(block, paneId); this.updateBlockList(); this.updateValidation(); this.renderPanelContent(); }));
+            content.querySelector('#issueTextInput')?.addEventListener('input', e => { block.issueText = e.target.value; if (e.target.value && !block.issueType) block.issueType = 'error'; this.updateBlockElement(block, paneId); });
+            content.querySelector('#clearIssueBtn')?.addEventListener('click', () => { block.issueType = null; block.issueText = ''; this.updateBlockElement(block, paneId); this.updateBlockList(); this.updateValidation(); this.renderPanelContent(); });
+            content.querySelectorAll('[data-change]').forEach(opt => opt.addEventListener('click', () => { block.changeType = block.changeType === opt.dataset.change ? null : opt.dataset.change; this.updateBlockElement(block, paneId); this.updateBlockList(); this.updateValidation(); this.renderPanelContent(); }));
+            content.querySelector('#fixTextInput')?.addEventListener('input', e => { block.fixText = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelector('#statusSelect')?.addEventListener('change', e => { block.status = e.target.value; this.updateBlockElement(block, paneId); });
+            content.querySelectorAll('.link-selector-item').forEach(item => item.addEventListener('click', () => { const issueId = item.dataset.issueId; this.issueFixLinks = this.issueFixLinks.filter(l => l.fixId !== block.id); this.issueFixLinks.push({ issueId, fixId: block.id }); this.updateBlockElement(block, paneId); this.renderPanelContent(); this.updateValidation(); }));
+            content.querySelector('#unlinkIssueBtn')?.addEventListener('click', () => { this.issueFixLinks = this.issueFixLinks.filter(l => l.fixId !== block.id); this.updateBlockElement(block, paneId); this.renderPanelContent(); this.updateValidation(); });
+            content.querySelectorAll('.type-option').forEach(opt => opt.addEventListener('click', () => { block.stepType = opt.dataset.type; block.config = block.config || {}; this.updateBlockElement(block, paneId); this.renderPanelContent(); }));
+            // Detail mode bindings
+            content.querySelector('#preconditionsInput')?.addEventListener('input', e => { block.preconditions = e.target.value; });
+            content.querySelector('#validationInput')?.addEventListener('input', e => { block.validation = e.target.value; });
+            content.querySelector('#errorPathInput')?.addEventListener('input', e => { block.errorPath = e.target.value; });
+            content.querySelector('#systemLinkInput')?.addEventListener('input', e => { block.systemLink = e.target.value; });
+        }
+
+        getCommentsTabHtml(block) {
+            const comments = block.comments || [];
+            return `<div class="comments-list">${comments.length === 0 ? '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:11px;">No comments yet</div>' : comments.map((c, i) => `<div class="comment-item"><div class="comment-header"><span class="comment-author">${c.author || 'User'}</span><span class="comment-date">${new Date(c.date).toLocaleString()}</span></div><div class="comment-text">${c.text}</div></div>`).join('')}</div><div class="comment-input-row"><input type="text" class="form-input" id="newCommentInput" placeholder="Add a comment..." /><button class="btn btn-primary" id="addCommentBtn" style="flex-shrink:0;">Add</button></div>`;
+        }
+
+        bindCommentsTabEvents(block, paneId) {
+            const content = document.getElementById('panelContent');
+            const input = content.querySelector('#newCommentInput');
+            const addBtn = content.querySelector('#addCommentBtn');
+            const addComment = () => { const text = input.value.trim(); if (!text) return; block.comments = block.comments || []; block.comments.push({ text, author: 'User', date: new Date().toISOString() }); input.value = ''; this.updateBlockElement(block, paneId); this.renderPanelContent(); };
+            addBtn?.addEventListener('click', addComment);
+            input?.addEventListener('keypress', e => { if (e.key === 'Enter') addComment(); });
+        }
+
+        getHistoryTabHtml() {
+            if (this.versionHistory.length === 0) return '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:11px;">No history yet. Save to create snapshots.</div>';
+            return `<div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;">Last ${this.versionHistory.length} saves</div>${this.versionHistory.slice().reverse().map((v, i) => `<div style="padding:8px;background:var(--bg-tertiary);border-radius:5px;margin-bottom:6px;"><div style="font-size:11px;font-weight:500;">${new Date(v.timestamp).toLocaleString()}</div><div style="font-size:10px;color:var(--text-muted);">${v.current.blocks.length} current, ${v.proposed.blocks.length} proposed</div></div>`).join('')}`;
+        }
+
+        addBlock(paneId) {
+            if (!this.currentFlowId) { this.showFlowModal(); return; }
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            const rect = els.canvasArea.getBoundingClientRect();
+            let x = (rect.width / 2 - pane.panX) / pane.zoom - 130;
+            let y = (rect.height / 2 - pane.panY) / pane.zoom - 50;
+            if (pane.blocks.size > 0) { const lastBlock = Array.from(pane.blocks.values()).pop(); x = lastBlock.x; y = lastBlock.y + 140; }
+            x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24;
+            const id = 'block_' + (++this.blockIdCounter);
+            const block = { id, name: 'New Step', description: '', x, y, outputs: 1, issueType: null, issueText: '', changeType: paneId === 'proposed' ? 'new' : null, fixText: '', status: paneId === 'proposed' ? 'todo' : null, owner: '', systems: '', timeEstimate: '', priority: '', stepType: null, config: {}, comments: [], preconditions: '', validation: '', errorPath: '', systemLink: '' };
+            pane.blocks.set(id, block);
+            this.renderBlock(block, paneId);
+            this.selectBlock(block, paneId);
+            this.updateInstructions();
+            this.updateBlockList();
+            this.updateMinimap();
+            setTimeout(() => { const input = document.getElementById('blockNameInput'); if (input) { input.focus(); input.select(); } }, 100);
+        }
+
+        renderBlock(block, paneId) {
+            const els = this.getPaneElements(paneId);
+            const el = document.createElement('div');
+            el.className = this.getBlockClasses(block, paneId);
+            el.id = block.id;
+            el.dataset.pane = paneId;
+            el.style.left = block.x + 'px';
+            el.style.top = block.y + 'px';
+            el.innerHTML = this.getBlockHtml(block, paneId);
+            this.bindBlockEvents(el, block, paneId);
+            els.blocksContainer.appendChild(el);
+        }
+
+        getBlockClasses(block, paneId) {
+            let classes = ['block'];
+            if (this.selectedBlock?.id === block.id && this.activePane === paneId) classes.push('selected');
+            if (paneId === 'current') { if (block.issueType === 'error') classes.push('issue-error'); else if (block.issueType === 'warning') classes.push('issue-warning'); }
+            else { if (block.changeType === 'fix' || block.fixText) classes.push('change-fix'); else if (block.changeType === 'new') classes.push('change-new'); else if (block.changeType === 'removed') classes.push('change-removed'); }
+            const hasLink = paneId === 'current' ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
+            if (hasLink) classes.push('linked');
+            return classes.join(' ');
+        }
+
+        getBlockHtml(block, paneId) {
+            const isCurrentPane = paneId === 'current';
+            const typeInfo = block.stepType ? STEP_TYPES[block.stepType] : null;
+            let badges = '';
+            let annotation = '';
+            if (isCurrentPane) { if (block.issueType === 'error') badges += '<span class="block-badge issue">Issue</span>'; else if (block.issueType === 'warning') badges += '<span class="block-badge warning">Warning</span>'; if (block.issueText) annotation = `<div class="block-annotation ${block.issueType || 'issue'}">${block.issueText}</div>`; }
+            else { if (block.changeType === 'fix' || block.fixText) badges += '<span class="block-badge fix">Fix</span>'; else if (block.changeType === 'new') badges += '<span class="block-badge new">New</span>'; else if (block.changeType === 'removed') badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>'; if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; }
+            const hasLink = isCurrentPane ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
+            if (hasLink) badges += '<span class="block-badge linked">🔗</span>';
+            let metaHtml = '';
+            if (block.owner || block.timeEstimate) { metaHtml = '<div class="block-meta">'; if (block.owner) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${block.owner}</span>`; if (block.timeEstimate) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${block.timeEstimate}</span>`; metaHtml += '</div>'; }
+            return `<div class="block-header"><div class="block-icon ${typeInfo ? 'typed' : ''}" style="${typeInfo ? `background:${typeInfo.color}` : ''}"><svg viewBox="0 0 24 24">${typeInfo ? typeInfo.icon : '<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>'}</svg></div><div class="block-title">${block.name || 'Untitled'}</div><div class="block-badges">${badges}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'No description'}</div>${annotation}${metaHtml}</div><div class="port-in" data-port="in"></div><div class="block-outputs">${Array(block.outputs || 1).fill(0).map((_, i) => `<div class="port-out" data-port="out" data-index="${i}"></div>`).join('')}</div><div class="add-output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+        }
+
+        bindBlockEvents(el, block, paneId) {
+            const pane = this.getPane(paneId);
+            el.addEventListener('mousedown', e => { if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return; e.stopPropagation(); this.isDragging = true; this.dragBlock = block; this.dragPane = paneId; const rect = el.getBoundingClientRect(); this.dragOffset = { x: (e.clientX - rect.left) / pane.zoom, y: (e.clientY - rect.top) / pane.zoom }; this.selectBlock(block, paneId); });
+            el.addEventListener('click', e => { e.stopPropagation(); this.selectBlock(block, paneId); });
+            el.querySelectorAll('.port-out').forEach(port => port.addEventListener('mousedown', e => { e.stopPropagation(); this.isConnecting = true; this.connectingFrom = block; this.connectingPane = paneId; this.connectingPortIndex = parseInt(port.dataset.index) || 0; }));
+            el.querySelector('.port-in')?.addEventListener('mouseup', e => { e.stopPropagation(); if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId); this.isConnecting = false; this.removeTempConnection(paneId); });
+            el.querySelector('.add-output')?.addEventListener('click', e => { e.stopPropagation(); block.outputs = (block.outputs || 1) + 1; this.updateBlockElement(block, paneId); this.updateConnections(paneId); });
+        }
+
+        updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
+        selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(block.id)?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
+        deleteSelectedBlock() { if (!this.selectedBlock) return; const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
+
+        createConnection(fromId, portIndex, toId, paneId) { const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId }); this.updateConnections(paneId); this.updateValidation(); }
+
+        updateConnections(paneId) {
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            els.connectionsSvg.innerHTML = '';
+            pane.connections.forEach(conn => {
+                const fromEl = document.getElementById(conn.from);
+                const toEl = document.getElementById(conn.to);
+                if (!fromEl || !toEl || fromEl.dataset.pane !== paneId) return;
+                const fromPort = fromEl.querySelector(`.port-out[data-index="${conn.portIndex}"]`) || fromEl.querySelector('.port-out');
+                const toPort = toEl.querySelector('.port-in');
+                if (!fromPort || !toPort) return;
+                const fromRect = fromPort.getBoundingClientRect();
+                const toRect = toPort.getBoundingClientRect();
+                const canvasRect = els.canvas.getBoundingClientRect();
+                const x1 = (fromRect.left + 5 - canvasRect.left) / pane.zoom;
+                const y1 = (fromRect.top + 5 - canvasRect.top) / pane.zoom;
+                const x2 = (toRect.left + 5 - canvasRect.left) / pane.zoom;
+                const y2 = (toRect.top + 5 - canvasRect.top) / pane.zoom;
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', `M${x1},${y1} C${x1 + Math.abs(x2-x1)*0.5},${y1} ${x2 - Math.abs(x2-x1)*0.5},${y2} ${x2},${y2}`);
+                path.classList.add('connection');
+                path.addEventListener('click', e => { e.stopPropagation(); if (confirm('Delete connection?')) { pane.connections = pane.connections.filter(c => c.id !== conn.id); this.updateConnections(paneId); this.updateValidation(); } });
+                els.connectionsSvg.appendChild(path);
+            });
+        }
+
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 5 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 5 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1 + Math.abs(x2-x1)*0.4},${y1} ${x2 - Math.abs(x2-x1)*0.4},${y2} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
+
+        onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
+        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.dragBlock.id); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
+        onCanvasMouseUp(e, paneId) { const els = this.getPaneElements(paneId); this.isDragging = false; this.dragBlock = null; if (this.panningPane === paneId) { this.isPanning = false; els.canvasArea.style.cursor = ''; } if (this.isConnecting && this.connectingPane === paneId) { this.isConnecting = false; this.connectingFrom = null; this.removeTempConnection(paneId); } }
+        onCanvasWheel(e, paneId) { e.preventDefault(); const pane = this.getPane(paneId); this.setZoom(pane.zoom + (e.deltaY > 0 ? -0.08 : 0.08), paneId); }
+        setZoom(newZoom, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); pane.zoom = Math.max(0.2, Math.min(2, newZoom)); this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
+        applyTransform(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); els.canvas.style.transform = `translate(${pane.panX}px, ${pane.panY}px) scale(${pane.zoom})`; }
+        zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
+
+        updateBlockList() {
+            const list = document.getElementById('blockList');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            let html = '';
+            const currentBlocks = Array.from(this.current.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm));
+            if (currentBlocks.length) { html += '<div class="block-list-pane-label">Current</div>'; html += currentBlocks.map(b => this.getBlockListItemHtml(b, 'current')).join(''); }
+            const proposedBlocks = Array.from(this.proposed.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm));
+            if (proposedBlocks.length) { html += '<div class="block-list-pane-label">Proposed</div>'; html += proposedBlocks.map(b => this.getBlockListItemHtml(b, 'proposed')).join(''); }
+            if (!html) html = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:10px;">No steps found</div>';
+            list.innerHTML = html;
+            list.querySelectorAll('.block-list-item').forEach(item => item.addEventListener('click', () => { const paneId = item.dataset.pane; const block = this.getPane(paneId).blocks.get(item.dataset.id); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } }));
+        }
+
+        getBlockListItemHtml(block, paneId) {
+            let itemClass = 'block-list-item';
+            if (this.selectedBlock?.id === block.id && this.activePane === paneId) itemClass += ' selected';
+            if (block.issueType === 'error' || block.issueType === 'warning') itemClass += ' has-issue';
+            else if (block.changeType === 'fix' || block.fixText) itemClass += ' has-fix';
+            return `<div class="${itemClass}" data-id="${block.id}" data-pane="${paneId}"><div class="block-list-item-name">${block.name}</div><div class="block-list-item-meta">${block.owner ? block.owner : ''}${block.stepType ? (block.owner ? ' • ' : '') + STEP_TYPES[block.stepType]?.name : ''}</div></div>`;
+        }
+
+        filterBlocks(searchTerm) { this.updateBlockList(); }
+        panToBlock(block, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvasArea.getBoundingClientRect(); pane.panX = rect.width / 2 - (block.x + 130) * pane.zoom; pane.panY = rect.height / 2 - (block.y + 60) * pane.zoom; this.applyTransform(paneId); this.updateMinimap(); }
+
+        updateMinimap() {
+            const minimap = document.getElementById('minimap');
+            const allBlocks = [...Array.from(this.current.blocks.values()), ...Array.from(this.proposed.blocks.values())];
+            if (allBlocks.length === 0) { minimap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:9px;">No blocks</div>'; return; }
+            const minX = Math.min(...allBlocks.map(b => b.x)); const minY = Math.min(...allBlocks.map(b => b.y)); const maxX = Math.max(...allBlocks.map(b => b.x + 260)); const maxY = Math.max(...allBlocks.map(b => b.y + 120));
+            const contentW = maxX - minX + 80; const contentH = maxY - minY + 80;
+            const scale = Math.min(minimap.offsetWidth / contentW, minimap.offsetHeight / contentH) * 0.9;
+            let html = '';
+            allBlocks.forEach(block => { const x = (block.x - minX + 40) * scale; const y = (block.y - minY + 40) * scale; const w = 260 * scale; const h = 30 * scale; let cls = 'minimap-block'; if (block.issueType) cls += ' issue'; else if (block.changeType === 'fix' || block.fixText) cls += ' fix'; html += `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;"></div>`; });
+            minimap.innerHTML = html;
+        }
+
+        updateValidation() {
+            const list = document.getElementById('validationList');
+            const results = this.runValidation();
+            if (results.length === 0) { list.innerHTML = '<div class="validation-item success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="validation-item-text">All checks passed</span></div>'; return; }
+            list.innerHTML = results.slice(0, 4).map(r => `<div class="validation-item ${r.type}" data-block-id="${r.blockId || ''}" data-pane="${r.pane || ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${r.type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}</svg><span class="validation-item-text">${r.message}</span></div>`).join('');
+            list.querySelectorAll('.validation-item').forEach(item => item.addEventListener('click', () => { const blockId = item.dataset.blockId; const paneId = item.dataset.pane; if (blockId && paneId) { const block = this.getPane(paneId).blocks.get(blockId); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } } }));
+        }
+
+        runValidation() {
+            const results = [];
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            currentBlocks.filter(b => b.issueType).forEach(block => { const hasLink = this.issueFixLinks.some(l => l.issueId === block.id); if (!hasLink) results.push({ type: 'warning', message: `"${block.name}" has no linked fix`, blockId: block.id, pane: 'current' }); });
+            ['current', 'proposed'].forEach(paneId => { const pane = this.getPane(paneId); pane.blocks.forEach(block => { const hasIncoming = pane.connections.some(c => c.to === block.id); const hasOutgoing = pane.connections.some(c => c.from === block.id); if (!hasIncoming && !hasOutgoing && pane.blocks.size > 1) results.push({ type: 'warning', message: `"${block.name}" not connected`, blockId: block.id, pane: paneId }); }); });
+            proposedBlocks.filter(b => b.changeType === 'fix' && !b.fixText).forEach(block => results.push({ type: 'warning', message: `"${block.name}" fix needs description`, blockId: block.id, pane: 'proposed' }));
+            const todoCount = proposedBlocks.filter(b => b.status === 'todo').length;
+            if (todoCount > 0) results.push({ type: 'warning', message: `${todoCount} fix(es) still To Do` });
+            return results;
+        }
+
+        showValidationModal() {
+            const results = this.runValidation();
+            const body = document.getElementById('validationModalBody');
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            const issues = currentBlocks.filter(b => b.issueType).length;
+            const linkedFixes = this.issueFixLinks.length;
+            const issueList = Array.from(this.current.blocks.values()).filter(b => b.issueType);
+            body.innerHTML = `<div class="summary-grid" style="margin-bottom:16px;"><div class="summary-stat"><div class="summary-stat-value">${currentBlocks.length}</div><div class="summary-stat-label">Current</div></div><div class="summary-stat"><div class="summary-stat-value">${proposedBlocks.length}</div><div class="summary-stat-label">Proposed</div></div><div class="summary-stat"><div class="summary-stat-value issues">${issues}</div><div class="summary-stat-label">Issues</div></div><div class="summary-stat"><div class="summary-stat-value fixes">${linkedFixes}</div><div class="summary-stat-label">Linked</div></div></div><div class="section-title">Validation Results</div>${results.length === 0 ? '<div style="text-align:center;padding:20px;"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2" width="36" height="36" style="margin-bottom:8px;"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><div style="font-size:14px;font-weight:600;color:var(--green);">All Checks Passed!</div></div>' : `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;">${results.map(r => `<div class="validation-item ${r.type}" style="cursor:default;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${r.type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}</svg><span class="validation-item-text">${r.message}</span></div>`).join('')}</div>`}<div class="section-divider"><div class="section-title">Issue ↔ Fix Traceability</div>${issueList.length === 0 ? '<div style="font-size:11px;color:var(--text-muted);">No issues marked</div>' : issueList.map(issue => { const link = this.issueFixLinks.find(l => l.issueId === issue.id); const fix = link ? this.proposed.blocks.get(link.fixId) : null; return `<div style="display:flex;align-items:center;gap:10px;padding:8px;background:var(--bg-tertiary);border-radius:5px;margin-bottom:6px;"><div style="flex:1;"><div style="font-size:11px;font-weight:500;color:${issue.issueType === 'error' ? 'var(--red)' : 'var(--orange)'};">⚠️ ${issue.name}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${issue.issueText || 'No description'}</div></div><div style="color:var(--text-muted);">→</div><div style="flex:1;">${fix ? `<div style="font-size:11px;font-weight:500;color:var(--green);">🔧 ${fix.name}</div><div style="font-size:10px;color:var(--text-muted);margin-top:2px;">${fix.fixText || 'No description'}</div>` : '<div style="font-size:11px;color:var(--text-muted);font-style:italic;">No fix linked</div>'}</div></div>`; }).join('')}</div>`;
+            this.showModal('validationModal');
+        }
+
+        showExportModal() { if (!this.currentFlowId) { this.toast('No analysis to export', 'error'); return; } this.showModal('exportModal'); }
+
+        doExport(type) {
+            const flow = this.flows[this.currentFlowId];
+            this.hideModal('exportModal');
+            if (type === 'json') this.exportJSON();
+            else if (type === 'report') this.exportReport();
+            else if (type === 'summary') this.exportSummary();
+            else if (type === 'print') window.print();
+        }
+
+        exportJSON() {
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            const data = { ...flow, current: { blocks: Array.from(this.current.blocks.values()), connections: this.current.connections }, proposed: { blocks: Array.from(this.proposed.blocks.values()), connections: this.proposed.connections }, issueFixLinks: this.issueFixLinks, exportedAt: new Date().toISOString() };
+            // Remove drive-specific fields from export
+            delete data.driveFileId;
+            delete data.isDrive;
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const now = new Date();
+            const timestamp = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (flow.name || 'analysis').replace(/\s+/g, '_') + '_' + timestamp + '.json'; a.click();
+            this.toast('JSON exported', 'success');
+        }
+
+        exportReport() {
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            const issues = currentBlocks.filter(b => b.issueType);
+            const html = `<!DOCTYPE html><html><head><title>${flow.name} - Report</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:800px;margin:0 auto;padding:30px;color:#1a1a2e;}h1{border-bottom:3px solid #3b82f6;padding-bottom:10px;}h2{color:#3b82f6;margin-top:24px;}.summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}.stat{background:#f8fafc;padding:16px;border-radius:6px;text-align:center;}.stat-value{font-size:28px;font-weight:700;}.stat-value.issues{color:#ef4444;}.stat-value.warnings{color:#f97316;}.stat-value.fixes{color:#22c55e;}.stat-label{font-size:11px;color:#64748b;text-transform:uppercase;}.card{background:#fef2f2;border-left:3px solid #ef4444;padding:12px;margin:8px 0;border-radius:0 6px 6px 0;}.card.fix{background:#f0fdf4;border-left-color:#22c55e;}.card-title{font-weight:600;margin-bottom:3px;}.card-desc{color:#64748b;font-size:13px;}.trace{display:flex;align-items:center;gap:16px;padding:10px;background:#f8fafc;border-radius:6px;margin:6px 0;}.meta{font-size:11px;color:#94a3b8;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:12px;}</style></head><body><h1>${flow.name}</h1><p>${flow.description || 'Process analysis report'}</p><div class="summary"><div class="stat"><div class="stat-value">${currentBlocks.length}</div><div class="stat-label">Current</div></div><div class="stat"><div class="stat-value issues">${issues.filter(b=>b.issueType==='error').length}</div><div class="stat-label">Issues</div></div><div class="stat"><div class="stat-value warnings">${issues.filter(b=>b.issueType==='warning').length}</div><div class="stat-label">Warnings</div></div><div class="stat"><div class="stat-value fixes">${proposedBlocks.filter(b=>b.changeType==='fix'||b.fixText).length}</div><div class="stat-label">Fixes</div></div></div><h2>Issues Identified</h2>${issues.map(b=>`<div class="card"><div class="card-title">${b.name}</div><div class="card-desc">${b.issueText||b.description||'No description'}</div></div>`).join('')||'<p>No issues</p>'}<h2>Proposed Fixes</h2>${proposedBlocks.filter(b=>b.changeType==='fix'||b.fixText).map(b=>`<div class="card fix"><div class="card-title">${b.name}</div><div class="card-desc">${b.fixText||b.description||'No description'}</div></div>`).join('')||'<p>No fixes</p>'}<h2>Traceability</h2>${issues.map(issue=>{const link=this.issueFixLinks.find(l=>l.issueId===issue.id);const fix=link?this.proposed.blocks.get(link.fixId):null;return`<div class="trace"><div style="flex:1;"><strong>Issue:</strong> ${issue.name}</div><div>→</div><div style="flex:1;"><strong>Fix:</strong> ${fix?fix.name:'Not linked'}</div></div>`;}).join('')}<div class="meta">Generated ${new Date().toLocaleString()} | FlowBuilder Pro</div></body></html>`;
+            const blob = new Blob([html], { type: 'text/html' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (flow.name || 'report').replace(/\s+/g, '_') + '_report.html'; a.click();
+            this.toast('Report exported', 'success');
+        }
+
+        exportSummary() {
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            const issues = currentBlocks.filter(b => b.issueType);
+            const fixes = proposedBlocks.filter(b => b.changeType === 'fix' || b.fixText);
+            const html = `<!DOCTYPE html><html><head><title>${flow.name} - Summary</title><style>body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:30px;color:#1a1a2e;}h1{font-size:24px;margin-bottom:6px;}.subtitle{color:#64748b;margin-bottom:24px;}.highlight{background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;padding:20px;border-radius:10px;margin:20px 0;}.highlight h2{margin:0 0 12px 0;font-size:16px;}.highlight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}.highlight-stat{text-align:center;}.highlight-value{font-size:32px;font-weight:700;}.highlight-label{font-size:11px;opacity:0.8;}.section{margin:24px 0;}.section h3{font-size:14px;color:#3b82f6;margin-bottom:10px;}ul{padding-left:18px;}li{margin:6px 0;}.footer{margin-top:30px;padding-top:16px;border-top:1px solid #e2e8f0;font-size:11px;color:#94a3b8;}</style></head><body><h1>${flow.name}</h1><p class="subtitle">Executive Summary</p><div class="highlight"><h2>Key Metrics</h2><div class="highlight-grid"><div class="highlight-stat"><div class="highlight-value">${issues.length}</div><div class="highlight-label">Issues Found</div></div><div class="highlight-stat"><div class="highlight-value">${fixes.length}</div><div class="highlight-label">Fixes Proposed</div></div></div></div><div class="section"><h3>Overview</h3><p>${flow.description||'This analysis documents the current process and proposes improvements.'}</p><p>Current: <strong>${currentBlocks.length} steps</strong>. Issues: <strong>${issues.length}</strong>.</p></div><div class="section"><h3>Top Issues</h3><ul>${issues.slice(0,5).map(b=>`<li><strong>${b.name}</strong>: ${b.issueText||'Issue identified'}</li>`).join('')||'<li>No issues</li>'}</ul></div><div class="section"><h3>Recommended Actions</h3><ul>${fixes.slice(0,5).map(b=>`<li><strong>${b.name}</strong>: ${b.fixText||'Implement fix'}</li>`).join('')||'<li>No actions</li>'}</ul></div><div class="footer">Generated ${new Date().toLocaleString()} | FlowBuilder Pro</div></body></html>`;
+            const blob = new Blob([html], { type: 'text/html' });
+            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = (flow.name || 'summary').replace(/\s+/g, '_') + '_summary.html'; a.click();
+            this.toast('Summary exported', 'success');
+        }
+
+        showModal(id) { document.getElementById(id).classList.add('show'); }
+        hideModal(id) { document.getElementById(id).classList.remove('show'); }
+    }
+
+    new FlowBuilder();
+    </script>
+</body>
+</html>
