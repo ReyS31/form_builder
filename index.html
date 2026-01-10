@@ -714,9 +714,23 @@
         async ensureDriveFolder() {
             if (this.driveFolderId) return this.driveFolderId;
             
-            // Search for existing folder
+            // First, search for shared folders (from other team members)
+            const sharedResp = await gapi.client.drive.files.list({
+                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false and sharedWithMe=true`,
+                fields: 'files(id, name, owners)',
+                spaces: 'drive'
+            });
+            
+            if (sharedResp.result.files && sharedResp.result.files.length > 0) {
+                // Use the shared folder
+                this.driveFolderId = sharedResp.result.files[0].id;
+                console.log('Using shared FlowBuilder folder');
+                return this.driveFolderId;
+            }
+            
+            // If no shared folder, search for own folder
             const searchResp = await gapi.client.drive.files.list({
-                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'me' in owners`,
                 fields: 'files(id, name)',
                 spaces: 'drive'
             });
@@ -743,7 +757,9 @@
                     q: `'${this.driveFolderId}' in parents and mimeType='application/json' and trashed=false`,
                     fields: 'files(id, name, modifiedTime)',
                     orderBy: 'modifiedTime desc',
-                    spaces: 'drive'
+                    spaces: 'drive',
+                    supportsAllDrives: true,
+                    includeItemsFromAllDrives: true
                 });
                 
                 this.driveFlows = {};
@@ -751,7 +767,8 @@
                     // Load file content
                     const contentResp = await gapi.client.drive.files.get({
                         fileId: file.id,
-                        alt: 'media'
+                        alt: 'media',
+                        supportsAllDrives: true
                     });
                     try {
                         const flowData = typeof contentResp.body === 'string' ? JSON.parse(contentResp.body) : contentResp.body;
@@ -782,7 +799,7 @@
             try {
                 if (flow.driveFileId) {
                     // Update existing file
-                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${flow.driveFileId}?uploadType=media`, {
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${flow.driveFileId}?uploadType=media&supportsAllDrives=true`, {
                         method: 'PATCH',
                         headers: {
                             'Authorization': 'Bearer ' + gapi.client.getToken().access_token,
@@ -802,7 +819,7 @@
                     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
                     form.append('file', blob);
                     
-                    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+                    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + gapi.client.getToken().access_token },
                         body: form
@@ -828,7 +845,7 @@
             if (!flow || !flow.driveFileId) return;
             
             try {
-                await gapi.client.drive.files.delete({ fileId: flow.driveFileId });
+                await gapi.client.drive.files.delete({ fileId: flow.driveFileId, supportsAllDrives: true });
                 delete this.driveFlows[flowId];
                 this.toast('Deleted from Drive', 'success');
             } catch (e) {
