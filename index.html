@@ -316,6 +316,11 @@
         .import-info-row { display: flex; justify-content: space-between; font-size: 11px; margin-bottom: 4px; }
         .import-info-row:last-child { margin-bottom: 0; }
         .import-info-label { color: var(--text-muted); }
+        .flow-picker-list { max-height: 300px; overflow-y: auto; }
+        .flow-picker-item { padding: 12px; background: var(--bg-tertiary); border-radius: 6px; margin-bottom: 8px; cursor: pointer; transition: all 0.15s; }
+        .flow-picker-item:hover { background: var(--bg-elevated); transform: translateX(4px); }
+        .flow-picker-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+        .flow-picker-meta { font-size: 11px; color: var(--text-muted); }
         .btn-merge { background: var(--purple); border-color: var(--purple); }
         .btn-merge:hover { background: #9333ea; }
         
@@ -1134,7 +1139,24 @@
                     if (isMarkdown) {
                         data = this.parseMarkdownFlow(content, file.name);
                     } else {
-                        data = JSON.parse(content);
+                        const parsed = JSON.parse(content);
+                        
+                        // Check if it's an array of flows
+                        if (Array.isArray(parsed)) {
+                            if (parsed.length === 0) {
+                                this.toast('File contains no flows', 'error');
+                                return;
+                            }
+                            // Show flow picker if multiple flows
+                            if (parsed.length > 1) {
+                                this.showFlowPickerModal(parsed, file.name);
+                                return;
+                            }
+                            // Single flow in array
+                            data = parsed[0];
+                        } else {
+                            data = parsed;
+                        }
                     }
                     
                     if (!data || (!data.current?.blocks?.length && !data.proposed?.blocks?.length)) {
@@ -1151,6 +1173,83 @@
             };
             reader.readAsText(file);
             e.target.value = '';
+        }
+        
+        showFlowPickerModal(flows, filename) {
+            const body = document.getElementById('importModalBody');
+            const footer = document.getElementById('importModalFooter');
+            
+            body.innerHTML = `
+                <div class="import-info">
+                    <div class="import-info-row"><span class="import-info-label">File:</span><span>${filename}</span></div>
+                    <div class="import-info-row"><span class="import-info-label">Contains:</span><span>${flows.length} flows</span></div>
+                </div>
+                <div class="section-divider">
+                    <div class="section-title">Select a flow to import</div>
+                </div>
+                <div class="flow-picker-list">
+                    ${flows.map((flow, idx) => `
+                        <div class="flow-picker-item" data-index="${idx}">
+                            <div class="flow-picker-name">${flow.name || 'Untitled Flow ' + (idx + 1)}</div>
+                            <div class="flow-picker-meta">
+                                ${(flow.current?.blocks?.length || 0)} current steps, 
+                                ${(flow.proposed?.blocks?.length || 0)} proposed steps
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            footer.innerHTML = `
+                <button class="btn" id="importAllFlowsBtn">Import All (${flows.length})</button>
+                <button class="btn" id="cancelFlowPickerBtn">Cancel</button>
+            `;
+            
+            // Bind events
+            body.querySelectorAll('.flow-picker-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const idx = parseInt(item.dataset.index);
+                    this.pendingImport = flows[idx];
+                    this.showImportDiffModal(flows[idx], filename);
+                });
+            });
+            
+            document.getElementById('importAllFlowsBtn').addEventListener('click', async () => {
+                this.hideModal('importModal');
+                let imported = 0;
+                for (const flow of flows) {
+                    if (flow.current?.blocks?.length || flow.proposed?.blocks?.length) {
+                        await this.importFlowDirect(flow);
+                        imported++;
+                    }
+                }
+                this.toast(`Imported ${imported} flows`, 'success');
+                this.renderFlowList();
+            });
+            
+            document.getElementById('cancelFlowPickerBtn').addEventListener('click', () => {
+                this.hideModal('importModal');
+            });
+            
+            this.showModal('importModal');
+        }
+        
+        async importFlowDirect(data) {
+            const id = 'flow_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            const newFlow = {
+                id,
+                name: data.name || 'Imported Flow',
+                description: data.description || '',
+                current: { blocks: data.current?.blocks || [], connections: data.current?.connections || [] },
+                proposed: { blocks: data.proposed?.blocks || [], connections: data.proposed?.connections || [] },
+                issueFixLinks: data.issueFixLinks || [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            this.driveFlows[id] = newFlow;
+            await this.saveToDrive(newFlow);
+            return id;
         }
         
         parseMarkdownFlow(content, filename) {
@@ -1562,17 +1661,20 @@
                 this.updateMinimap();
                 this.updateValidation();
                 this.updateInstructions();
+                this.saveCurrentFlow(); // Save merged changes to Drive
                 this.hideModal('importModal');
                 this.toast(`Merged: ${added.length} added, ${changed.length} updated`, 'success');
                 
             } else {
-                // Replace: create new flow or replace current
+                // Replace: create new flow in Drive
                 const id = 'flow_' + Date.now();
                 data.id = id;
-                data.name = data.name + ' (imported)';
-                this.flows[id] = data;
-                this.saveFlows();
-                this.loadFlow(id);
+                data.name = (data.name || 'Imported Flow') + ' (imported)';
+                data.createdAt = data.createdAt || new Date().toISOString();
+                data.updatedAt = new Date().toISOString();
+                this.driveFlows[id] = data;
+                this.saveToDrive(data);
+                this.loadFlow(id, true);
                 this.hideModal('importModal');
                 this.toast('Flow imported', 'success');
             }
