@@ -595,7 +595,7 @@
             // Init Google Identity Services
             this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.file',
+                scope: 'https://www.googleapis.com/auth/drive',
                 callback: (response) => {
                     if (response.error) {
                         // Auth failed or denied
@@ -617,6 +617,14 @@
                 }
             });
             this.gisInited = true;
+            
+            // Clear old tokens - scope changed to full drive access
+            const tokenVersion = localStorage.getItem('fb_token_version');
+            if (tokenVersion !== '2') {
+                localStorage.removeItem('fb_google_token');
+                localStorage.removeItem('fb_google_user');
+                localStorage.setItem('fb_token_version', '2');
+            }
             
             // Check for existing token - auto login
             const savedToken = localStorage.getItem('fb_google_token');
@@ -712,41 +720,70 @@
         }
         
         async ensureDriveFolder() {
+            // Return cached ID if we already have it
             if (this.driveFolderId) return this.driveFolderId;
-            
-            // First, search for shared folders (from other team members)
-            const sharedResp = await gapi.client.drive.files.list({
-                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false and sharedWithMe=true`,
-                fields: 'files(id, name, owners)',
-                spaces: 'drive'
-            });
-            
-            if (sharedResp.result.files && sharedResp.result.files.length > 0) {
-                // Use the shared folder
-                this.driveFolderId = sharedResp.result.files[0].id;
-                console.log('Using shared FlowBuilder folder');
-                return this.driveFolderId;
-            }
-            
-            // If no shared folder, search for own folder
-            const searchResp = await gapi.client.drive.files.list({
-                q: `name='${DRIVE_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false and 'me' in owners`,
-                fields: 'files(id, name)',
-                spaces: 'drive'
-            });
-            
-            if (searchResp.result.files && searchResp.result.files.length > 0) {
-                this.driveFolderId = searchResp.result.files[0].id;
-            } else {
-                // Create folder
-                const createResp = await gapi.client.drive.files.create({
-                    resource: { name: DRIVE_FOLDER_NAME, mimeType: 'application/vnd.google-apps.folder' },
-                    fields: 'id'
+
+            try {
+                // 1. Unified Search: Find ANY folder with this name (Owned OR Shared)
+                // We request 'capabilities' to check if we can actually write to it.
+                const listResp = await gapi.client.drive.files.list({
+                    q: `name = '${DRIVE_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
+                    fields: 'files(id, name, owners, sharedWithMe, capabilities(canEdit, canAddChildren))',
+                    spaces: 'drive',
+                    // critical for finding folders inside Team/Shared Drives
+                    includeItemsFromAllDrives: true,
+                    supportsAllDrives: true
                 });
-                this.driveFolderId = createResp.result.id;
+
+                const folders = listResp.result.files;
+                let targetFolder = null;
+
+                if (folders && folders.length > 0) {
+                    // 2. Filter: Only consider folders where we have EDIT/WRITE permission
+                    // 'canAddChildren' is the specific permission needed to upload files into a folder
+                    const writableFolders = folders.filter(f => 
+                        f.capabilities.canEdit || f.capabilities.canAddChildren
+                    );
+
+                    if (writableFolders.length > 0) {
+                        // 3. Priority: Prefer a SHARED folder if one exists (for team collaboration)
+                        const sharedWritable = writableFolders.find(f => f.sharedWithMe);
+                        
+                        if (sharedWritable) {
+                            targetFolder = sharedWritable;
+                            console.log('Using SHARED FlowBuilder folder (Edit access verified)');
+                        } else {
+                            targetFolder = writableFolders[0];
+                            console.log('Using OWNED FlowBuilder folder');
+                        }
+                    } else {
+                        console.warn(`Found '${DRIVE_FOLDER_NAME}', but you only have Read-Only access. Ignoring and creating a new one...`);
+                    }
+                }
+
+                if (targetFolder) {
+                    this.driveFolderId = targetFolder.id;
+                } else {
+                    // 4. Fallback: Create folder if no writable one exists
+                    console.log('No writable folder found. Creating new one...');
+                    const createResp = await gapi.client.drive.files.create({
+                        resource: { 
+                            name: DRIVE_FOLDER_NAME, 
+                            mimeType: 'application/vnd.google-apps.folder' 
+                        },
+                        fields: 'id',
+                        supportsAllDrives: true
+                    });
+                    this.driveFolderId = createResp.result.id;
+                }
+                
+                return this.driveFolderId;
+
+            } catch (err) {
+                console.error('Error ensuring Drive folder:', err);
+                // Throwing error allows the caller to handle the UI failure state
+                throw err;
             }
-            
-            return this.driveFolderId;
         }
         
         async loadDriveFlows() {
