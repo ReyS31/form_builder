@@ -719,7 +719,7 @@
             }
         }
         
-        async ensureDriveFolder() {
+          async ensureDriveFolder() {
             // Return cached ID if we already have it
             if (this.driveFolderId) return this.driveFolderId;
 
@@ -728,7 +728,7 @@
                 // We request 'capabilities' to check if we can actually write to it.
                 const listResp = await gapi.client.drive.files.list({
                     q: `name = '${DRIVE_FOLDER_NAME}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false`,
-                    fields: 'files(id, name, owners, sharedWithMe, capabilities(canEdit, canAddChildren))',
+                    fields: 'files(id, name, owners, shared, capabilities(canEdit, canAddChildren))',
                     spaces: 'drive',
                     // critical for finding folders inside Team/Shared Drives
                     includeItemsFromAllDrives: true,
@@ -747,7 +747,7 @@
 
                     if (writableFolders.length > 0) {
                         // 3. Priority: Prefer a SHARED folder if one exists (for team collaboration)
-                        const sharedWritable = writableFolders.find(f => f.sharedWithMe);
+                        const sharedWritable = writableFolders.find(f => f.shared);
                         
                         if (sharedWritable) {
                             targetFolder = sharedWritable;
