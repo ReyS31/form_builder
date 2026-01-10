@@ -141,12 +141,13 @@
         .block-meta-item svg { width: 9px; height: 9px; }
 
         .port-in, .port-out { position: absolute; width: 10px; height: 10px; background: var(--bg-secondary); border: 2px solid var(--border-default); border-radius: 50%; cursor: crosshair; z-index: 10; }
-        .port-in { left: -5px; top: 50%; transform: translateY(-50%); }
-        .port-in:hover, .port-out:hover { background: var(--accent); border-color: var(--accent); transform: translateY(-50%) scale(1.3); }
-        .block-outputs { position: absolute; right: -5px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; }
+        .port-in { left: 50%; top: -5px; transform: translateX(-50%); }
+        .port-in:hover { background: var(--accent); border-color: var(--accent); transform: translateX(-50%) scale(1.3); }
+        .port-out:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.3); }
+        .block-outputs { position: absolute; bottom: -5px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; }
         .block-outputs .port-out { position: relative; right: auto; top: auto; transform: none; }
         .block-outputs .port-out:hover { transform: scale(1.3); }
-        .add-output { position: absolute; right: -5px; bottom: 8px; width: 10px; height: 10px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .add-output { position: absolute; bottom: -5px; right: 20px; width: 10px; height: 10px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .add-output:hover { border-color: var(--accent); border-style: solid; background: var(--accent); }
         .add-output svg { width: 6px; height: 6px; color: var(--text-muted); }
         .add-output:hover svg { color: white; }
@@ -1622,14 +1623,14 @@
                 const x2 = (toRect.left + 5 - canvasRect.left) / pane.zoom;
                 const y2 = (toRect.top + 5 - canvasRect.top) / pane.zoom;
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-                path.setAttribute('d', `M${x1},${y1} C${x1 + Math.abs(x2-x1)*0.5},${y1} ${x2 - Math.abs(x2-x1)*0.5},${y2} ${x2},${y2}`);
+                path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.5} ${x2},${y2 - Math.abs(y2-y1)*0.5} ${x2},${y2}`);
                 path.classList.add('connection');
                 path.addEventListener('click', e => { e.stopPropagation(); if (confirm('Delete connection?')) { pane.connections = pane.connections.filter(c => c.id !== conn.id); this.updateConnections(paneId); this.updateValidation(); } });
                 els.connectionsSvg.appendChild(path);
             });
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 5 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 5 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1 + Math.abs(x2-x1)*0.4},${y1} ${x2 - Math.abs(x2-x1)*0.4},${y2} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 5 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 5 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
