@@ -102,6 +102,17 @@
         
         .connection { fill: none; stroke: var(--border-default); stroke-width: 2; stroke-linecap: round; pointer-events: stroke; cursor: pointer; }
         .connection:hover { stroke: var(--accent); stroke-width: 3; }
+        .connection-label { font-size: 10px; fill: var(--text-secondary); pointer-events: all; cursor: pointer; user-select: none; }
+        .connection-label:hover { fill: var(--accent); }
+        .connection-label-bg { fill: var(--bg-primary); }
+        .connection-arrow { fill: var(--border-default); }
+        .connection:hover + .connection-arrow, .connection-group:hover .connection-arrow { fill: var(--accent); }
+        .connection-group:hover .connection { stroke: var(--accent); stroke-width: 3; }
+        .connection-group:hover .connection-label { fill: var(--accent); }
+        .port-label { position: absolute; font-size: 8px; color: var(--text-muted); white-space: nowrap; pointer-events: none; }
+        .port-label-out { bottom: -18px; left: 50%; transform: translateX(-50%); }
+        .port-label-in { top: -18px; left: 50%; transform: translateX(-50%); }
+        .connection:hover { stroke: var(--accent); stroke-width: 3; }
         .temp-connection { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; fill: none; opacity: 0.7; }
 
         .block { position: absolute; width: 260px; background: var(--bg-secondary); border: 2px solid var(--border-subtle); border-radius: 10px; cursor: move; user-select: none; z-index: 10; }
@@ -1602,12 +1613,18 @@
         selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(block.id)?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
         deleteSelectedBlock() { if (!this.selectedBlock) return; const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
 
-        createConnection(fromId, portIndex, toId, paneId) { const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId }); this.updateConnections(paneId); this.updateValidation(); }
+        createConnection(fromId, portIndex, toId, paneId) { const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId, label: '' }); this.updateConnections(paneId); this.updateValidation(); }
 
         updateConnections(paneId) {
             const pane = this.getPane(paneId);
             const els = this.getPaneElements(paneId);
             els.connectionsSvg.innerHTML = '';
+            
+            // Add arrow marker definition
+            const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+            defs.innerHTML = `<marker id="arrowhead-${paneId}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="connection-arrow"/></marker>`;
+            els.connectionsSvg.appendChild(defs);
+            
             pane.connections.forEach(conn => {
                 const fromEl = document.getElementById(conn.from);
                 const toEl = document.getElementById(conn.to);
@@ -1622,11 +1639,67 @@
                 const y1 = (fromRect.top + 5 - canvasRect.top) / pane.zoom;
                 const x2 = (toRect.left + 5 - canvasRect.left) / pane.zoom;
                 const y2 = (toRect.top + 5 - canvasRect.top) / pane.zoom;
+                
+                // Create group for connection elements
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.classList.add('connection-group');
+                
+                // Path
                 const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.5} ${x2},${y2 - Math.abs(y2-y1)*0.5} ${x2},${y2}`);
                 path.classList.add('connection');
-                path.addEventListener('click', e => { e.stopPropagation(); if (confirm('Delete connection?')) { pane.connections = pane.connections.filter(c => c.id !== conn.id); this.updateConnections(paneId); this.updateValidation(); } });
-                els.connectionsSvg.appendChild(path);
+                path.setAttribute('marker-end', `url(#arrowhead-${paneId})`);
+                group.appendChild(path);
+                
+                // Label
+                const midX = (x1 + x2) / 2;
+                const midY = (y1 + y2) / 2;
+                const labelText = conn.label || '';
+                
+                // Label background
+                if (labelText) {
+                    const bg = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    const textWidth = labelText.length * 6 + 8;
+                    bg.setAttribute('x', midX - textWidth/2);
+                    bg.setAttribute('y', midY - 8);
+                    bg.setAttribute('width', textWidth);
+                    bg.setAttribute('height', 16);
+                    bg.setAttribute('rx', 3);
+                    bg.classList.add('connection-label-bg');
+                    group.appendChild(bg);
+                }
+                
+                // Label text (show placeholder if empty)
+                const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                label.setAttribute('x', midX);
+                label.setAttribute('y', midY + 4);
+                label.setAttribute('text-anchor', 'middle');
+                label.classList.add('connection-label');
+                label.textContent = labelText || '+';
+                if (!labelText) label.style.opacity = '0.3';
+                group.appendChild(label);
+                
+                // Click on label to edit
+                label.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const newLabel = prompt('Connection label (e.g., Yes, No, Success, Error):', conn.label || '');
+                    if (newLabel !== null) {
+                        conn.label = newLabel;
+                        this.updateConnections(paneId);
+                    }
+                });
+                
+                // Click on path to delete
+                path.addEventListener('click', e => { 
+                    e.stopPropagation(); 
+                    if (confirm('Delete connection?')) { 
+                        pane.connections = pane.connections.filter(c => c.id !== conn.id); 
+                        this.updateConnections(paneId); 
+                        this.updateValidation(); 
+                    } 
+                });
+                
+                els.connectionsSvg.appendChild(group);
             });
         }
 
