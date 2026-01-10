@@ -119,9 +119,13 @@
         .connection:hover + .connection-arrow, .connection-group:hover .connection-arrow { fill: var(--accent); }
         .connection-group:hover .connection { stroke: var(--accent); stroke-width: 3; }
         .connection-group:hover .connection-label { fill: var(--accent); }
-        .connection-waypoint { fill: var(--bg-tertiary); stroke: var(--border-default); stroke-width: 2; cursor: move; r: 5; }
-        .connection-waypoint:hover { fill: var(--accent); stroke: var(--accent); r: 6; }
-        .connection-waypoint.dragging { fill: var(--accent); stroke: var(--accent); }
+        .connection-waypoint { fill: var(--bg-secondary); stroke: var(--accent); stroke-width: 2; cursor: move; opacity: 0; transition: opacity 0.15s; }
+        .connection-group:hover .connection-waypoint { opacity: 1; }
+        .connection-waypoint:hover { fill: var(--accent); transform: scale(1.3); }
+        .connection-waypoint.dragging { fill: var(--accent); opacity: 1; }
+        .connection-add-hint { fill: var(--text-muted); font-size: 16px; opacity: 0; cursor: pointer; pointer-events: all; }
+        .connection-group:hover .connection-add-hint { opacity: 0.5; }
+        .connection-add-hint:hover { opacity: 1; fill: var(--accent); }
         .port-label { position: absolute; font-size: 8px; color: var(--text-muted); white-space: nowrap; pointer-events: none; }
         .port-label-out { bottom: -18px; left: 50%; transform: translateX(-50%); }
         .port-label-in { top: -18px; left: 50%; transform: translateX(-50%); }
@@ -164,17 +168,22 @@
         .block-meta-item { display: flex; align-items: center; gap: 2px; }
         .block-meta-item svg { width: 9px; height: 9px; }
 
-        .port-in, .port-out { position: absolute; width: 10px; height: 10px; background: var(--bg-secondary); border: 2px solid var(--border-default); border-radius: 50%; cursor: crosshair; z-index: 10; }
-        .port-in { left: 50%; top: -5px; transform: translateX(-50%); }
-        .port-in:hover { background: var(--accent); border-color: var(--accent); transform: translateX(-50%) scale(1.3); }
-        .port-out:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.3); }
-        .block-outputs { position: absolute; bottom: -5px; left: 0; right: 0; display: flex; justify-content: center; gap: 12px; }
+        .port-in, .port-out { position: absolute; width: 14px; height: 14px; background: var(--bg-secondary); border: 2px solid var(--border-default); border-radius: 50%; cursor: pointer; z-index: 10; }
+        .port-in::before, .port-out::before { content: ''; position: absolute; top: -8px; left: -8px; right: -8px; bottom: -8px; border-radius: 50%; }
+        .port-in { left: 50%; top: -7px; transform: translateX(-50%); }
+        .port-in:hover { background: var(--accent); border-color: var(--accent); transform: translateX(-50%) scale(1.2); }
+        .port-out:hover { background: var(--accent); border-color: var(--accent); transform: scale(1.2); }
+        .port-in.connect-target, .port-out.connect-source { background: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); } 50% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); } }
+        .block-outputs { position: absolute; bottom: -7px; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; }
         .block-outputs .port-out { position: relative; right: auto; top: auto; transform: none; }
-        .block-outputs .port-out:hover { transform: scale(1.3); }
-        .add-output { position: absolute; bottom: -5px; right: 20px; width: 10px; height: 10px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
+        .block-outputs .port-out:hover { transform: scale(1.2); }
+        .add-output { position: absolute; bottom: -7px; right: 16px; width: 14px; height: 14px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; }
         .add-output:hover { border-color: var(--accent); border-style: solid; background: var(--accent); }
-        .add-output svg { width: 6px; height: 6px; color: var(--text-muted); }
+        .add-output svg { width: 8px; height: 8px; color: var(--text-muted); }
         .add-output:hover svg { color: white; }
+        .connecting-mode .block:not(.connect-target-block) { opacity: 0.5; }
+        .connecting-mode .connect-target-block { opacity: 1; box-shadow: 0 0 0 2px var(--accent); }
 
         .panel { width: 320px; background: var(--bg-secondary); border-left: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
         .panel-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
@@ -984,7 +993,13 @@
                 els.canvasArea.addEventListener('mouseup', e => this.onCanvasMouseUp(e, paneId));
                 els.canvasArea.addEventListener('wheel', e => this.onCanvasWheel(e, paneId), { passive: false });
                 els.canvasArea.addEventListener('click', e => {
-                    if (e.target === els.canvasArea || e.target.closest('.canvas-container')) this.selectBlock(null, paneId);
+                    if (e.target === els.canvasArea || e.target.closest('.canvas-container')) {
+                        if (this.isConnecting) {
+                            this.cancelConnecting();
+                        } else {
+                            this.selectBlock(null, paneId);
+                        }
+                    }
                 });
                 els.canvasArea.querySelectorAll('.zoom-btn').forEach(btn => {
                     btn.addEventListener('click', () => {
@@ -1007,7 +1022,7 @@
             document.addEventListener('keydown', e => {
                 if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) this.deleteSelectedBlock();
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
-                if (e.key === 'Escape') { this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.selectBlock(null, this.activePane); }
+                if (e.key === 'Escape') { this.cancelConnecting(); this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.selectBlock(null, this.activePane); }
             });
         }
 
@@ -2037,11 +2052,88 @@
 
         bindBlockEvents(el, block, paneId) {
             const pane = this.getPane(paneId);
-            el.addEventListener('mousedown', e => { if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return; e.stopPropagation(); this.isDragging = true; this.dragBlock = block; this.dragPane = paneId; const rect = el.getBoundingClientRect(); this.dragOffset = { x: (e.clientX - rect.left) / pane.zoom, y: (e.clientY - rect.top) / pane.zoom }; this.selectBlock(block, paneId); });
-            el.addEventListener('click', e => { e.stopPropagation(); this.selectBlock(block, paneId); });
-            el.querySelectorAll('.port-out').forEach(port => port.addEventListener('mousedown', e => { e.stopPropagation(); this.isConnecting = true; this.connectingFrom = block; this.connectingPane = paneId; this.connectingPortIndex = parseInt(port.dataset.index) || 0; }));
-            el.querySelector('.port-in')?.addEventListener('mouseup', e => { e.stopPropagation(); if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId); this.isConnecting = false; this.removeTempConnection(paneId); });
+            el.addEventListener('mousedown', e => { 
+                if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return; 
+                e.stopPropagation(); 
+                this.isDragging = true; 
+                this.dragBlock = block; 
+                this.dragPane = paneId; 
+                const rect = el.getBoundingClientRect(); 
+                this.dragOffset = { x: (e.clientX - rect.left) / pane.zoom, y: (e.clientY - rect.top) / pane.zoom }; 
+                this.selectBlock(block, paneId); 
+            });
+            el.addEventListener('click', e => { 
+                e.stopPropagation(); 
+                // If connecting and clicked on a valid target block
+                if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) {
+                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId);
+                    this.cancelConnecting();
+                    return;
+                }
+                this.selectBlock(block, paneId); 
+            });
+            // Click on output port to START connection
+            el.querySelectorAll('.port-out').forEach(port => port.addEventListener('click', e => { 
+                e.stopPropagation(); 
+                // If already connecting from this port, cancel
+                if (this.isConnecting && this.connectingFrom.id === block.id && this.connectingPortIndex === (parseInt(port.dataset.index) || 0)) {
+                    this.cancelConnecting();
+                    return;
+                }
+                this.startConnecting(block, paneId, parseInt(port.dataset.index) || 0);
+            }));
+            // Click on input port to COMPLETE connection
+            el.querySelector('.port-in')?.addEventListener('click', e => { 
+                e.stopPropagation(); 
+                if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) {
+                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId);
+                    this.cancelConnecting();
+                }
+            });
             el.querySelector('.add-output')?.addEventListener('click', e => { e.stopPropagation(); block.outputs = (block.outputs || 1) + 1; this.updateBlockElement(block, paneId); this.updateConnections(paneId); });
+        }
+        
+        startConnecting(block, paneId, portIndex) {
+            this.isConnecting = true;
+            this.connectingFrom = block;
+            this.connectingPane = paneId;
+            this.connectingPortIndex = portIndex;
+            
+            // Visual feedback
+            const els = this.getPaneElements(paneId);
+            els.canvasArea.classList.add('connecting-mode');
+            
+            // Highlight source port
+            const sourceEl = document.getElementById(block.id);
+            const sourcePort = sourceEl?.querySelector(`.port-out[data-index="${portIndex}"]`) || sourceEl?.querySelector('.port-out');
+            sourcePort?.classList.add('connect-source');
+            
+            // Highlight valid targets
+            this.getPane(paneId).blocks.forEach((b, id) => {
+                if (id !== block.id) {
+                    const targetEl = document.getElementById(id);
+                    targetEl?.classList.add('connect-target-block');
+                    targetEl?.querySelector('.port-in')?.classList.add('connect-target');
+                }
+            });
+            
+            this.toast('Click on a target step to connect, or press Escape to cancel', 'info');
+        }
+        
+        cancelConnecting() {
+            if (!this.isConnecting) return;
+            
+            // Remove visual feedback
+            document.querySelectorAll('.connecting-mode').forEach(el => el.classList.remove('connecting-mode'));
+            document.querySelectorAll('.connect-source').forEach(el => el.classList.remove('connect-source'));
+            document.querySelectorAll('.connect-target').forEach(el => el.classList.remove('connect-target'));
+            document.querySelectorAll('.connect-target-block').forEach(el => el.classList.remove('connect-target-block'));
+            
+            this.isConnecting = false;
+            this.connectingFrom = null;
+            this.connectingPane = null;
+            this.removeTempConnection('current');
+            this.removeTempConnection('proposed');
         }
 
         updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
@@ -2083,7 +2175,6 @@
                 const waypoints = conn.waypoints || [];
                 
                 // Build path with waypoints
-                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 let pathD;
                 if (waypoints.length === 0) {
                     // Default bezier curve
@@ -2099,6 +2190,18 @@
                         pathD += ` C${p0.x},${midY} ${p1.x},${midY} ${p1.x},${p1.y}`;
                     }
                 }
+                
+                // Hit area (invisible wider path for easier clicking)
+                const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                hitArea.setAttribute('d', pathD);
+                hitArea.setAttribute('stroke', 'transparent');
+                hitArea.setAttribute('stroke-width', '16');
+                hitArea.setAttribute('fill', 'none');
+                hitArea.style.cursor = 'pointer';
+                group.appendChild(hitArea);
+                
+                // Visible path
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                 path.setAttribute('d', pathD);
                 path.classList.add('connection');
                 path.setAttribute('marker-end', `url(#arrowhead-${paneId})`);
@@ -2154,8 +2257,8 @@
                     }
                 });
                 
-                // Double-click on path to add waypoint
-                path.addEventListener('dblclick', e => {
+                // Double-click on hitArea to add waypoint
+                hitArea.addEventListener('dblclick', e => {
                     e.stopPropagation();
                     const rect = els.canvas.getBoundingClientRect();
                     const wx = (e.clientX - rect.left) / pane.zoom;
@@ -2166,7 +2269,9 @@
                     const allPoints = [{x: x1, y: y1}, ...conn.waypoints, {x: x2, y: y2}];
                     let insertIdx = conn.waypoints.length;
                     for (let i = 0; i < allPoints.length - 1; i++) {
-                        if (wy >= allPoints[i].y && wy <= allPoints[i + 1].y) {
+                        const minY = Math.min(allPoints[i].y, allPoints[i + 1].y);
+                        const maxY = Math.max(allPoints[i].y, allPoints[i + 1].y);
+                        if (wy >= minY && wy <= maxY) {
                             insertIdx = i;
                             break;
                         }
@@ -2175,8 +2280,8 @@
                     this.updateConnections(paneId);
                 });
                 
-                // Right-click on path to delete
-                path.addEventListener('contextmenu', e => { 
+                // Right-click on hitArea to delete
+                hitArea.addEventListener('contextmenu', e => { 
                     e.preventDefault();
                     e.stopPropagation(); 
                     if (confirm('Delete connection?')) { 
@@ -2186,12 +2291,38 @@
                     } 
                 });
                 
+                // Add bend hints between segments (show "+" on hover)
+                const allPoints = [{x: x1, y: y1}, ...waypoints, {x: x2, y: y2}];
+                for (let i = 0; i < allPoints.length - 1; i++) {
+                    const p1 = allPoints[i];
+                    const p2 = allPoints[i + 1];
+                    const hintX = (p1.x + p2.x) / 2;
+                    const hintY = (p1.y + p2.y) / 2;
+                    
+                    // Skip if too close to existing label
+                    if (Math.abs(hintX - midX) < 30 && Math.abs(hintY - midY) < 30) continue;
+                    
+                    const hint = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    hint.setAttribute('x', hintX);
+                    hint.setAttribute('y', hintY + 4);
+                    hint.setAttribute('text-anchor', 'middle');
+                    hint.classList.add('connection-add-hint');
+                    hint.textContent = '⊕';
+                    hint.addEventListener('click', e => {
+                        e.stopPropagation();
+                        if (!conn.waypoints) conn.waypoints = [];
+                        conn.waypoints.splice(i, 0, { x: hintX, y: hintY });
+                        this.updateConnections(paneId);
+                    });
+                    group.appendChild(hint);
+                }
+                
                 // Render waypoints
                 waypoints.forEach((wp, idx) => {
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     circle.setAttribute('cx', wp.x);
                     circle.setAttribute('cy', wp.y);
-                    circle.setAttribute('r', 5);
+                    circle.setAttribute('r', 6);
                     circle.classList.add('connection-waypoint');
                     
                     // Drag waypoint
@@ -2238,8 +2369,34 @@
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
         onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.dragBlock.id); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
-        onCanvasMouseUp(e, paneId) { const els = this.getPaneElements(paneId); this.isDragging = false; this.dragBlock = null; if (this.panningPane === paneId) { this.isPanning = false; els.canvasArea.style.cursor = ''; } if (this.isConnecting && this.connectingPane === paneId) { this.isConnecting = false; this.connectingFrom = null; this.removeTempConnection(paneId); } }
-        onCanvasWheel(e, paneId) { e.preventDefault(); const pane = this.getPane(paneId); this.setZoom(pane.zoom + (e.deltaY > 0 ? -0.08 : 0.08), paneId); }
+        onCanvasMouseUp(e, paneId) { const els = this.getPaneElements(paneId); this.isDragging = false; this.dragBlock = null; if (this.panningPane === paneId) { this.isPanning = false; els.canvasArea.style.cursor = ''; } }
+        onCanvasWheel(e, paneId) { 
+            e.preventDefault(); 
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            const rect = els.canvasArea.getBoundingClientRect();
+            
+            // Cursor position relative to canvas area
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+            
+            // Point in canvas coordinates before zoom
+            const canvasX = (mouseX - pane.panX) / pane.zoom;
+            const canvasY = (mouseY - pane.panY) / pane.zoom;
+            
+            // New zoom
+            const oldZoom = pane.zoom;
+            const newZoom = Math.max(0.2, Math.min(2, oldZoom + (e.deltaY > 0 ? -0.08 : 0.08)));
+            
+            // Adjust pan so cursor stays over same point
+            pane.panX = mouseX - canvasX * newZoom;
+            pane.panY = mouseY - canvasY * newZoom;
+            pane.zoom = newZoom;
+            
+            this.applyTransform(paneId);
+            els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%';
+            this.updateMinimap();
+        }
         setZoom(newZoom, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); pane.zoom = Math.max(0.2, Math.min(2, newZoom)); this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
         applyTransform(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); els.canvas.style.transform = `translate(${pane.panX}px, ${pane.panY}px) scale(${pane.zoom})`; }
         zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
