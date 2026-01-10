@@ -392,7 +392,7 @@
             <div class="header-spacer"></div>
             <div class="header-actions">
                 <div class="google-auth" id="googleAuth">
-                    <div class="google-user" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span><button class="btn-icon" id="googleSignOutBtn" title="Sign out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></button></div>
+                    <div class="google-user" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span></div>
                 </div>
                 <div class="header-divider"></div>
                 <button class="btn" id="validateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validate</button>
@@ -527,11 +527,28 @@
         }
 
         async initAuth() {
-            // Bind login button
-            document.getElementById('loginBtn').addEventListener('click', () => this.loginWithGoogle());
+            // Show loading while Google API loads
+            document.getElementById('loginContent').classList.add('hidden');
+            document.getElementById('loginLoading').classList.add('show');
+            document.querySelector('#loginLoading span').textContent = 'Loading...';
             
             // Initialize Google API
-            await this.initGoogleApi();
+            try {
+                await this.initGoogleApi();
+                // API ready - show login button (if not auto-logged in)
+                if (!this.authenticated) {
+                    document.getElementById('loginContent').classList.remove('hidden');
+                    document.getElementById('loginLoading').classList.remove('show');
+                }
+            } catch (e) {
+                console.error('Failed to load Google API:', e);
+                document.getElementById('loginLoading').classList.remove('show');
+                document.getElementById('loginError').textContent = 'Failed to load. Please refresh the page.';
+                document.getElementById('loginError').classList.add('show');
+            }
+            
+            // Bind login button
+            document.getElementById('loginBtn').addEventListener('click', () => this.loginWithGoogle());
         }
         
         initApp() {
@@ -549,13 +566,15 @@
         
         loginWithGoogle() {
             if (!this.gisInited) { 
-                document.getElementById('loginError').textContent = 'Google API not ready. Please refresh the page.';
+                document.getElementById('loginError').textContent = 'Still loading. Please wait a moment and try again.';
                 document.getElementById('loginError').classList.add('show');
                 return; 
             }
+            document.getElementById('loginError').classList.remove('show');
             document.getElementById('loginContent').classList.add('hidden');
             document.getElementById('loginLoading').classList.add('show');
-            this.tokenClient.requestAccessToken({ prompt: 'consent' });
+            document.querySelector('#loginLoading span').textContent = 'Signing in...';
+            this.tokenClient.requestAccessToken({ prompt: '' });
         }
         
         async initGoogleApi() {
@@ -893,8 +912,6 @@
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
                 if (e.key === 'Escape') { this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.selectBlock(null, this.activePane); }
             });
-            // Google sign out button
-            document.getElementById('googleSignOutBtn').addEventListener('click', () => this.googleSignOut());
         }
 
         setMode(mode) {
