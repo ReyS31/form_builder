@@ -256,6 +256,24 @@
         .modal-overlay.show { display: flex; }
         .modal { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; width: 460px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .modal.lg { width: 640px; }
+        .modal.xl { width: 800px; max-height: 85vh; }
+        .help-content { padding: 0; }
+        .help-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-subtle); margin: -16px -16px 16px -16px; padding: 0 16px; }
+        .help-tab { padding: 12px 20px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 13px; font-weight: 500; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+        .help-tab:hover { color: var(--text-primary); }
+        .help-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .help-panel { display: none; max-height: 60vh; overflow-y: auto; padding-right: 8px; }
+        .help-panel.active { display: block; }
+        .help-panel h3 { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 20px 0 10px 0; }
+        .help-panel h3:first-child { margin-top: 0; }
+        .help-panel p { font-size: 13px; color: var(--text-secondary); line-height: 1.6; margin: 0 0 12px 0; }
+        .help-panel ul, .help-panel ol { font-size: 13px; color: var(--text-secondary); line-height: 1.8; margin: 0 0 12px 0; padding-left: 20px; }
+        .help-panel li { margin-bottom: 4px; }
+        .help-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 12px 0; }
+        .help-table td { padding: 8px 12px; border: 1px solid var(--border-subtle); vertical-align: top; }
+        .help-table td:first-child { width: 140px; background: var(--bg-tertiary); font-weight: 500; white-space: nowrap; }
+        .help-code { background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 12px; font-family: 'SF Mono', Monaco, monospace; font-size: 11px; line-height: 1.5; overflow-x: auto; white-space: pre; color: var(--text-secondary); margin: 12px 0; }
+        .help-prompt { background: var(--bg-tertiary); border-radius: 8px; padding: 16px; margin: 12px 0; }
         .modal-header { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; }
         .modal-title { font-size: 14px; font-weight: 600; }
         .modal-close { background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; border-radius: 4px; }
@@ -431,6 +449,7 @@
                     <div class="google-user" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span></div>
                 </div>
                 <div class="header-divider"></div>
+                <button class="btn" id="helpBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help</button>
                 <button class="btn" id="validateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validate</button>
                 <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
                 <button class="btn btn-primary" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>Save</button>
@@ -515,6 +534,272 @@
     <div class="modal-overlay" id="exportModal"><div class="modal"><div class="modal-header"><span class="modal-title">Export Analysis</span><button class="modal-close" id="closeExportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="export-options"><div class="export-option" data-export="json"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">JSON Data</div><div class="export-option-desc">Full data export for backup or import</div></div></div><div class="export-option" data-export="report"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="export-option-info"><div class="export-option-name">Change Report (HTML)</div><div class="export-option-desc">Detailed report of all issues and fixes</div></div></div><div class="export-option" data-export="summary"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="export-option-info"><div class="export-option-name">Executive Summary</div><div class="export-option-desc">High-level overview for stakeholders</div></div></div><div class="export-option" data-export="print"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><div class="export-option-info"><div class="export-option-name">Print View</div><div class="export-option-desc">Print-friendly layout</div></div></div></div></div></div></div>
     <div class="modal-overlay" id="validationModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Validation Results</span><button class="modal-close" id="closeValidationModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="validationModalBody"></div></div></div>
     <div class="modal-overlay" id="importModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Import Analysis</span><button class="modal-close" id="closeImportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="importModalBody"></div><div class="modal-footer" id="importModalFooter"></div></div></div>
+    <div class="modal-overlay" id="helpModal"><div class="modal xl"><div class="modal-header"><span class="modal-title">FlowBuilder Pro - User Guide</span><button class="modal-close" id="closeHelpModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body help-content">
+        <div class="help-tabs">
+            <button class="help-tab active" data-help="guide">User Guide</button>
+            <button class="help-tab" data-help="import">Import Format</button>
+            <button class="help-tab" data-help="ai">AI Prompt</button>
+        </div>
+        <div class="help-panel active" id="helpGuide">
+            <h3>🎯 What is FlowBuilder Pro?</h3>
+            <p>FlowBuilder Pro helps you document and improve business processes. It uses a split-screen view to compare the <strong>Current State</strong> (AS-IS) with a <strong>Proposed State</strong> (TO-BE), making it easy to identify issues and plan improvements.</p>
+            
+            <h3>🚀 Getting Started</h3>
+            <ol>
+                <li><strong>Create a new analysis</strong> - Click the flow name in the header → Enter a name → Create</li>
+                <li><strong>Add steps</strong> - Click "Add Step" in either pane, or use a template</li>
+                <li><strong>Connect steps</strong> - Click an output port (bottom of block) → Click a target block</li>
+                <li><strong>Mark issues</strong> - Select a step → In the panel, choose Issue or Warning</li>
+                <li><strong>Save</strong> - Click Save or press Ctrl+S (auto-saves to Google Drive)</li>
+            </ol>
+            
+            <h3>📐 Views</h3>
+            <table class="help-table">
+                <tr><td><strong>Split View</strong></td><td>See Current and Proposed side-by-side (default)</td></tr>
+                <tr><td><strong>Current Only</strong></td><td>Focus on documenting the current process</td></tr>
+                <tr><td><strong>Proposed Only</strong></td><td>Focus on designing improvements</td></tr>
+            </table>
+            <p>Use the view toggle buttons above the canvas to switch.</p>
+            
+            <h3>🔗 Connections</h3>
+            <table class="help-table">
+                <tr><td><strong>Create</strong></td><td>Click output port → Click target block or its input port</td></tr>
+                <tr><td><strong>Cancel</strong></td><td>Press Escape or click empty canvas</td></tr>
+                <tr><td><strong>Add label</strong></td><td>Click the "+" on a connection line</td></tr>
+                <tr><td><strong>Add bend</strong></td><td>Click the ⊕ symbol on a connection segment</td></tr>
+                <tr><td><strong>Move bend</strong></td><td>Drag the waypoint circle</td></tr>
+                <tr><td><strong>Remove bend</strong></td><td>Double-click the waypoint circle</td></tr>
+                <tr><td><strong>Delete connection</strong></td><td>Right-click on the connection line</td></tr>
+            </table>
+            
+            <h3>🔍 Navigation</h3>
+            <table class="help-table">
+                <tr><td><strong>Pan</strong></td><td>Click and drag on empty canvas</td></tr>
+                <tr><td><strong>Zoom</strong></td><td>Scroll wheel (zooms to cursor position)</td></tr>
+                <tr><td><strong>Zoom buttons</strong></td><td>Use +/- buttons in bottom-left of canvas</td></tr>
+                <tr><td><strong>Fit all</strong></td><td>Click the fit button (⛶) to see all blocks</td></tr>
+                <tr><td><strong>Minimap</strong></td><td>Shows overview in left sidebar</td></tr>
+            </table>
+            
+            <h3>📝 Editing Steps</h3>
+            <p>Click any step to select it. The right panel shows:</p>
+            <ul>
+                <li><strong>Details tab</strong> - Name, description, type, owner, time estimate</li>
+                <li><strong>Comments tab</strong> - Add timestamped notes</li>
+                <li><strong>Technical tab</strong> - Preconditions, validation rules, error handling</li>
+            </ul>
+            
+            <h3>🏷️ Step Types</h3>
+            <p>Set a type for visual distinction: Action, Decision, API, Email, Form, Data, Delay, Webhook</p>
+            
+            <h3>⚠️ Issue Tracking (Current pane only)</h3>
+            <ul>
+                <li><strong>Issue</strong> (red) - A problem that needs fixing</li>
+                <li><strong>Warning</strong> (orange) - A potential concern</li>
+            </ul>
+            
+            <h3>✅ Fix Tracking (Proposed pane only)</h3>
+            <ul>
+                <li><strong>Fix</strong> - Resolves an issue from current state</li>
+                <li><strong>New</strong> - A newly added step</li>
+                <li><strong>Modified</strong> - Changed from current</li>
+                <li><strong>Removed</strong> - Step will be removed</li>
+            </ul>
+            <p>Link fixes to issues to maintain traceability!</p>
+            
+            <h3>🔄 Workflow Actions</h3>
+            <table class="help-table">
+                <tr><td><strong>Copy from Current</strong></td><td>Copies all steps to Proposed pane as a starting point</td></tr>
+                <tr><td><strong>Promote</strong></td><td>Replaces Current with Proposed (when changes are implemented)</td></tr>
+            </table>
+            
+            <h3>⌨️ Keyboard Shortcuts</h3>
+            <table class="help-table">
+                <tr><td><strong>Ctrl+S</strong></td><td>Save</td></tr>
+                <tr><td><strong>Delete</strong></td><td>Delete selected step</td></tr>
+                <tr><td><strong>Escape</strong></td><td>Cancel connection / Close modal</td></tr>
+            </table>
+        </div>
+        
+        <div class="help-panel" id="helpImport">
+            <h3>📥 Import Formats</h3>
+            <p>FlowBuilder Pro accepts <strong>JSON</strong> and <strong>Markdown</strong> files.</p>
+            
+            <h3>JSON Format</h3>
+            <pre class="help-code">{
+  "name": "Process Name",
+  "description": "Optional description",
+  "current": {
+    "blocks": [
+      {
+        "id": "block_1",
+        "name": "Step Name",
+        "description": "What this step does",
+        "x": 100, "y": 100,
+        "outputs": 1,
+        "stepType": "action",
+        "issueType": "error",
+        "issueText": "Problem description",
+        "owner": "Team/Person",
+        "timeEstimate": "5 min",
+        "systems": "CRM, API"
+      }
+    ],
+    "connections": [
+      {
+        "id": "conn_1",
+        "from": "block_1",
+        "to": "block_2",
+        "portIndex": 0,
+        "label": "Yes"
+      }
+    ]
+  },
+  "proposed": {
+    "blocks": [...],
+    "connections": [...]
+  }
+}</pre>
+            
+            <h3>Block Properties</h3>
+            <table class="help-table">
+                <tr><td><strong>id</strong></td><td>Unique identifier (e.g., "block_1")</td></tr>
+                <tr><td><strong>name</strong></td><td>Step title</td></tr>
+                <tr><td><strong>description</strong></td><td>What happens in this step</td></tr>
+                <tr><td><strong>x, y</strong></td><td>Position on canvas (pixels)</td></tr>
+                <tr><td><strong>outputs</strong></td><td>Number of output ports (default: 1)</td></tr>
+                <tr><td><strong>stepType</strong></td><td>action, decision, api, email, form, data, delay, webhook</td></tr>
+                <tr><td><strong>issueType</strong></td><td>"error" or "warning" (current pane only)</td></tr>
+                <tr><td><strong>issueText</strong></td><td>Description of the problem</td></tr>
+                <tr><td><strong>changeType</strong></td><td>"fix", "new", "modified", "removed" (proposed pane only)</td></tr>
+                <tr><td><strong>fixText</strong></td><td>Description of the fix</td></tr>
+                <tr><td><strong>status</strong></td><td>"todo", "in-progress", "done", "blocked"</td></tr>
+                <tr><td><strong>owner</strong></td><td>Responsible person/team</td></tr>
+                <tr><td><strong>timeEstimate</strong></td><td>Duration (e.g., "5 min", "2 hours")</td></tr>
+                <tr><td><strong>systems</strong></td><td>Related systems (e.g., "CRM, Database")</td></tr>
+                <tr><td><strong>priority</strong></td><td>"low", "medium", "high", "critical"</td></tr>
+            </table>
+            
+            <h3>Connection Properties</h3>
+            <table class="help-table">
+                <tr><td><strong>id</strong></td><td>Unique identifier</td></tr>
+                <tr><td><strong>from</strong></td><td>Source block ID</td></tr>
+                <tr><td><strong>to</strong></td><td>Target block ID</td></tr>
+                <tr><td><strong>portIndex</strong></td><td>Which output port (0 = first)</td></tr>
+                <tr><td><strong>label</strong></td><td>Connection label (e.g., "Yes", "No")</td></tr>
+                <tr><td><strong>waypoints</strong></td><td>Array of {x, y} bend points (optional)</td></tr>
+            </table>
+            
+            <h3>Multiple Flows</h3>
+            <p>You can import an array of flows: <code>[{flow1}, {flow2}, ...]</code></p>
+            <p>FlowBuilder will let you pick which flow(s) to import.</p>
+        </div>
+        
+        <div class="help-panel" id="helpAi">
+            <h3>🤖 AI Prompt for Converting Process Documentation</h3>
+            <p>Copy this prompt and give it to an AI along with your process documentation:</p>
+            
+            <div class="help-prompt">
+                <button class="btn btn-primary" id="copyAiPromptBtn" style="margin-bottom:12px;">📋 Copy Prompt</button>
+                <pre class="help-code" id="aiPromptText">Convert the following process documentation into FlowBuilder Pro JSON format.
+
+INSTRUCTIONS:
+1. Create a JSON object with this structure:
+{
+  "name": "Process Name",
+  "current": { "blocks": [], "connections": [] },
+  "proposed": { "blocks": [], "connections": [] }
+}
+
+2. For each step in the process, create a block:
+{
+  "id": "block_N",           // Unique ID, increment N
+  "name": "Step Name",       // Short title (max 30 chars)
+  "description": "Details",  // What happens in this step
+  "x": 100,                  // X position (use 100 for single column)
+  "y": N * 160,              // Y position (160px spacing between steps)
+  "outputs": 1,              // Number of outgoing connections
+  "stepType": "action",      // One of: action, decision, api, email, form, data, delay, webhook
+  "issueType": null,         // "error" or "warning" if there's a problem (current pane only)
+  "issueText": "",           // Describe the problem
+  "owner": "",               // Person/team responsible
+  "timeEstimate": "",        // Duration like "5 min" or "2 hours"
+  "systems": ""              // Related systems like "CRM, Database"
+}
+
+3. For each flow between steps, create a connection:
+{
+  "id": "conn_N",
+  "from": "block_X",         // Source block ID
+  "to": "block_Y",           // Target block ID  
+  "portIndex": 0,            // Use 0 for first output, 1 for second, etc.
+  "label": ""                // Optional label like "Yes", "No", "On Error"
+}
+
+4. Decision steps (stepType: "decision") typically have 2+ outputs for different paths.
+   Set "outputs": 2 (or more) and use portIndex 0, 1, 2... for each branch.
+
+5. Place blocks that branch out side by side:
+   - Main flow: x=100
+   - First branch: x=100, Second branch: x=350
+   - Use y position to maintain vertical flow
+
+6. Mark problems in the current process with:
+   - issueType: "error" for serious problems
+   - issueType: "warning" for concerns
+   - issueText: explanation of what's wrong
+
+7. For proposed improvements, use changeType and fixText instead of issueType.
+
+OUTPUT FORMAT:
+Return ONLY valid JSON, no explanations. Ensure all block IDs referenced in connections exist.
+
+PROCESS TO CONVERT:
+[Paste your process documentation here]</pre>
+            </div>
+            
+            <h3>💡 Tips for AI Conversion</h3>
+            <ul>
+                <li>Provide clear, structured documentation (numbered steps work best)</li>
+                <li>Mention any known problems - AI will mark them as issues</li>
+                <li>Specify decision points clearly - AI will create proper branches</li>
+                <li>Include system names - AI will populate the systems field</li>
+                <li>Review the output before importing - AI may need corrections</li>
+            </ul>
+            
+            <h3>Example Input</h3>
+            <pre class="help-code">Order Processing Flow:
+1. Customer places order on website (Form)
+2. System validates payment (API) - ISSUE: 15% failure rate
+3. If valid, create order in database
+4. If invalid, show error to customer
+5. Send confirmation email (Email)
+6. Notify warehouse (Webhook)</pre>
+            
+            <h3>Example Output</h3>
+            <pre class="help-code">{
+  "name": "Order Processing Flow",
+  "current": {
+    "blocks": [
+      {"id":"block_1","name":"Place Order","description":"Customer places order on website","x":100,"y":100,"outputs":1,"stepType":"form"},
+      {"id":"block_2","name":"Validate Payment","description":"System validates payment","x":100,"y":260,"outputs":2,"stepType":"api","issueType":"error","issueText":"15% failure rate"},
+      {"id":"block_3","name":"Create Order","description":"Create order in database","x":100,"y":420,"outputs":1,"stepType":"data"},
+      {"id":"block_4","name":"Show Error","description":"Show error to customer","x":350,"y":420,"outputs":1,"stepType":"action"},
+      {"id":"block_5","name":"Send Confirmation","description":"Send confirmation email","x":100,"y":580,"outputs":1,"stepType":"email"},
+      {"id":"block_6","name":"Notify Warehouse","description":"Notify warehouse","x":100,"y":740,"outputs":1,"stepType":"webhook"}
+    ],
+    "connections": [
+      {"id":"conn_1","from":"block_1","to":"block_2","portIndex":0,"label":""},
+      {"id":"conn_2","from":"block_2","to":"block_3","portIndex":0,"label":"Valid"},
+      {"id":"conn_3","from":"block_2","to":"block_4","portIndex":1,"label":"Invalid"},
+      {"id":"conn_4","from":"block_3","to":"block_5","portIndex":0,"label":""},
+      {"id":"conn_5","from":"block_5","to":"block_6","portIndex":0,"label":""}
+    ]
+  },
+  "proposed": {"blocks":[],"connections":[]}
+}</pre>
+        </div>
+    </div></div></div>
     <input type="file" id="importFileInput" accept=".json,.md,.markdown,.txt" style="display:none;" />
     <div class="toast-container" id="toastContainer"></div>
     <script>
@@ -1011,6 +1296,10 @@
             document.getElementById('exportBtn').addEventListener('click', () => this.showExportModal());
             document.getElementById('closeExportModal').addEventListener('click', () => this.hideModal('exportModal'));
             document.querySelectorAll('.export-option').forEach(opt => opt.addEventListener('click', () => this.doExport(opt.dataset.export)));
+            document.getElementById('helpBtn').addEventListener('click', () => this.showHelpModal());
+            document.getElementById('closeHelpModal').addEventListener('click', () => this.hideModal('helpModal'));
+            document.querySelectorAll('.help-tab').forEach(tab => tab.addEventListener('click', () => this.switchHelpTab(tab.dataset.help)));
+            document.getElementById('copyAiPromptBtn')?.addEventListener('click', () => this.copyAiPrompt());
             document.getElementById('validateBtn').addEventListener('click', () => this.showValidationModal());
             document.getElementById('closeValidationModal').addEventListener('click', () => this.hideModal('validationModal'));
             document.getElementById('closeImportModal').addEventListener('click', () => this.hideModal('importModal'));
@@ -1019,7 +1308,7 @@
             document.addEventListener('keydown', e => {
                 if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) this.deleteSelectedBlock();
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
-                if (e.key === 'Escape') { this.cancelConnecting(); this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.selectBlock(null, this.activePane); }
+                if (e.key === 'Escape') { this.cancelConnecting(); this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.hideModal('helpModal'); this.selectBlock(null, this.activePane); }
             });
         }
 
@@ -2475,6 +2764,25 @@
         }
 
         showExportModal() { if (!this.currentFlowId) { this.toast('No analysis to export', 'error'); return; } this.showModal('exportModal'); }
+        
+        showHelpModal() { this.showModal('helpModal'); }
+        
+        switchHelpTab(tab) {
+            document.querySelectorAll('.help-tab').forEach(t => t.classList.toggle('active', t.dataset.help === tab));
+            document.querySelectorAll('.help-panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('help' + tab.charAt(0).toUpperCase() + tab.slice(1))?.classList.add('active');
+        }
+        
+        copyAiPrompt() {
+            const promptText = document.getElementById('aiPromptText')?.textContent;
+            if (promptText) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    this.toast('AI prompt copied to clipboard!', 'success');
+                }).catch(() => {
+                    this.toast('Failed to copy', 'error');
+                });
+            }
+        }
 
         doExport(type) {
             const flow = this.flows[this.currentFlowId];
