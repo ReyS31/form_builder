@@ -4,115 +4,907 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowBuilder Pro - Process Analysis</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --bg-primary: #0a0b0d; --bg-secondary: #111318; --bg-tertiary: #1a1d24; --bg-elevated: #22262f;
-            --border-subtle: #2a2f3a; --border-default: #3d444d;
-            --text-primary: #e6edf3; --text-secondary: #8b949e; --text-muted: #6e7681;
-            --accent: #3b82f6; --accent-hover: #2563eb; --accent-bg: rgba(59, 130, 246, 0.15);
-            --green: #22c55e; --green-dim: rgba(34, 197, 94, 0.15); --green-bg: rgba(34, 197, 94, 0.15);
-            --orange: #f97316; --orange-dim: rgba(249, 115, 22, 0.15); --orange-bg: rgba(249, 115, 22, 0.15);
-            --red: #ef4444; --red-dim: rgba(239, 68, 68, 0.15);
-            --purple: #a855f7; --purple-dim: rgba(168, 85, 247, 0.15);
-            --cyan: #06b6d4; --cyan-dim: rgba(6, 182, 212, 0.15);
-            --yellow: #eab308;
+            /* Refined, calmer palette */
+            --bg-primary: #0c0d10;
+            --bg-secondary: #12141a;
+            --bg-tertiary: #1a1d24;
+            --bg-elevated: #22262f;
+            --bg-hover: #2a2f3a;
+            
+            --border-subtle: rgba(255,255,255,0.06);
+            --border-default: rgba(255,255,255,0.1);
+            --border-strong: rgba(255,255,255,0.15);
+            
+            --text-primary: #e8ecf2;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --text-faint: #4b5563;
+            
+            --accent: #6366f1;
+            --accent-hover: #818cf8;
+            --accent-bg: rgba(99, 102, 241, 0.12);
+            
+            --green: #10b981;
+            --green-dim: rgba(16, 185, 129, 0.12);
+            --orange: #f59e0b;
+            --orange-dim: rgba(245, 158, 11, 0.12);
+            --red: #ef4444;
+            --red-dim: rgba(239, 68, 68, 0.12);
+            --purple: #a855f7;
+            --purple-dim: rgba(168, 85, 247, 0.12);
+            --cyan: #06b6d4;
+            --cyan-dim: rgba(6, 182, 212, 0.12);
+            
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
+            --transition: 0.2s ease;
         }
+        
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'DM Sans', sans-serif; background: var(--bg-primary); color: var(--text-primary); overflow: hidden; height: 100vh; }
+        body { 
+            font-family: 'Inter', -apple-system, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            font-size: 13px;
+            -webkit-font-smoothing: antialiased;
+        }
         .app { display: flex; flex-direction: column; height: 100vh; }
         
-        .header { height: 52px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0; }
-        .logo { font-weight: 700; font-size: 14px; display: flex; align-items: center; gap: 6px; transition: opacity 0.2s; }
-        .logo:hover { opacity: 0.8; }
-        .logo span { background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .header-divider { width: 1px; height: 24px; background: var(--border-subtle); }
+        /* ===== HEADER - Minimal ===== */
+        .header {
+            height: 48px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            margin-left: -10px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .logo:hover { background: var(--bg-hover); }
+        .logo-icon {
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .logo-icon svg { width: 14px; height: 14px; color: white; }
+        .logo-text { font-weight: 600; font-size: 13px; }
+        .logo-back { color: var(--text-muted); margin-right: 2px; }
         
-        .flow-selector { display: flex; align-items: center; gap: 6px; padding: 5px 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; cursor: pointer; min-width: 160px; }
-        .flow-selector:hover { border-color: var(--border-default); }
-        .flow-selector-name { font-size: 12px; font-weight: 500; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .header-divider { width: 1px; height: 20px; background: var(--border-subtle); margin: 0 4px; }
         
-        .mode-toggle { display: flex; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 2px; }
-        .mode-btn { font-family: inherit; font-size: 11px; font-weight: 500; padding: 4px 10px; border: none; background: transparent; color: var(--text-secondary); border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
-        .mode-btn:hover { color: var(--text-primary); }
-        .mode-btn.active { background: var(--accent); color: white; }
-        .mode-btn svg { width: 12px; height: 12px; }
+        /* Flow name - inline editable */
+        .flow-title-btn {
+            padding: 6px 10px;
+            font-size: 13px;
+            font-weight: 500;
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            cursor: pointer;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: all var(--transition);
+        }
+        .flow-title-btn:hover { background: var(--bg-tertiary); border-color: var(--border-subtle); }
+        
+        /* Environment badge */
+        .env-badge-header {
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 500;
+            border-radius: 4px;
+            display: none;
+        }
+        .env-badge-header.show { display: inline-flex; }
+        .env-badge-header.exhibitor { background: rgba(34,197,94,0.15); color: #22c55e; }
+        .env-badge-header.organizer { background: rgba(59,130,246,0.15); color: #3b82f6; }
+        .env-badge-header.ea { background: rgba(249,115,22,0.15); color: #f97316; }
+        .env-badge-header.valverde { background: rgba(168,85,247,0.15); color: #a855f7; }
+        .env-badge-header.other { background: var(--bg-tertiary); color: var(--text-muted); }
         
         .header-spacer { flex: 1; }
-        .header-actions { display: flex; gap: 6px; }
-        .btn { font-family: inherit; font-size: 11px; font-weight: 500; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        
+        /* Mode toggle - simplified */
+        .mode-toggle {
+            display: flex;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            padding: 2px;
+        }
+        .mode-btn {
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 500;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .mode-btn:hover { color: var(--text-secondary); }
+        .mode-btn.active { background: var(--accent); color: white; }
+        
+        /* Icon buttons */
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .icon-btn svg { width: 16px; height: 16px; }
+        .icon-btn.active { color: var(--accent); background: var(--accent-bg); }
+        
+        .btn { 
+            font-family: inherit;
+            font-size: 12px;
+            font-weight: 500;
+            padding: 7px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all var(--transition);
+        }
         .btn:hover { background: var(--bg-elevated); border-color: var(--border-default); }
-        .btn-primary { background: var(--accent); border-color: var(--accent); }
+        .btn-primary { background: var(--accent); border-color: var(--accent); color: white; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn svg { width: 12px; height: 12px; }
+        .btn-icon { padding: 6px; }
+        .btn.danger { color: var(--red); }
+        .btn.danger:hover { background: var(--red-dim); border-color: var(--red); }
 
+        /* ===== MAIN LAYOUT ===== */
         .main { display: flex; flex: 1; overflow: hidden; }
 
-        .sidebar-left { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
-        .sidebar-section { padding: 10px; border-bottom: 1px solid var(--border-subtle); }
-        .sidebar-section-title { font-size: 9px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 6px; }
+        /* ===== LEFT SIDEBAR - Collapsible ===== */
+        .sidebar-left {
+            width: 240px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width var(--transition), margin var(--transition);
+        }
+        .sidebar-left.collapsed { width: 0; margin-left: -1px; overflow: hidden; }
         
-        .search-box { display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 5px; }
-        .search-box svg { width: 12px; height: 12px; color: var(--text-muted); }
-        .search-box input { flex: 1; background: none; border: none; color: var(--text-primary); font-family: inherit; font-size: 11px; outline: none; }
+        .sidebar-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .sidebar-search {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 10px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            transition: border-color var(--transition);
+        }
+        .sidebar-search:focus-within { border-color: var(--accent); }
+        .sidebar-search svg { width: 13px; height: 13px; color: var(--text-muted); }
+        .sidebar-search input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 12px;
+            outline: none;
+        }
+        .sidebar-search input::placeholder { color: var(--text-muted); }
         
-        .minimap { height: 100px; background: var(--bg-tertiary); border-radius: 5px; position: relative; overflow: hidden; }
-        .minimap-block { position: absolute; background: var(--text-muted); border-radius: 1px; }
+        /* Block list */
+        .block-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .block-list::-webkit-scrollbar { width: 4px; }
+        .block-list::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+        
+        .block-list-pane-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding: 10px 8px 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .block-list-pane-label::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--orange);
+        }
+        .block-list-pane-label.proposed::before { background: var(--green); }
+        
+        .block-list-item {
+            padding: 10px 12px;
+            margin-bottom: 4px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            border-left: 3px solid transparent;
+            transition: all var(--transition);
+        }
+        .block-list-item:hover { background: var(--bg-hover); }
+        .block-list-item.selected { background: var(--accent-bg); border-left-color: var(--accent); }
+        .block-list-item.has-issue { border-left-color: var(--red); }
+        .block-list-item.has-fix { border-left-color: var(--green); }
+        .block-list-item-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 2px;
+        }
+        .block-list-item-meta { font-size: 10px; color: var(--text-muted); }
+        
+        /* Minimap section */
+        .minimap-section {
+            padding: 12px;
+            border-top: 1px solid var(--border-subtle);
+        }
+        .minimap-section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .minimap {
+            height: 70px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            position: relative;
+            overflow: hidden;
+        }
+        .minimap-block {
+            position: absolute;
+            background: var(--text-faint);
+            border-radius: 1px;
+        }
         .minimap-block.issue { background: var(--red); }
         .minimap-block.fix { background: var(--green); }
         
-        .block-list { flex: 1; overflow-y: auto; padding: 6px; }
-        .block-list::-webkit-scrollbar { width: 4px; }
-        .block-list::-webkit-scrollbar-thumb { background: var(--border-subtle); border-radius: 2px; }
-        .block-list-item { padding: 6px 8px; margin-bottom: 3px; background: var(--bg-tertiary); border: 1px solid transparent; border-radius: 5px; cursor: pointer; }
-        .block-list-item:hover { border-color: var(--border-subtle); }
-        .block-list-item.selected { border-color: var(--accent); background: rgba(59, 130, 246, 0.1); }
-        .block-list-item.has-issue { border-left: 2px solid var(--red); }
-        .block-list-item.has-fix { border-left: 2px solid var(--green); }
-        .block-list-item-name { font-size: 11px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .block-list-item-meta { font-size: 9px; color: var(--text-muted); }
-        .block-list-pane-label { font-size: 9px; font-weight: 600; color: var(--text-muted); padding: 6px 8px 3px; text-transform: uppercase; }
-
-        .validation-list { max-height: 150px; overflow-y: auto; }
-        .validation-item { display: flex; align-items: flex-start; gap: 6px; padding: 6px; margin-bottom: 3px; background: var(--bg-tertiary); border-radius: 5px; font-size: 10px; cursor: pointer; }
-        .validation-item:hover { background: var(--bg-elevated); }
-        .validation-item svg { width: 12px; height: 12px; flex-shrink: 0; }
+        /* Validation section */
+        .validation-section { padding: 12px; border-top: 1px solid var(--border-subtle); }
+        .validation-list { max-height: 100px; overflow-y: auto; }
+        .validation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            padding: 6px 8px;
+            margin-bottom: 3px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            font-size: 10px;
+            cursor: pointer;
+            transition: background var(--transition);
+        }
+        .validation-item:hover { background: var(--bg-hover); }
+        .validation-item svg { width: 12px; height: 12px; flex-shrink: 0; margin-top: 1px; }
         .validation-item.error svg { color: var(--red); }
         .validation-item.warning svg { color: var(--orange); }
         .validation-item.success svg { color: var(--green); }
 
-        .canvas-wrapper { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-        .view-toggle { display: flex; justify-content: center; gap: 2px; padding: 6px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); }
-        .view-btn { padding: 6px 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 4px; cursor: pointer; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-size: 10px; }
-        .view-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
-        .view-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+        /* ===== CANVAS WRAPPER ===== */
+        .canvas-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* View toggle - clean pills */
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 4px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .view-btn {
+            padding: 7px 14px;
+            font-size: 11px;
+            font-weight: 500;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all var(--transition);
+        }
+        .view-btn:hover { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .view-btn.active { background: var(--bg-elevated); color: var(--text-primary); }
         .view-btn svg { width: 14px; height: 14px; }
+        .view-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .view-btn .dot.current { background: var(--orange); }
+        .view-btn .dot.proposed { background: var(--green); }
+        
         .canvas-split { display: flex; flex: 1; overflow: hidden; }
         .canvas-split.view-current #proposedPane { display: none; }
         .canvas-split.view-current #currentPane { flex: 1; }
         .canvas-split.view-proposed #currentPane { display: none; }
         .canvas-split.view-proposed #proposedPane { flex: 1; }
-        .canvas-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .canvas-pane:first-child { border-right: 2px solid var(--border-subtle); }
         
-        .pane-header { height: 40px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; flex-shrink: 0; }
-        .pane-title { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-        .pane-indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .canvas-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .canvas-pane:first-child { border-right: 1px solid var(--border-subtle); }
+        
+        /* Pane header - minimal, hover reveals actions */
+        .pane-header {
+            height: 36px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            flex-shrink: 0;
+        }
+        .pane-title {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .pane-indicator { width: 6px; height: 6px; border-radius: 50%; }
         .pane-indicator.current { background: var(--orange); }
         .pane-indicator.proposed { background: var(--green); }
-        .pane-actions { display: flex; gap: 5px; }
-        .pane-btn { font-family: inherit; font-size: 10px; padding: 4px 7px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 3px; }
-        .pane-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        
+        .pane-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
+        .pane-header:hover .pane-actions { opacity: 1; }
+        .pane-btn {
+            font-family: inherit;
+            font-size: 10px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--border-subtle);
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all var(--transition);
+        }
+        .pane-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
         .pane-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .pane-btn.primary:hover { background: var(--accent-hover); }
         .pane-btn svg { width: 10px; height: 10px; }
+
+        /* Canvas */
+        .canvas-area { flex: 1; position: relative; overflow: hidden; background: var(--bg-primary); }
+        .canvas-container { position: absolute; inset: 0; overflow: hidden; }
+        .canvas {
+            position: absolute;
+            width: 6000px;
+            height: 6000px;
+            background-image: radial-gradient(circle, var(--border-subtle) 1px, transparent 1px);
+            background-size: 24px 24px;
+            transform-origin: 0 0;
+        }
+        .canvas-svg {
+            position: absolute;
+            inset: 0;
+            width: 6000px;
+            height: 6000px;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 5;
+        }
+        
+        /* Canvas empty state */
+        .canvas-instructions {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--transition);
+        }
+        .canvas-instructions.show { opacity: 1; }
+        .canvas-instructions svg { width: 40px; height: 40px; margin-bottom: 12px; opacity: 0.3; }
+        .canvas-instructions p { font-size: 12px; text-align: center; line-height: 1.6; }
+        
+        /* Zoom controls - floating, subtle */
+        .zoom-controls {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            padding: 4px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            opacity: 0.7;
+            transition: opacity var(--transition);
+            z-index: 50;
+        }
+        .zoom-controls:hover { opacity: 1; }
+        .zoom-btn {
+            width: 26px;
+            height: 26px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .zoom-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .zoom-btn svg { width: 12px; height: 12px; }
+        .zoom-level { font-size: 10px; color: var(--text-muted); min-width: 32px; text-align: center; }
+
+        /* ===== BLOCKS - Cleaner ===== */
+        .block {
+            position: absolute;
+            width: 240px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: var(--radius-md);
+            cursor: move;
+            user-select: none;
+            z-index: 10;
+            box-shadow: var(--shadow-sm);
+            transition: border-color var(--transition), box-shadow var(--transition);
+        }
+        .block:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); z-index: 15; }
+        .block.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); z-index: 20; }
+        .block.issue-error { border-color: var(--red); background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--red-dim) 100%); }
+        .block.issue-warning { border-color: var(--orange); background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--orange-dim) 100%); }
+        .block.change-fix { border-color: var(--green); background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--green-dim) 100%); }
+        .block.change-new { border-style: dashed; border-color: var(--cyan); }
+        .block.change-removed { opacity: 0.5; border-style: dashed; border-color: var(--red); }
+        .block.linked { box-shadow: 0 0 0 2px var(--purple), 0 0 8px rgba(168,85,247,0.2); }
+        .block.multi-selected { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .block.search-highlight { outline: 2px solid var(--accent); outline-offset: 3px; animation: pulse-outline 1.5s ease infinite; }
+        @keyframes pulse-outline { 0%,100% { outline-offset: 3px; } 50% { outline-offset: 5px; } }
+        
+        .block-header {
+            padding: 10px 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        .block-icon {
+            width: 28px;
+            height: 28px;
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .block-icon svg { width: 14px; height: 14px; color: var(--text-secondary); }
+        .block-info { flex: 1; min-width: 0; }
+        .block-title {
+            font-size: 12px;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-bottom: 2px;
+        }
+        .block-description {
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .block-description.empty { font-style: italic; color: var(--text-faint); }
+        
+        .block-badges { display: flex; gap: 3px; flex-shrink: 0; }
+        .block-badge {
+            font-size: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .block-badge.issue { background: var(--red-dim); color: var(--red); }
+        .block-badge.warning { background: var(--orange-dim); color: var(--orange); }
+        .block-badge.fix { background: var(--green-dim); color: var(--green); }
+        .block-badge.new { background: var(--cyan-dim); color: var(--cyan); }
+        .block-badge.linked { background: var(--purple-dim); color: var(--purple); }
+        
+        .block-annotation {
+            margin: 0 12px 10px;
+            padding: 6px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .block-annotation.issue { background: var(--red-dim); color: #fca5a5; border-left: 2px solid var(--red); }
+        .block-annotation.fix { background: var(--green-dim); color: #86efac; border-left: 2px solid var(--green); }
+        
+        .block-footer {
+            padding: 6px 12px;
+            border-top: 1px solid var(--border-subtle);
+            display: flex;
+            gap: 8px;
+            font-size: 9px;
+            color: var(--text-muted);
+        }
+        .block-meta-item { display: flex; align-items: center; gap: 3px; }
+        .block-meta-item svg { width: 9px; height: 9px; }
+
+        /* Ports */
+        .port-in, .port-out {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-default);
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 10;
+            transition: all var(--transition);
+        }
+        .port-in { left: 50%; top: -6px; transform: translateX(-50%); }
+        .port-in:hover, .port-out:hover { background: var(--accent); border-color: var(--accent); transform: translateX(-50%) scale(1.3); }
+        .port-out:hover { transform: scale(1.3); }
+        .port-in.connect-target, .port-out.connect-source { background: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(99,102,241,0.4); } 50% { box-shadow: 0 0 0 6px rgba(99,102,241,0); } }
+        .block-outputs { position: absolute; bottom: -6px; left: 0; right: 0; display: flex; justify-content: center; gap: 16px; }
+        .block-outputs .port-out { position: relative; transform: none; }
+        .add-output {
+            position: absolute;
+            bottom: -6px;
+            right: 16px;
+            width: 12px;
+            height: 12px;
+            background: var(--bg-tertiary);
+            border: 2px dashed var(--border-default);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .add-output:hover { border-color: var(--accent); border-style: solid; background: var(--accent); }
+        .add-output svg { width: 8px; height: 8px; color: var(--text-muted); }
+        .add-output:hover svg { color: white; }
+        .connecting-mode .block:not(.connect-target-block) { opacity: 0.4; }
+        .connecting-mode .connect-target-block { opacity: 1; box-shadow: 0 0 0 2px var(--accent); }
+
+        /* Connections */
+        .connection { fill: none; stroke: var(--border-default); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+        .connection-group:hover .connection { stroke: var(--accent); stroke-width: 2.5; }
+        .connection-label { font-size: 10px; fill: var(--text-muted); pointer-events: all; cursor: pointer; }
+        .connection-label:hover { fill: var(--accent); }
+        .connection-label-bg { fill: var(--bg-primary); }
+        .connection-arrow { fill: var(--border-default); }
+        .connection-group:hover .connection-arrow { fill: var(--accent); }
+        .connection-waypoint { fill: var(--bg-primary); stroke: var(--accent); stroke-width: 2; cursor: move; }
+        .connection-waypoint:hover { fill: var(--accent); }
+        .temp-connection { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; fill: none; opacity: 0.7; }
+
+        /* ===== RIGHT PANEL - Accordion style ===== */
+        .panel {
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-subtle);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            transition: width var(--transition), margin var(--transition);
+        }
+        .panel.collapsed { width: 0; margin-right: -1px; overflow: hidden; }
+        
+        .panel-header {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+        }
+        .panel-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+        .panel-block-name { font-size: 13px; font-weight: 600; }
+        .panel-block-type { font-size: 11px; color: var(--text-muted); }
+        
+        .panel-tabs { display: flex; gap: 2px; padding: 8px 12px; border-bottom: 1px solid var(--border-subtle); }
+        .panel-tab {
+            flex: 1;
+            padding: 7px;
+            font-size: 11px;
+            font-weight: 500;
+            text-align: center;
+            background: transparent;
+            border: none;
+            border-radius: 4px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .panel-tab:hover { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .panel-tab.active { background: var(--bg-elevated); color: var(--text-primary); }
+        
+        .panel-content { flex: 1; overflow-y: auto; padding: 12px; }
+        .panel-content::-webkit-scrollbar { width: 4px; }
+        .panel-content::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 2px; }
+        
+        /* Form elements */
+        .form-group { margin-bottom: 14px; }
+        .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; }
+        .form-row { display: flex; gap: 8px; }
+        .form-row > * { flex: 1; }
+        .form-input, .form-select {
+            width: 100%;
+            padding: 8px 10px;
+            font-family: inherit;
+            font-size: 12px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color var(--transition);
+        }
+        .form-input:focus, .form-select:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-muted); }
+        textarea.form-input { resize: vertical; min-height: 70px; line-height: 1.5; }
+        .form-hint { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
+
+        /* Section dividers - cleaner */
+        .section-divider { margin: 14px 0; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+        .section-title {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .section-title .dot { width: 5px; height: 5px; border-radius: 50%; }
+
+        /* Option grids */
+        .option-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .option-item {
+            padding: 10px 8px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            text-align: center;
+            transition: all var(--transition);
+        }
+        .option-item:hover { border-color: var(--border-default); }
+        .option-item.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .option-item.selected.error { border-color: var(--red); background: var(--red-dim); }
+        .option-item.selected.warning { border-color: var(--orange); background: var(--orange-dim); }
+        .option-item.selected.fix { border-color: var(--green); background: var(--green-dim); }
+        .option-item-icon { font-size: 18px; margin-bottom: 3px; }
+        .option-item-icon svg { width: 18px; height: 18px; }
+        .option-item-label { font-size: 10px; font-weight: 500; color: var(--text-secondary); }
+
+        .type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+        .type-option {
+            padding: 8px 4px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            text-align: center;
+            transition: all var(--transition);
+        }
+        .type-option:hover { border-color: var(--border-default); }
+        .type-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .type-option-icon { width: 22px; height: 22px; margin: 0 auto 3px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .type-option-icon svg { width: 12px; height: 12px; color: white; }
+        .type-option-name { font-size: 9px; font-weight: 500; }
+
+        .link-selector { padding: 10px; background: var(--bg-tertiary); border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); }
+        .link-selector-label { font-size: 10px; color: var(--text-muted); margin-bottom: 8px; }
+        .link-selector-current { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--bg-elevated); border-radius: 4px; }
+        .link-selector-current span { font-size: 11px; }
+        .link-selector-btn { font-size: 10px; color: var(--accent); background: none; border: none; cursor: pointer; }
+        .link-selector-list { max-height: 100px; overflow-y: auto; margin-top: 8px; }
+        .link-selector-item { padding: 8px; margin-bottom: 3px; background: var(--bg-elevated); border-radius: 4px; cursor: pointer; font-size: 11px; transition: background var(--transition); }
+        .link-selector-item:hover { background: var(--bg-hover); }
+
+        /* Comments */
+        .comments-list { max-height: 150px; overflow-y: auto; margin-bottom: 10px; }
+        .comment-item { padding: 10px; margin-bottom: 6px; background: var(--bg-tertiary); border-radius: var(--radius-sm); border-left: 2px solid var(--border-default); }
+        .comment-header { display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .comment-author { font-size: 11px; font-weight: 600; }
+        .comment-date { font-size: 10px; color: var(--text-muted); }
+        .comment-text { font-size: 11px; color: var(--text-secondary); line-height: 1.5; }
+        .comment-input-row { display: flex; gap: 6px; }
+        .comment-input-row .form-input { flex: 1; }
+
+        /* Attachments section */
+        .attachments-section { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-subtle); }
+        .attachments-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        .attachments-title { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-muted); }
+        .attachment-add-btn { padding: 4px 8px; font-size: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+        .attachment-add-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .attachments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 6px; }
+        .attachment-item { position: relative; aspect-ratio: 1; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-subtle); cursor: pointer; }
+        .attachment-item img { width: 100%; height: 100%; object-fit: cover; }
+        .attachment-item:hover .attachment-overlay { opacity: 1; }
+        .attachment-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; gap: 6px; opacity: 0; transition: opacity var(--transition); }
+        .attachment-btn { padding: 4px; background: var(--bg-secondary); border-radius: 3px; border: none; cursor: pointer; color: var(--text-primary); }
+        .attachment-btn:hover { background: var(--accent); }
+        .attachment-btn.danger:hover { background: var(--red); }
+        .attachment-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border: 2px dashed var(--border-subtle); border-radius: 4px; color: var(--text-muted); font-size: 10px; cursor: pointer; }
+        .attachment-placeholder:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* Cross-flow links */
+        .crossflow-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 6px; font-size: 11px; }
+        .crossflow-link-icon { color: var(--accent); }
+        .crossflow-link-name { flex: 1; color: var(--text-primary); cursor: pointer; }
+        .crossflow-link-name:hover { text-decoration: underline; }
+        .crossflow-link-remove { padding: 2px; color: var(--text-muted); cursor: pointer; background: none; border: none; }
+        .crossflow-link-remove:hover { color: var(--red); }
+        
+        /* ===== NEW UX STYLES ===== */
+        
+        /* Logo styling */
+        .logo { display: flex; align-items: center; gap: 10px; padding: 6px 10px; margin-left: -10px; border-radius: var(--radius-sm); cursor: pointer; transition: background var(--transition); }
+        .logo:hover { background: var(--bg-hover); }
+        .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), var(--purple)); border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-icon svg { color: white; }
+        .logo-text { font-size: 14px; font-weight: 600; letter-spacing: -0.01em; }
+        
+        /* Header flow section */
+        .header-flow { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .flow-title-btn { display: flex; align-items: center; gap: 6px; padding: 8px 14px; font-size: 13px; font-weight: 500; background: transparent; border: 1px solid transparent; border-radius: var(--radius-sm); color: var(--text-primary); cursor: pointer; max-width: 280px; transition: all var(--transition); }
+        .flow-title-btn:hover { background: var(--bg-tertiary); border-color: var(--border-subtle); }
+        .flow-title-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        /* Environment badge */
+        .env-badge { padding: 4px 10px; font-size: 11px; font-weight: 500; border-radius: 12px; display: none; }
+        .env-badge.show { display: inline-flex; }
+        .env-badge.exhibitor { background: var(--green-dim); color: var(--green); }
+        .env-badge.organizer { background: rgba(59,130,246,0.12); color: #3b82f6; }
+        .env-badge.ea { background: var(--orange-dim); color: var(--orange); }
+        .env-badge.valverde { background: var(--purple-dim); color: var(--purple); }
+        .env-badge.other { background: var(--bg-tertiary); color: var(--text-muted); }
+        
+        /* Icon button */
+        .icon-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-muted); border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+        .icon-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+        .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .icon-btn:disabled:hover { background: transparent; color: var(--text-muted); }
+        .icon-btn svg { width: 18px; height: 18px; }
+        .icon-btn.active { background: var(--accent-bg); color: var(--accent); }
+        
+        /* User avatar */
+        .user-avatar { width: 32px; height: 32px; border-radius: 50%; cursor: pointer; transition: opacity var(--transition); border: 2px solid var(--border-subtle); }
+        .user-avatar:hover { opacity: 0.8; }
+        
+        /* Sidebar header */
+        .sidebar-header { padding: 12px; border-bottom: 1px solid var(--border-subtle); }
+        .sidebar-search { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); transition: border-color var(--transition); }
+        .sidebar-search:focus-within { border-color: var(--accent); }
+        .sidebar-search svg { width: 14px; height: 14px; color: var(--text-muted); flex-shrink: 0; }
+        .sidebar-search input { flex: 1; background: none; border: none; color: var(--text-primary); font-size: 12px; outline: none; }
+        .sidebar-search input::placeholder { color: var(--text-muted); }
+        
+        /* Block list container */
+        .block-list-container { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+        
+        /* Sidebar accordion */
+        .sidebar-accordion { border-top: 1px solid var(--border-subtle); }
+        .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; cursor: pointer; transition: background var(--transition); }
+        .accordion-header:hover { background: var(--bg-hover); }
+        .accordion-title { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); }
+        .accordion-chevron { width: 14px; height: 14px; color: var(--text-faint); transition: transform var(--transition); }
+        .sidebar-accordion.open .accordion-chevron { transform: rotate(180deg); }
+        .accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .sidebar-accordion.open .accordion-body { max-height: 200px; }
+        .accordion-content { padding: 0 12px 12px; }
+        
+        /* Validation badge */
+        .validation-badge { font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 8px; background: var(--red-dim); color: var(--red); margin-left: auto; margin-right: 8px; display: none; }
+        .validation-badge.show { display: inline-block; }
+        .validation-badge.warning { background: var(--orange-dim); color: var(--orange); }
+        .validation-badge.success { background: var(--green-dim); color: var(--green); }
+        
+        /* Panel accordion */
+        .panel-accordion { border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); margin-bottom: 12px; overflow: hidden; }
+        .panel-accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; background: var(--bg-tertiary); cursor: pointer; transition: background var(--transition); }
+        .panel-accordion-header:hover { background: var(--bg-hover); }
+        .panel-accordion-title { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+        .panel-accordion-chevron { width: 14px; height: 14px; color: var(--text-muted); transition: transform var(--transition); }
+        .panel-accordion.open .panel-accordion-chevron { transform: rotate(180deg); }
+        .panel-accordion-body { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+        .panel-accordion.open .panel-accordion-body { max-height: 400px; }
+        .panel-accordion-content { padding: 12px; }
+        
+        /* Panel header improvements */
+        .panel-header-section { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); }
+        .panel-header-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2px; }
+        .panel-block-name { font-size: 13px; font-weight: 600; }
+        .panel-block-type { font-size: 11px; color: var(--text-muted); }
+        
+        /* Pane header improvements */
+        .pane-indicator { width: 6px; height: 6px; border-radius: 50%; }
+        .pane-indicator.current { background: var(--orange); }
+        .pane-indicator.proposed { background: var(--green); }
+        .pane-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
+        .pane-header:hover .pane-actions { opacity: 1; }
+        .pane-btn { font-family: inherit; font-size: 10px; font-weight: 500; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all var(--transition); }
+        .pane-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .pane-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
+        .pane-btn.primary:hover { background: var(--accent-hover); }
+        .pane-btn svg { width: 11px; height: 11px; }
 
         .canvas-area { flex: 1; position: relative; overflow: hidden; }
         .canvas-container { position: absolute; inset: 0; overflow: hidden; }
         .canvas { position: absolute; width: 6000px; height: 6000px; background-image: radial-gradient(circle, var(--border-subtle) 1px, transparent 1px); background-size: 24px 24px; transform-origin: 0 0; }
-        .canvas-svg { position: absolute; inset: 0; width: 6000px; height: 6000px; pointer-events: none; overflow: visible; }
+        .canvas-svg { position: absolute; inset: 0; width: 6000px; height: 6000px; pointer-events: none; overflow: visible; z-index: 20; }
         
-        .connection { fill: none; stroke: var(--border-default); stroke-width: 2; stroke-linecap: round; pointer-events: none; }
+        .connection { fill: none; stroke: var(--border-default); stroke-width: 2; stroke-linecap: round; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,0.15)); }
         .connection:hover { stroke: var(--accent); stroke-width: 3; }
         .connection-label { font-size: 10px; fill: var(--text-secondary); pointer-events: all; cursor: pointer; user-select: none; }
         .connection-label:hover { fill: var(--accent); }
@@ -243,7 +1035,8 @@
         .comment-input-row { display: flex; gap: 5px; }
         .comment-input-row .form-input { flex: 1; }
 
-        .zoom-controls { position: absolute; bottom: 10px; left: 10px; display: flex; align-items: center; gap: 2px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 2px; z-index: 50; }
+        .zoom-controls { position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 2px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 3px; z-index: 50; opacity: 0.7; transition: opacity var(--transition); }
+        .zoom-controls:hover { opacity: 1; }
         .zoom-btn { width: 24px; height: 24px; border: none; background: transparent; color: var(--text-secondary); border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .zoom-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
         .zoom-btn svg { width: 12px; height: 12px; }
@@ -608,77 +1401,102 @@
     <div class="app" id="mainApp" style="display:none;">
         <header class="header">
             <div class="logo" id="backToDashboard" style="cursor:pointer;" title="Back to Dashboard">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14" style="margin-right:4px;"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><path d="M12 3L4 9v12h16V9l-8-6z"/><path d="M9 14l2 2 4-4"/></svg>
-                <span>FlowBuilder Pro</span>
+                <div class="logo-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 3L4 9v12h16V9l-8-6z"/><path d="M9 14l2 2 4-4"/></svg></div>
+                <span class="logo-text">FlowBuilder</span>
             </div>
             <div class="header-divider"></div>
-            <div class="flow-selector" id="flowSelector">
-                <span class="flow-selector-name" id="currentFlowName">Select analysis...</span>
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
+            
+            <!-- Flow info - centered -->
+            <div class="header-flow">
+                <button class="flow-title-btn" id="flowSelector" title="Click to change flow">
+                    <span id="currentFlowName">Select analysis...</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <span class="env-badge" id="envBadge"></span>
             </div>
-            <button class="btn btn-icon" id="flowSettingsBtn" title="Flow Settings" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
-            <button class="btn btn-icon" id="duplicateFlowBtn" title="Duplicate Flow" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
-            <select class="form-input" id="flowEnvSelector" style="padding:6px 12px; font-size:11px; width:auto; border-radius:14px; background:var(--bg-tertiary); display:none; font-weight:500; cursor:pointer;">
-                <option value="exhibitor">🟢 Exhibitor</option>
-                <option value="organizer">🔵 Organizer</option>
-                <option value="ea">🟠 EA Exhibitions</option>
-                <option value="valverde">🟣 Valverde</option>
-                <option value="other">⚪ Other</option>
-            </select>
-            <div class="header-divider"></div>
-            <div class="block-search-container">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" class="block-search-input" id="blockSearchInput" placeholder="Search blocks... (Ctrl+F)" />
-            </div>
-            <div class="header-divider" id="searchDivider" style="display:none;"></div>
-            <div class="mode-toggle">
-                <button class="mode-btn active" id="sketchModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Sketch</button>
-                <button class="mode-btn" id="configureModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>Configure</button>
-                <button class="mode-btn" id="detailModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>Detail</button>
-            </div>
+            
             <div class="header-spacer"></div>
+            
+            <!-- Simplified actions -->
             <div class="header-actions">
-                <div class="google-auth" id="googleAuth">
-                    <div class="google-user" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span></div>
-                </div>
+                <button class="icon-btn" id="toggleSidebarBtn" title="Toggle Sidebar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
                 <div class="header-divider"></div>
-                <button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 015 5v2"/><polyline points="3 10 7 6"/><polyline points="3 10 7 14"/></svg></button>
-                <button class="btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10H11a5 5 0 00-5 5v2"/><polyline points="21 10 17 6"/><polyline points="21 10 17 14"/></svg></button>
-                <button class="btn" id="helpBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help</button>
-                <button class="btn" id="validateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validate</button>
-                <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
+                <button class="icon-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 015 5v2"/><polyline points="3 10 7 6"/><polyline points="3 10 7 14"/></svg></button>
+                <button class="icon-btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10H11a5 5 0 00-5 5v2"/><polyline points="21 10 17 6"/><polyline points="21 10 17 14"/></svg></button>
+                <div class="header-divider"></div>
+                <button class="icon-btn" id="flowSettingsBtn" title="Flow Settings" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+                <button class="icon-btn" id="duplicateFlowBtn" title="Duplicate Flow" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                <button class="icon-btn" id="exportBtn" title="Export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                <button class="icon-btn" id="helpBtn" title="Help & Shortcuts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
+                <div class="header-divider"></div>
                 <button class="btn btn-primary" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>Save</button>
+                <div class="google-auth" id="googleAuth">
+                    <img class="user-avatar" id="googleUserPhoto" title="Account" />
+                </div>
             </div>
+            <!-- Hidden elements for compatibility -->
+            <select class="form-input" id="flowEnvSelector" style="display:none;">
+                <option value="exhibitor">Exhibitor</option>
+                <option value="organizer">Organizer</option>
+                <option value="ea">EA Exhibitions</option>
+                <option value="valverde">Valverde</option>
+                <option value="other">Other</option>
+            </select>
+            <input type="hidden" id="blockSearchInput" />
         </header>
         <main class="main">
             <aside class="sidebar-left" id="sidebarLeft">
-                <div class="sidebar-section">
-                    <div class="search-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg><input type="text" id="searchInput" placeholder="Search steps..." /></div>
+                <!-- Search header -->
+                <div class="sidebar-header">
+                    <div class="sidebar-search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        <input type="text" id="searchInput" placeholder="Search steps... (Ctrl+F)" />
+                    </div>
                 </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Minimap</div>
-                    <div class="minimap" id="minimap"></div>
-                </div>
-                <div class="sidebar-section" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-                    <div class="sidebar-section-title">Steps</div>
+                
+                <!-- Block list - main content -->
+                <div class="block-list-container">
                     <div class="block-list" id="blockList"></div>
                 </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-section-title">Validation</div>
-                    <div class="validation-list" id="validationList"></div>
+                
+                <!-- Accordion: Minimap -->
+                <div class="sidebar-accordion open" id="minimapAccordion">
+                    <div class="accordion-header">
+                        <span class="accordion-title">Minimap</span>
+                        <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="accordion-body">
+                        <div class="accordion-content">
+                            <div class="minimap" id="minimap"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Accordion: Validation -->
+                <div class="sidebar-accordion" id="validationAccordion">
+                    <div class="accordion-header">
+                        <span class="accordion-title">Validation</span>
+                        <span class="validation-badge" id="validationBadge"></span>
+                        <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                    <div class="accordion-body">
+                        <div class="accordion-content">
+                            <div class="validation-list" id="validationList"></div>
+                        </div>
+                    </div>
                 </div>
             </aside>
+            
             <div class="canvas-wrapper">
                 <div class="view-toggle">
-                    <button class="view-btn" id="viewCurrentBtn" title="Current State Only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>
-                    <button class="view-btn active" id="viewSplitBtn" title="Split View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg></button>
-                    <button class="view-btn" id="viewProposedBtn" title="Proposed State Only"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg></button>
+                    <button class="view-btn" id="viewCurrentBtn" title="Current State Only"><span class="dot current"></span>Current Only</button>
+                    <button class="view-btn active" id="viewSplitBtn" title="Split View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Split View</button>
+                    <button class="view-btn" id="viewProposedBtn" title="Proposed State Only"><span class="dot proposed"></span>Proposed Only</button>
                 </div>
                 <div class="canvas-split" id="canvasSplit">
                 <div class="canvas-pane" id="currentPane">
                     <div class="pane-header">
-                        <div class="pane-title"><span class="pane-indicator current"></span>Current State (AS-IS)</div>
+                        <div class="pane-title"><span class="pane-indicator current"></span>Current State</div>
                         <div class="pane-actions">
                             <button class="pane-btn primary" id="addCurrentBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
                         </div>
@@ -687,20 +1505,20 @@
                         <div class="canvas-container"><div class="canvas" id="currentCanvas"><svg class="canvas-svg" id="currentConnectionsSvg"></svg><div id="currentBlocksContainer"></div></div></div>
                         <div class="canvas-instructions" id="currentInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Add steps to document<br/>the current process</p></div>
                         <div class="zoom-controls">
-                            <button class="zoom-btn" data-action="out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <span class="zoom-level" id="currentZoomLevel">100%</span>
-                            <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
                             <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
                 </div>
                 <div class="canvas-pane" id="proposedPane">
                     <div class="pane-header">
-                        <div class="pane-title"><span class="pane-indicator proposed"></span>Proposed State (TO-BE)</div>
+                        <div class="pane-title"><span class="pane-indicator proposed"></span>Proposed State</div>
                         <div class="pane-actions">
-                            <button class="pane-btn" id="promoteToCurrentBtn" title="Replace Current with Proposed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Promote</button>
-                            <button class="pane-btn" id="copyFromCurrentBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy from Current</button>
+                            <button class="pane-btn" id="promoteToCurrentBtn" title="Promote: Replace current state with proposed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+                            <button class="pane-btn" id="copyFromCurrentBtn" title="Copy all blocks from current state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy</button>
                             <button class="pane-btn primary" id="addProposedBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
                         </div>
                     </div>
@@ -708,10 +1526,10 @@
                         <div class="canvas-container"><div class="canvas" id="proposedCanvas"><svg class="canvas-svg" id="proposedConnectionsSvg"></svg><div id="proposedBlocksContainer"></div></div></div>
                         <div class="canvas-instructions" id="proposedInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Copy from current or build<br/>the improved process</p></div>
                         <div class="zoom-controls">
-                            <button class="zoom-btn" data-action="out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <span class="zoom-level" id="proposedZoomLevel">100%</span>
-                            <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                            <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
                             <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
@@ -1607,9 +2425,9 @@ PROCESS TO CONVERT:
             document.getElementById('newFlowName').addEventListener('keypress', e => { if (e.key === 'Enter') this.createFlow(); });
             document.getElementById('importFlowBtn').addEventListener('click', () => document.getElementById('importFileInput').click());
             document.getElementById('importFileInput').addEventListener('change', e => this.importFlow(e));
-            document.getElementById('sketchModeBtn').addEventListener('click', () => this.setMode('sketch'));
-            document.getElementById('configureModeBtn').addEventListener('click', () => this.setMode('configure'));
-            document.getElementById('detailModeBtn').addEventListener('click', () => this.setMode('detail'));
+            document.getElementById('sketchModeBtn')?.addEventListener('click', () => this.setMode('sketch'));
+            document.getElementById('configureModeBtn')?.addEventListener('click', () => this.setMode('configure'));
+            document.getElementById('detailModeBtn')?.addEventListener('click', () => this.setMode('detail'));
             document.querySelectorAll('.panel-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
@@ -1660,7 +2478,7 @@ PROCESS TO CONVERT:
             document.getElementById('closeHelpModal').addEventListener('click', () => this.hideModal('helpModal'));
             document.querySelectorAll('.help-tab').forEach(tab => tab.addEventListener('click', () => this.switchHelpTab(tab.dataset.help)));
             document.getElementById('copyAiPromptBtn')?.addEventListener('click', () => this.copyAiPrompt());
-            document.getElementById('validateBtn').addEventListener('click', () => this.showValidationModal());
+            document.getElementById('validateBtn')?.addEventListener('click', () => this.showValidationModal());
             document.getElementById('closeValidationModal').addEventListener('click', () => this.hideModal('validationModal'));
             document.getElementById('closeImportModal').addEventListener('click', () => this.hideModal('importModal'));
             document.getElementById('saveBtn').addEventListener('click', () => this.saveCurrentFlow());
@@ -1703,6 +2521,32 @@ PROCESS TO CONVERT:
             });
             document.getElementById('attachmentFileInput')?.addEventListener('change', e => this.handleAttachmentUpload(e));
             
+            // ===== NEW UX EVENT BINDINGS =====
+            
+            // Sidebar toggle
+            document.getElementById('toggleSidebarBtn')?.addEventListener('click', () => this.toggleSidebar());
+            
+            // Sidebar accordions
+            document.querySelectorAll('.sidebar-accordion .accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    header.closest('.sidebar-accordion').classList.toggle('open');
+                });
+            });
+            
+            // Panel accordions (delegated)
+            document.getElementById('panelContent')?.addEventListener('click', e => {
+                const accordionHeader = e.target.closest('.panel-accordion-header');
+                if (accordionHeader) {
+                    accordionHeader.closest('.panel-accordion').classList.toggle('open');
+                }
+            });
+            
+            // Search input - also bind to sidebar search
+            document.getElementById('searchInput')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') this.jumpToNextSearchResult();
+                if (e.key === 'Escape') { e.target.value = ''; this.filterBlocks(''); e.target.blur(); }
+            });
+            
             document.addEventListener('keydown', e => {
                 if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
                     if (this.multiSelectedBlocks.size > 0) this.deleteMultiSelected();
@@ -1713,9 +2557,12 @@ PROCESS TO CONVERT:
                 if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); this.redo(); }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'f') { 
                     e.preventDefault(); 
-                    const searchContainer = document.querySelector('.block-search-container');
-                    const searchInput = document.getElementById('blockSearchInput');
-                    if (searchContainer) searchContainer.style.display = 'flex';
+                    // Focus sidebar search
+                    const sidebar = document.getElementById('sidebarLeft');
+                    if (sidebar?.classList.contains('collapsed')) {
+                        sidebar.classList.remove('collapsed');
+                    }
+                    const searchInput = document.getElementById('searchInput');
                     if (searchInput) { searchInput.focus(); searchInput.select(); }
                 }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
@@ -1737,11 +2584,49 @@ PROCESS TO CONVERT:
             });
         }
 
+        // ===== NEW UX METHODS =====
+        
+        toggleSidebar() {
+            const sidebar = document.getElementById('sidebarLeft');
+            const toggleBtn = document.getElementById('toggleSidebarBtn');
+            sidebar.classList.toggle('collapsed');
+            toggleBtn?.classList.toggle('active', !sidebar.classList.contains('collapsed'));
+        }
+        
+        updateEnvBadge(env) {
+            const badge = document.getElementById('envBadge');
+            if (!badge) return;
+            
+            badge.className = 'env-badge';
+            if (env && env !== 'other') {
+                badge.classList.add(env, 'show');
+                const labels = { exhibitor: 'Exhibitor', organizer: 'Organizer', ea: 'EA Exhibitions', valverde: 'Valverde' };
+                badge.textContent = labels[env] || env;
+            }
+        }
+        
+        updateValidationBadge() {
+            const badge = document.getElementById('validationBadge');
+            if (!badge) return;
+            
+            const errors = document.querySelectorAll('.validation-item.error').length;
+            const warnings = document.querySelectorAll('.validation-item.warning').length;
+            
+            badge.className = 'validation-badge';
+            if (errors > 0) {
+                badge.classList.add('show');
+                badge.textContent = errors;
+            } else if (warnings > 0) {
+                badge.classList.add('show', 'warning');
+                badge.textContent = warnings;
+            }
+        }
+
         setMode(mode) {
             this.mode = mode;
-            document.getElementById('sketchModeBtn').classList.toggle('active', mode === 'sketch');
-            document.getElementById('configureModeBtn').classList.toggle('active', mode === 'configure');
-            document.getElementById('detailModeBtn').classList.toggle('active', mode === 'detail');
+            document.getElementById('sketchModeBtn')?.classList.toggle('active', mode === 'sketch');
+            document.getElementById('configureModeBtn')?.classList.toggle('active', mode === 'configure');
+            document.getElementById('detailModeBtn')?.classList.toggle('active', mode === 'detail');
             this.renderPanelContent();
             ['current', 'proposed'].forEach(paneId => this.getPane(paneId).blocks.forEach(block => this.updateBlockElement(block, paneId)));
         }
@@ -2605,7 +3490,9 @@ PROCESS TO CONVERT:
 
         updateFlowSelector() { 
             const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
-            document.getElementById('currentFlowName').textContent = this.currentFlowId ? (flow?.name || 'Untitled') + (this.currentFlowIsDrive ? ' ☁️' : '') : 'Select analysis...'; 
+            document.getElementById('currentFlowName').textContent = this.currentFlowId ? (flow?.name || 'Untitled') : 'Select analysis...';
+            // Update environment badge
+            this.updateEnvBadge(flow?.environment);
         }
         showFlowModal() { this.renderFlowList(); this.showModal('flowModal'); document.getElementById('newFlowName').focus(); }
 
@@ -3347,8 +4234,8 @@ PROCESS TO CONVERT:
         
         // Calculate smart route that avoids blocks using orthogonal routing
         calculateSmartRoute(x1, y1, x2, y2, fromId, toId, blockRects) {
-            const padding = 25; // Space around blocks
-            const cornerRadius = 8;
+            const padding = 40; // Space around blocks - increased for clarity
+            const cornerRadius = 12;
             
             // Get blocks that might be in the way (exclude source and target)
             const obstacles = blockRects.filter(r => r.id !== fromId && r.id !== toId);
@@ -3356,9 +4243,10 @@ PROCESS TO CONVERT:
             // If no obstacles or going straight down with no blocks in path, return empty
             if (obstacles.length === 0) return [];
             
-            // Check if any block is in the direct vertical path
-            const minX = Math.min(x1, x2) - 10;
-            const maxX = Math.max(x1, x2) + 10;
+            // Expand the corridor slightly for the check
+            const corridorExpand = 30;
+            const minX = Math.min(x1, x2) - corridorExpand;
+            const maxX = Math.max(x1, x2) + corridorExpand;
             const minY = Math.min(y1, y2);
             const maxY = Math.max(y1, y2);
             
@@ -3375,24 +4263,29 @@ PROCESS TO CONVERT:
             blockingObstacles.sort((a, b) => a.y - b.y);
             
             // Determine best side to route around
-            // Calculate total "cost" for going left vs right
-            let leftClear = true;
-            let rightClear = true;
-            let leftX = Math.min(x1, x2);
-            let rightX = Math.max(x1, x2);
+            // Calculate the leftmost and rightmost boundaries we need to avoid
+            let leftBoundary = Infinity;
+            let rightBoundary = -Infinity;
             
             for (const block of blockingObstacles) {
-                leftX = Math.min(leftX, block.x - padding);
-                rightX = Math.max(rightX, block.right + padding);
+                leftBoundary = Math.min(leftBoundary, block.x);
+                rightBoundary = Math.max(rightBoundary, block.right);
             }
             
+            // Add padding
+            const leftRouteX = leftBoundary - padding;
+            const rightRouteX = rightBoundary + padding;
+            
             // Check if other blocks would obstruct the left or right routes
+            let leftClear = true;
+            let rightClear = true;
+            
             for (const block of obstacles) {
-                if (block.right > leftX - 10 && block.x < leftX + 10 && 
+                if (block.right > leftRouteX - 5 && block.x < leftRouteX + 5 && 
                     block.bottom > minY && block.y < maxY) {
                     leftClear = false;
                 }
-                if (block.right > rightX - 10 && block.x < rightX + 10 && 
+                if (block.right > rightRouteX - 5 && block.x < rightRouteX + 5 && 
                     block.bottom > minY && block.y < maxY) {
                     rightClear = false;
                 }
@@ -3400,16 +4293,16 @@ PROCESS TO CONVERT:
             
             // Choose side - prefer the one closer to the start/end points
             let routeX;
-            const distToLeft = Math.abs(x1 - leftX) + Math.abs(x2 - leftX);
-            const distToRight = Math.abs(x1 - rightX) + Math.abs(x2 - rightX);
+            const distToLeft = Math.abs(x1 - leftRouteX) + Math.abs(x2 - leftRouteX);
+            const distToRight = Math.abs(x1 - rightRouteX) + Math.abs(x2 - rightRouteX);
             
             if (leftClear && (!rightClear || distToLeft <= distToRight)) {
-                routeX = leftX;
+                routeX = leftRouteX;
             } else if (rightClear) {
-                routeX = rightX;
+                routeX = rightRouteX;
             } else {
-                // Both sides have obstacles, pick the shorter path
-                routeX = distToLeft < distToRight ? leftX - padding : rightX + padding;
+                // Both sides have obstacles, pick the shorter path with extra padding
+                routeX = distToLeft < distToRight ? leftRouteX - padding : rightRouteX + padding;
             }
             
             // Build waypoints for orthogonal route
@@ -3425,28 +4318,32 @@ PROCESS TO CONVERT:
             
             // Going downward (normal flow)
             if (y2 > y1) {
-                // First waypoint: go horizontal to the side
-                const startY = Math.min(y1 + 30, obstacleTopY - padding);
-                waypoints.push({ x: routeX, y: startY });
+                // First waypoint: exit horizontally from start
+                const exitY = Math.min(y1 + 40, obstacleTopY - padding);
+                waypoints.push({ x: x1, y: exitY }); // Go down a bit first
+                waypoints.push({ x: routeX, y: exitY }); // Then horizontal
                 
                 // Second waypoint: go down past the obstacles
-                const endY = obstacleBottomY + padding;
-                waypoints.push({ x: routeX, y: endY });
+                const passY = obstacleBottomY + padding;
+                waypoints.push({ x: routeX, y: passY });
                 
-                // If target is not aligned, add point to turn back
+                // Third waypoint: turn back toward target
                 if (Math.abs(routeX - x2) > 20) {
-                    waypoints.push({ x: routeX, y: Math.max(endY, y2 - 30) });
+                    const entryY = Math.max(passY, y2 - 40);
+                    waypoints.push({ x: x2, y: entryY });
                 }
             } else {
                 // Going upward (backwards connection)
-                const startY = Math.max(y1 - 30, obstacleBottomY + padding);
-                waypoints.push({ x: routeX, y: startY });
+                const exitY = Math.max(y1 - 40, obstacleBottomY + padding);
+                waypoints.push({ x: x1, y: exitY });
+                waypoints.push({ x: routeX, y: exitY });
                 
-                const endY = obstacleTopY - padding;
-                waypoints.push({ x: routeX, y: endY });
+                const passY = obstacleTopY - padding;
+                waypoints.push({ x: routeX, y: passY });
                 
                 if (Math.abs(routeX - x2) > 20) {
-                    waypoints.push({ x: routeX, y: Math.min(endY, y2 + 30) });
+                    const entryY = Math.min(passY, y2 + 40);
+                    waypoints.push({ x: x2, y: entryY });
                 }
             }
             
@@ -3673,9 +4570,11 @@ PROCESS TO CONVERT:
         updateValidation() {
             const list = document.getElementById('validationList');
             const results = this.runValidation();
-            if (results.length === 0) { list.innerHTML = '<div class="validation-item success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="validation-item-text">All checks passed</span></div>'; return; }
-            list.innerHTML = results.slice(0, 4).map(r => `<div class="validation-item ${r.type}" data-block-id="${r.blockId || ''}" data-pane="${r.pane || ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${r.type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}</svg><span class="validation-item-text">${r.message}</span></div>`).join('');
-            list.querySelectorAll('.validation-item').forEach(item => item.addEventListener('click', () => { const blockId = item.dataset.blockId; const paneId = item.dataset.pane; if (blockId && paneId) { const block = this.getPane(paneId).blocks.get(blockId); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } } }));
+            if (results.length === 0) { list.innerHTML = '<div class="validation-item success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span class="validation-item-text">All checks passed</span></div>'; }
+            else { list.innerHTML = results.slice(0, 4).map(r => `<div class="validation-item ${r.type}" data-block-id="${r.blockId || ''}" data-pane="${r.pane || ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${r.type === 'error' ? '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>' : '<path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'}</svg><span class="validation-item-text">${r.message}</span></div>`).join('');
+            list.querySelectorAll('.validation-item').forEach(item => item.addEventListener('click', () => { const blockId = item.dataset.blockId; const paneId = item.dataset.pane; if (blockId && paneId) { const block = this.getPane(paneId).blocks.get(blockId); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } } })); }
+            // Update validation badge
+            this.updateValidationBadge();
         }
 
         runValidation() {
@@ -4836,22 +5735,26 @@ PROCESS TO CONVERT:
             const blocks = Array.from(pane.blocks.values());
             const inDegree = new Map();
             const children = new Map();
+            const parents = new Map();
             
             blocks.forEach(b => {
                 inDegree.set(b.id, 0);
                 children.set(b.id, []);
+                parents.set(b.id, []);
             });
             
             pane.connections.forEach(conn => {
                 if (pane.blocks.has(conn.from) && pane.blocks.has(conn.to)) {
                     inDegree.set(conn.to, (inDegree.get(conn.to) || 0) + 1);
                     children.get(conn.from)?.push(conn.to);
+                    parents.get(conn.to)?.push(conn.from);
                 }
             });
             
             // Topological sort with levels
             const levels = [];
             const assigned = new Set();
+            const blockLevel = new Map();
             
             while (assigned.size < blocks.length) {
                 const level = [];
@@ -4870,6 +5773,7 @@ PROCESS TO CONVERT:
                 
                 level.forEach(id => {
                     assigned.add(id);
+                    blockLevel.set(id, levels.length);
                     children.get(id)?.forEach(childId => {
                         inDegree.set(childId, (inDegree.get(childId) || 0) - 1);
                     });
@@ -4879,32 +5783,264 @@ PROCESS TO CONVERT:
                 if (level.length === 0) break;
             }
             
-            // Position blocks
-            const startX = 100;
+            // Position blocks with generous spacing for clean connections
+            const startX = 150;
             const startY = 100;
-            const blockWidth = 200;
-            const blockHeight = 80;
-            const gapX = 80;
-            const gapY = 60;
+            const blockWidth = 260;
+            const blockHeight = 100;
+            const gapX = 120; // Horizontal gap between blocks at same level
+            const gapY = 140; // Vertical gap between levels (enough for connection routing)
+            
+            // Calculate positions - center each level
+            const maxLevelWidth = Math.max(...levels.map(l => l.length));
+            const totalWidth = maxLevelWidth * (blockWidth + gapX) - gapX;
             
             levels.forEach((level, levelIdx) => {
                 const levelWidth = level.length * (blockWidth + gapX) - gapX;
-                const offsetX = (levels.length > 1 && level.length > 1) ? -levelWidth / 2 + blockWidth / 2 : 0;
+                const offsetX = (totalWidth - levelWidth) / 2;
                 
                 level.forEach((blockId, idx) => {
                     const block = pane.blocks.get(blockId);
                     if (block) {
                         block.x = startX + offsetX + idx * (blockWidth + gapX);
                         block.y = startY + levelIdx * (blockHeight + gapY);
-                        this.updateBlockElement(block, paneId);
                     }
                 });
             });
+            
+            // Optimize block positions within levels to minimize connection crossings
+            this.optimizeBlockPositions(pane, levels, blockWidth, gapX, startX, totalWidth);
+            
+            // Update all block elements first (needed for accurate positioning)
+            blocks.forEach(block => {
+                this.updateBlockElement(block, paneId);
+            });
+            
+            // Calculate clean waypoints for all connections
+            this.calculateAutoLayoutWaypoints(pane, blockLevel, blockWidth, blockHeight, gapY);
             
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
             this.toast('Layout applied', 'success');
+        }
+        
+        calculateAutoLayoutWaypoints(pane, blockLevel, blockWidth, blockHeight, gapY) {
+            // For each connection, calculate waypoints that route cleanly between blocks
+            const portOffset = blockWidth / 2; // Center of block
+            const padding = 35; // Space from block edges
+            
+            // Group connections by their from-block to handle multiple outputs
+            const connectionsByFrom = new Map();
+            pane.connections.forEach(conn => {
+                if (!connectionsByFrom.has(conn.from)) {
+                    connectionsByFrom.set(conn.from, []);
+                }
+                connectionsByFrom.get(conn.from).push(conn);
+            });
+            
+            // Calculate waypoints for each connection
+            pane.connections.forEach(conn => {
+                const fromBlock = pane.blocks.get(conn.from);
+                const toBlock = pane.blocks.get(conn.to);
+                if (!fromBlock || !toBlock) return;
+                
+                const fromLevel = blockLevel.get(conn.from) || 0;
+                const toLevel = blockLevel.get(conn.to) || 0;
+                
+                // Start point (bottom center of from block)
+                const startX = fromBlock.x + portOffset;
+                const startY = fromBlock.y + blockHeight;
+                
+                // End point (top center of to block)
+                const endX = toBlock.x + portOffset;
+                const endY = toBlock.y;
+                
+                // Calculate level difference
+                const levelDiff = toLevel - fromLevel;
+                
+                // Clear existing waypoints
+                conn.waypoints = [];
+                
+                if (levelDiff === 1 && Math.abs(startX - endX) < 30) {
+                    // Direct vertical connection - no waypoints needed (straight line)
+                    // The smooth bezier will handle it
+                    return;
+                }
+                
+                if (levelDiff === 1) {
+                    // One level down but offset horizontally
+                    // Route: down -> horizontal -> down
+                    const midY = startY + (gapY - blockHeight) / 2;
+                    conn.waypoints = [
+                        { x: startX, y: midY },
+                        { x: endX, y: midY }
+                    ];
+                } else if (levelDiff > 1) {
+                    // Multiple levels down - need to route around intermediate blocks
+                    // Find if any blocks are in the direct path
+                    const directPath = Math.abs(startX - endX) < 50;
+                    
+                    if (directPath) {
+                        // Check for blocking blocks
+                        let blocked = false;
+                        pane.blocks.forEach((block, id) => {
+                            if (id === conn.from || id === conn.to) return;
+                            const bLevel = blockLevel.get(id);
+                            if (bLevel > fromLevel && bLevel < toLevel) {
+                                // Check horizontal overlap
+                                if (Math.abs((block.x + portOffset) - startX) < blockWidth / 2 + 30) {
+                                    blocked = true;
+                                }
+                            }
+                        });
+                        
+                        if (!blocked) {
+                            // Can go mostly straight with slight adjustments
+                            const midY = (startY + endY) / 2;
+                            conn.waypoints = [
+                                { x: startX, y: midY },
+                                { x: endX, y: midY }
+                            ];
+                        } else {
+                            // Need to route around - go to the side
+                            const routeX = this.findClearRouteX(pane, fromBlock, toBlock, blockLevel, fromLevel, toLevel, blockWidth, padding);
+                            const exitY = startY + padding;
+                            const entryY = endY - padding;
+                            conn.waypoints = [
+                                { x: startX, y: exitY },
+                                { x: routeX, y: exitY },
+                                { x: routeX, y: entryY },
+                                { x: endX, y: entryY }
+                            ];
+                        }
+                    } else {
+                        // Significant horizontal offset
+                        // Route around any blocks in between
+                        const routeX = this.findClearRouteX(pane, fromBlock, toBlock, blockLevel, fromLevel, toLevel, blockWidth, padding);
+                        const exitY = startY + padding;
+                        const entryY = endY - padding;
+                        
+                        // Check if we can use a simpler S-curve
+                        if (Math.abs(routeX - startX) < 50 && Math.abs(routeX - endX) < 50) {
+                            const midY = (startY + endY) / 2;
+                            conn.waypoints = [
+                                { x: startX, y: midY },
+                                { x: endX, y: midY }
+                            ];
+                        } else {
+                            conn.waypoints = [
+                                { x: startX, y: exitY },
+                                { x: routeX, y: exitY },
+                                { x: routeX, y: entryY },
+                                { x: endX, y: entryY }
+                            ];
+                        }
+                    }
+                } else if (levelDiff <= 0) {
+                    // Backward connection (going up) - needs special routing
+                    // Go out to the side and loop back up
+                    const allX = Array.from(pane.blocks.values()).map(b => b.x + blockWidth);
+                    const rightEdge = Math.max(...allX) + padding * 2;
+                    
+                    const exitY = startY + padding;
+                    const entryY = endY - padding;
+                    
+                    conn.waypoints = [
+                        { x: startX, y: exitY },
+                        { x: rightEdge, y: exitY },
+                        { x: rightEdge, y: entryY },
+                        { x: endX, y: entryY }
+                    ];
+                }
+            });
+        }
+        
+        findClearRouteX(pane, fromBlock, toBlock, blockLevel, fromLevel, toLevel, blockWidth, padding) {
+            // Find an X coordinate that doesn't intersect any intermediate blocks
+            const startX = fromBlock.x + blockWidth / 2;
+            const endX = toBlock.x + blockWidth / 2;
+            
+            // Collect all intermediate block X positions
+            const intermediateBlocks = [];
+            pane.blocks.forEach((block, id) => {
+                const bLevel = blockLevel.get(id);
+                if (bLevel > fromLevel && bLevel < toLevel) {
+                    intermediateBlocks.push({
+                        left: block.x - padding,
+                        right: block.x + blockWidth + padding,
+                        center: block.x + blockWidth / 2
+                    });
+                }
+            });
+            
+            if (intermediateBlocks.length === 0) {
+                return (startX + endX) / 2;
+            }
+            
+            // Find leftmost and rightmost intermediate blocks
+            const leftMost = Math.min(...intermediateBlocks.map(b => b.left));
+            const rightMost = Math.max(...intermediateBlocks.map(b => b.right));
+            
+            // Decide which side is closer/better
+            const goLeft = leftMost - padding;
+            const goRight = rightMost + padding;
+            
+            const distLeft = Math.abs(startX - goLeft) + Math.abs(endX - goLeft);
+            const distRight = Math.abs(startX - goRight) + Math.abs(endX - goRight);
+            
+            return distLeft < distRight ? goLeft : goRight;
+        }
+        
+        optimizeBlockPositions(pane, levels, blockWidth, gapX, startX, totalWidth) {
+            // Try to position blocks so their connections go straight down when possible
+            // This minimizes crossings and makes flows easier to follow
+            
+            for (let levelIdx = 1; levelIdx < levels.length; levelIdx++) {
+                const level = levels[levelIdx];
+                const prevLevel = levels[levelIdx - 1];
+                
+                // For each block in this level, find the average X of its parents
+                const targetPositions = level.map(blockId => {
+                    const block = pane.blocks.get(blockId);
+                    const parentConns = pane.connections.filter(c => c.to === blockId);
+                    
+                    if (parentConns.length === 0) {
+                        return { id: blockId, targetX: block.x };
+                    }
+                    
+                    // Average X position of parent blocks
+                    let sumX = 0;
+                    let count = 0;
+                    parentConns.forEach(conn => {
+                        const parentBlock = pane.blocks.get(conn.from);
+                        if (parentBlock) {
+                            sumX += parentBlock.x;
+                            count++;
+                        }
+                    });
+                    
+                    return { 
+                        id: blockId, 
+                        targetX: count > 0 ? sumX / count : block.x,
+                        block: block
+                    };
+                });
+                
+                // Sort by target X position
+                targetPositions.sort((a, b) => a.targetX - b.targetX);
+                
+                // Assign actual positions ensuring no overlap
+                const levelWidth = level.length * (blockWidth + gapX) - gapX;
+                const offsetX = (totalWidth - levelWidth) / 2;
+                
+                targetPositions.forEach((item, idx) => {
+                    const block = pane.blocks.get(item.id);
+                    if (block) {
+                        block.x = startX + offsetX + idx * (blockWidth + gapX);
+                    }
+                });
+            }
         }
         
         // ===== ATTACHMENTS =====
