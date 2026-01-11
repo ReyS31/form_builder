@@ -467,6 +467,102 @@
         
         /* Empty State */
         .env-empty { padding: 30px; text-align: center; color: var(--text-muted); font-size: 13px; background: var(--bg-tertiary); border-radius: 8px; border: 1px dashed var(--border-default); }
+        
+        /* Flow Settings Modal */
+        .flow-settings-grid { display: grid; gap: 16px; }
+        .flow-settings-row { display: grid; grid-template-columns: 100px 1fr; align-items: start; gap: 12px; }
+        .flow-settings-row label { font-size: 12px; color: var(--text-secondary); padding-top: 8px; }
+        
+        /* Attachments */
+        .attachments-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+        .attachments-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .attachments-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .attachment-add-btn { padding: 4px 8px; font-size: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); cursor: pointer; }
+        .attachment-add-btn:hover { background: var(--bg-elevated); color: var(--text-primary); }
+        .attachments-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 8px; }
+        .attachment-item { position: relative; aspect-ratio: 1; border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle); cursor: pointer; }
+        .attachment-item img { width: 100%; height: 100%; object-fit: cover; }
+        .attachment-item:hover .attachment-overlay { opacity: 1; }
+        .attachment-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; gap: 8px; opacity: 0; transition: opacity 0.2s; }
+        .attachment-btn { padding: 4px; background: var(--bg-secondary); border-radius: 4px; border: none; cursor: pointer; color: var(--text-primary); }
+        .attachment-btn:hover { background: var(--accent); }
+        .attachment-btn.danger:hover { background: var(--red); }
+        .attachment-placeholder { display: flex; align-items: center; justify-content: center; aspect-ratio: 1; border: 2px dashed var(--border-subtle); border-radius: 6px; color: var(--text-muted); font-size: 10px; cursor: pointer; }
+        .attachment-placeholder:hover { border-color: var(--accent); color: var(--accent); }
+        
+        /* Cross-flow links */
+        .crossflow-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+        .crossflow-link { display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: var(--bg-tertiary); border-radius: 4px; margin-bottom: 6px; font-size: 11px; }
+        .crossflow-link-icon { color: var(--accent); }
+        .crossflow-link-name { flex: 1; color: var(--text-primary); cursor: pointer; }
+        .crossflow-link-name:hover { text-decoration: underline; }
+        .crossflow-link-remove { padding: 2px; color: var(--text-muted); cursor: pointer; }
+        .crossflow-link-remove:hover { color: var(--red); }
+        
+        /* Block list drag */
+        .block-list-item.dragging { opacity: 0.5; background: var(--accent-bg); }
+        .block-list-item.drag-over { border-top: 2px solid var(--accent); }
+        
+        /* Auto-layout button */
+        .auto-layout-btn { padding: 4px 8px; font-size: 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 4px; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .auto-layout-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        
+        /* Flow card actions */
+        .flow-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; }
+        .flow-card:hover .flow-card-actions { opacity: 1; }
+        .flow-card-action { padding: 4px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; cursor: pointer; color: var(--text-muted); }
+        .flow-card-action:hover { background: var(--accent); color: white; border-color: var(--accent); }
+        .flow-card-action.danger:hover { background: var(--red); border-color: var(--red); }
+        
+        /* Image viewer modal */
+        .image-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center; z-index: 20000; cursor: zoom-out; }
+        .image-viewer.show { display: flex; }
+        .image-viewer img { max-width: 90vw; max-height: 90vh; object-fit: contain; }
+        
+        /* Block Search */
+        .block-search-container { display: flex; align-items: center; gap: 6px; padding: 4px 10px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); border-radius: 6px; }
+        .block-search-container svg { color: var(--text-muted); flex-shrink: 0; }
+        .block-search-input { background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 12px; width: 150px; }
+        .block-search-input::placeholder { color: var(--text-muted); }
+        
+        /* Multi-select */
+        .block.multi-selected { outline: 2px solid var(--cyan); outline-offset: 2px; }
+        .selection-box { position: absolute; border: 1px dashed var(--accent); background: rgba(59, 130, 246, 0.1); pointer-events: none; z-index: 100; }
+        
+        /* Block highlight from search */
+        .block.search-highlight { animation: searchPulse 1s ease 2; }
+        @keyframes searchPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); } 50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.4); } }
+        
+        /* Attachments */
+        .block-attachments { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+        .block-attachment { width: 32px; height: 32px; border-radius: 4px; overflow: hidden; border: 1px solid var(--border-subtle); cursor: pointer; position: relative; }
+        .block-attachment img { width: 100%; height: 100%; object-fit: cover; }
+        .block-attachment:hover .attachment-remove { opacity: 1; }
+        .attachment-remove { position: absolute; top: -4px; right: -4px; width: 14px; height: 14px; background: var(--red); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; cursor: pointer; }
+        .attachment-remove svg { width: 8px; height: 8px; color: white; }
+        .attachment-add { display: flex; align-items: center; justify-content: center; background: var(--bg-tertiary); color: var(--text-muted); }
+        .attachment-add:hover { background: var(--bg-elevated); color: var(--accent); }
+        
+        /* Attachment preview modal */
+        .attachment-preview { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 20000; display: none; align-items: center; justify-content: center; cursor: zoom-out; }
+        .attachment-preview.show { display: flex; }
+        .attachment-preview img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; }
+        
+        /* Cross-flow links */
+        .cross-flow-link { display: flex; align-items: center; gap: 6px; padding: 6px 10px; background: var(--bg-tertiary); border-radius: 6px; font-size: 11px; cursor: pointer; transition: all 0.15s; }
+        .cross-flow-link:hover { background: var(--bg-elevated); }
+        .cross-flow-link svg { width: 12px; height: 12px; color: var(--accent); }
+        
+        /* Auto-layout button */
+        .auto-layout-btn { position: absolute; bottom: 10px; left: 10px; z-index: 10; }
+        
+        /* Sortable blocks in sidebar */
+        .block-list-item.dragging { opacity: 0.5; }
+        .block-list-item.drag-over { border-top: 2px solid var(--accent); }
+        
+        /* Button icon style */
+        .btn-icon { padding: 6px; min-width: auto; }
+        .btn-icon svg { margin: 0; }
 </style>
 </head>
 <body>
@@ -521,6 +617,8 @@
                 <span class="flow-selector-name" id="currentFlowName">Select analysis...</span>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="6 9 12 15 18 9"/></svg>
             </div>
+            <button class="btn btn-icon" id="flowSettingsBtn" title="Flow Settings" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg></button>
+            <button class="btn btn-icon" id="duplicateFlowBtn" title="Duplicate Flow" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
             <select class="form-input" id="flowEnvSelector" style="padding:6px 12px; font-size:11px; width:auto; border-radius:14px; background:var(--bg-tertiary); display:none; font-weight:500; cursor:pointer;">
                 <option value="exhibitor">🟢 Exhibitor</option>
                 <option value="organizer">🔵 Organizer</option>
@@ -529,6 +627,11 @@
                 <option value="other">⚪ Other</option>
             </select>
             <div class="header-divider"></div>
+            <div class="block-search-container">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" class="block-search-input" id="blockSearchInput" placeholder="Search blocks... (Ctrl+F)" />
+            </div>
+            <div class="header-divider" id="searchDivider" style="display:none;"></div>
             <div class="mode-toggle">
                 <button class="mode-btn active" id="sketchModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Sketch</button>
                 <button class="mode-btn" id="configureModeBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>Configure</button>
@@ -588,6 +691,7 @@
                             <span class="zoom-level" id="currentZoomLevel">100%</span>
                             <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -608,6 +712,7 @@
                             <span class="zoom-level" id="proposedZoomLevel">100%</span>
                             <button class="zoom-btn" data-action="in"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <button class="zoom-btn" data-action="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
                 </div>
@@ -740,8 +845,22 @@
                 <tr><td><strong>Ctrl+Z</strong></td><td>Undo</td></tr>
                 <tr><td><strong>Ctrl+Y</strong></td><td>Redo (also Ctrl+Shift+Z)</td></tr>
                 <tr><td><strong>Ctrl+S</strong></td><td>Save</td></tr>
-                <tr><td><strong>Delete</strong></td><td>Delete selected step</td></tr>
-                <tr><td><strong>Escape</strong></td><td>Cancel connection / Close modal</td></tr>
+                <tr><td><strong>Ctrl+F</strong></td><td>Search blocks</td></tr>
+                <tr><td><strong>Ctrl+A</strong></td><td>Select all blocks in active pane</td></tr>
+                <tr><td><strong>Shift+Click</strong></td><td>Multi-select blocks</td></tr>
+                <tr><td><strong>Delete</strong></td><td>Delete selected block(s)</td></tr>
+                <tr><td><strong>Escape</strong></td><td>Cancel / Close / Clear selection</td></tr>
+            </table>
+            
+            <h3>🚀 Advanced Features</h3>
+            <table class="help-table">
+                <tr><td><strong>Search Blocks</strong></td><td>Use the search bar or Ctrl+F to find blocks. Enter to cycle through matches.</td></tr>
+                <tr><td><strong>Multi-Select</strong></td><td>Shift+Click to select multiple blocks. Move or delete them together.</td></tr>
+                <tr><td><strong>Auto-Layout</strong></td><td>Click the grid icon in zoom controls to automatically arrange blocks.</td></tr>
+                <tr><td><strong>Duplicate Flow</strong></td><td>Use the copy icon in the header to duplicate the current flow.</td></tr>
+                <tr><td><strong>Cross-Flow Links</strong></td><td>Link related flows together in the panel's "Related Flows" section.</td></tr>
+                <tr><td><strong>Attachments</strong></td><td>Add screenshots or images to any block via the Attachments section.</td></tr>
+                <tr><td><strong>Block Reordering</strong></td><td>Drag blocks in the sidebar list to reorder them.</td></tr>
             </table>
         </div>
         
@@ -925,6 +1044,68 @@ PROCESS TO CONVERT:
         </div>
     </div></div></div>
     <input type="file" id="importFileInput" accept=".json,.md,.markdown,.txt" style="display:none;" />
+    <input type="file" id="attachmentFileInput" accept="image/*" multiple style="display:none;" />
+    
+    <!-- Flow Settings Modal -->
+    <div class="modal-overlay" id="flowSettingsModal"><div class="modal"><div class="modal-header"><span class="modal-title">Flow Settings</span><button class="modal-close" id="closeFlowSettingsModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+        <div class="flow-settings-grid">
+            <div class="form-group">
+                <label class="form-label">Flow Name</label>
+                <input type="text" class="form-input" id="flowSettingsName" placeholder="Flow name..." />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-input" id="flowSettingsDesc" rows="3" placeholder="Describe what this flow documents..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Environment</label>
+                <select class="form-input" id="flowSettingsEnv">
+                    <option value="exhibitor">🟢 Exhibitor</option>
+                    <option value="organizer">🔵 Organizer</option>
+                    <option value="ea">🟠 EA Exhibitions</option>
+                    <option value="valverde">🟣 Valverde</option>
+                    <option value="other">⚪ Other</option>
+                </select>
+            </div>
+            <div class="section-divider"><div class="section-title">Cross-Flow Links</div></div>
+            <div id="crossFlowLinksContainer"></div>
+            <button class="btn" id="addCrossFlowLinkBtn" style="margin-top:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Link to Another Flow</button>
+            <div class="section-divider"><div class="section-title">Metadata</div></div>
+            <div style="font-size:11px;color:var(--text-muted);">
+                <div style="margin-bottom:4px;">Created: <span id="flowSettingsCreated">-</span></div>
+                <div style="margin-bottom:4px;">Updated: <span id="flowSettingsUpdated">-</span></div>
+                <div>ID: <span id="flowSettingsId" style="font-family:monospace;">-</span></div>
+            </div>
+        </div>
+    </div><div class="modal-footer">
+        <button class="btn danger" id="deleteFlowSettingsBtn">Delete Flow</button>
+        <div style="flex:1;"></div>
+        <button class="btn" id="flowSettingsCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="saveFlowSettingsBtn">Save Changes</button>
+    </div></div></div>
+    
+    <!-- Cross-flow Link Modal -->
+    <div class="modal-overlay" id="crossflowModal"><div class="modal"><div class="modal-header"><span class="modal-title">Link to Another Flow</span><button class="modal-close" id="closeCrossflowModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+        <div class="form-group">
+            <label class="form-label">Select Flow to Link</label>
+            <select class="form-input" id="crossflowSelect"></select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Link Type</label>
+            <select class="form-input" id="crossflowType">
+                <option value="triggers">Triggers →</option>
+                <option value="triggered-by">← Triggered by</option>
+                <option value="related">↔ Related to</option>
+                <option value="subprocess">◇ Subprocess of</option>
+            </select>
+        </div>
+    </div><div class="modal-footer">
+        <button class="btn" id="crossflowCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="crossflowAddBtn">Add Link</button>
+    </div></div></div>
+    
+    <!-- Image Viewer -->
+    <div class="image-viewer" id="imageViewer"><img id="imageViewerImg" /></div>
     <div class="toast-container" id="toastContainer"></div>
     <script>
     const STEP_TYPES = {
@@ -983,6 +1164,17 @@ PROCESS TO CONVERT:
             this.authenticated = false;
             // Dashboard
             this.dashboardSearchTerm = '';
+            // Multi-select
+            this.multiSelectedBlocks = new Set();
+            this.multiSelectPane = null;
+            // Attachments
+            this.pendingAttachmentBlockId = null;
+            this.pendingAttachmentPane = null;
+            // Cross-flow links
+            this.pendingCrossflowBlockId = null;
+            this.pendingCrossflowPane = null;
+            // Block list drag
+            this.draggedBlockItem = null;
             this.initAuth();
         }
 
@@ -1444,8 +1636,9 @@ PROCESS TO CONVERT:
                     if (e.target === els.canvasArea || e.target.closest('.canvas-container')) {
                         if (this.isConnecting) {
                             this.cancelConnecting();
-                        } else {
+                        } else if (!e.shiftKey) {
                             this.selectBlock(null, paneId);
+                            this.clearMultiSelect();
                         }
                     }
                 });
@@ -1456,6 +1649,7 @@ PROCESS TO CONVERT:
                         if (action === 'in') this.setZoom(pane.zoom + 0.1, paneId);
                         else if (action === 'out') this.setZoom(pane.zoom - 0.1, paneId);
                         else if (action === 'fit') this.zoomToFit(paneId);
+                        else if (action === 'auto-layout') this.autoLayout(paneId);
                     });
                 });
             });
@@ -1473,12 +1667,73 @@ PROCESS TO CONVERT:
             document.getElementById('searchInput').addEventListener('input', e => this.filterBlocks(e.target.value));
             document.getElementById('undoBtn').addEventListener('click', () => this.undo());
             document.getElementById('redoBtn').addEventListener('click', () => this.redo());
+            
+            // Flow settings
+            document.getElementById('flowSettingsBtn')?.addEventListener('click', () => this.showFlowSettingsModal());
+            document.getElementById('closeFlowSettingsModal')?.addEventListener('click', () => this.hideModal('flowSettingsModal'));
+            document.getElementById('flowSettingsCancelBtn')?.addEventListener('click', () => this.hideModal('flowSettingsModal'));
+            document.getElementById('saveFlowSettingsBtn')?.addEventListener('click', () => this.saveFlowSettings());
+            document.getElementById('deleteFlowSettingsBtn')?.addEventListener('click', () => this.deleteCurrentFlow());
+            document.getElementById('addCrossFlowLinkBtn')?.addEventListener('click', () => this.showCrossflowModal());
+            
+            // Cross-flow modal
+            document.getElementById('closeCrossflowModal')?.addEventListener('click', () => this.hideModal('crossflowModal'));
+            document.getElementById('crossflowCancelBtn')?.addEventListener('click', () => this.hideModal('crossflowModal'));
+            document.getElementById('crossflowAddBtn')?.addEventListener('click', () => this.addCrossFlowLink());
+            
+            // Duplicate flow
+            document.getElementById('duplicateFlowBtn')?.addEventListener('click', () => this.duplicateFlow());
+            
+            // Block search
+            document.getElementById('blockSearchInput')?.addEventListener('input', e => this.searchBlocks(e.target.value));
+            document.getElementById('blockSearchInput')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter') this.jumpToNextSearchResult();
+                if (e.key === 'Escape') { e.target.value = ''; this.searchBlocks(''); e.target.blur(); }
+            });
+            
+            // Image viewer
+            document.getElementById('imageViewer')?.addEventListener('click', () => {
+                document.getElementById('imageViewer').classList.remove('show');
+            });
+            document.getElementById('crossFlowSearch')?.addEventListener('input', e => this.filterCrossFlowList(e.target.value));
+            
+            // Attachment preview
+            document.getElementById('attachmentPreview')?.addEventListener('click', () => {
+                document.getElementById('attachmentPreview').classList.remove('show');
+            });
+            document.getElementById('attachmentFileInput')?.addEventListener('change', e => this.handleAttachmentUpload(e));
+            
             document.addEventListener('keydown', e => {
-                if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) this.deleteSelectedBlock();
+                if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                    if (this.multiSelectedBlocks.size > 0) this.deleteMultiSelected();
+                    else this.deleteSelectedBlock();
+                }
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
                 if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); this.undo(); }
                 if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); this.redo(); }
-                if (e.key === 'Escape') { this.cancelConnecting(); this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.hideModal('helpModal'); this.selectBlock(null, this.activePane); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'f') { 
+                    e.preventDefault(); 
+                    const searchContainer = document.querySelector('.block-search-container');
+                    const searchInput = document.getElementById('blockSearchInput');
+                    if (searchContainer) searchContainer.style.display = 'flex';
+                    if (searchInput) { searchInput.focus(); searchInput.select(); }
+                }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) {
+                    e.preventDefault();
+                    this.selectAllBlocks();
+                }
+                if (e.key === 'Escape') { 
+                    this.cancelConnecting(); 
+                    this.clearMultiSelect();
+                    this.hideModal('flowModal'); 
+                    this.hideModal('exportModal'); 
+                    this.hideModal('validationModal'); 
+                    this.hideModal('importModal'); 
+                    this.hideModal('helpModal'); 
+                    this.hideModal('flowSettingsModal');
+                    this.hideModal('crossflowModal');
+                    this.selectBlock(null, this.activePane); 
+                }
             });
         }
 
@@ -1727,6 +1982,10 @@ PROCESS TO CONVERT:
                 envSelector.style.display = 'block';
                 envSelector.value = flow.environment || 'other';
             }
+            
+            // Show flow action buttons
+            document.getElementById('flowSettingsBtn').style.display = '';
+            document.getElementById('duplicateFlowBtn').style.display = '';
             
             setTimeout(() => { this.zoomToFit('current'); this.zoomToFit('proposed'); }, 100);
         }
@@ -2558,6 +2817,26 @@ PROCESS TO CONVERT:
                 html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>On Failure</div><input type="text" class="form-input" id="errorPathInput" value="${block.errorPath || ''}" placeholder="What happens when this fails? → Go to step X, Retry, Alert admin..." /><div class="form-hint">Where to go or what to do when this step fails</div></div>`;
                 html += `<div class="section-divider"><div class="section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12" style="margin-right:4px;"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>System Links</div><input type="text" class="form-input" id="systemLinkInput" value="${block.systemLink || ''}" placeholder="URL to screen, docs, or code..." /><div class="form-hint">Link to the actual screen, API endpoint, or documentation</div></div>`;
             }
+            // Attachments section (all modes)
+            const attachments = block.attachments || [];
+            html += `<div class="attachments-section">
+                <div class="attachments-header">
+                    <span class="attachments-title">Attachments</span>
+                    <button class="attachment-add-btn" id="addAttachmentBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="10" height="10"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add</button>
+                </div>
+                <div class="attachments-grid">
+                    ${attachments.map(att => `
+                        <div class="attachment-item" data-att-id="${att.id}">
+                            <img src="${att.data}" alt="${att.name}" />
+                            <div class="attachment-overlay">
+                                <button class="attachment-btn" data-action="view" title="View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button>
+                                <button class="attachment-btn danger" data-action="remove" title="Remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                            </div>
+                        </div>
+                    `).join('')}
+                    ${attachments.length === 0 ? '<div class="attachment-placeholder" id="attachmentPlaceholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>' : ''}
+                </div>
+            </div>`;
             html += `<div class="section-divider"><button class="btn" id="deleteBlockBtn" style="width:100%;justify-content:center;color:var(--red);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>Delete Step</button></div>`;
             return html;
         }
@@ -2594,6 +2873,21 @@ PROCESS TO CONVERT:
             content.querySelector('#validationInput')?.addEventListener('input', e => { block.validation = e.target.value; });
             content.querySelector('#errorPathInput')?.addEventListener('input', e => { block.errorPath = e.target.value; });
             content.querySelector('#systemLinkInput')?.addEventListener('input', e => { block.systemLink = e.target.value; });
+            
+            // Attachments
+            content.querySelector('#addAttachmentBtn')?.addEventListener('click', () => this.showAttachmentUpload(block.id, paneId));
+            content.querySelector('#attachmentPlaceholder')?.addEventListener('click', () => this.showAttachmentUpload(block.id, paneId));
+            content.querySelectorAll('.attachment-item').forEach(item => {
+                item.querySelector('[data-action="view"]')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    const att = (block.attachments || []).find(a => a.id === item.dataset.attId);
+                    if (att) this.showImageViewer(att.data);
+                });
+                item.querySelector('[data-action="remove"]')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    this.removeAttachment(block.id, paneId, item.dataset.attId);
+                });
+            });
         }
 
         getCommentsTabHtml(block) {
@@ -3284,13 +3578,73 @@ PROCESS TO CONVERT:
             const list = document.getElementById('blockList');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             let html = '';
-            const currentBlocks = Array.from(this.current.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm));
+            const currentBlocks = Array.from(this.current.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.y - b.y);
             if (currentBlocks.length) { html += '<div class="block-list-pane-label">Current</div>'; html += currentBlocks.map(b => this.getBlockListItemHtml(b, 'current')).join(''); }
-            const proposedBlocks = Array.from(this.proposed.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm));
+            const proposedBlocks = Array.from(this.proposed.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.y - b.y);
             if (proposedBlocks.length) { html += '<div class="block-list-pane-label">Proposed</div>'; html += proposedBlocks.map(b => this.getBlockListItemHtml(b, 'proposed')).join(''); }
             if (!html) html = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:10px;">No steps found</div>';
             list.innerHTML = html;
-            list.querySelectorAll('.block-list-item').forEach(item => item.addEventListener('click', () => { const paneId = item.dataset.pane; const block = this.getPane(paneId).blocks.get(item.dataset.id); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } }));
+            list.querySelectorAll('.block-list-item').forEach(item => {
+                item.addEventListener('click', () => { 
+                    const paneId = item.dataset.pane; 
+                    const block = this.getPane(paneId).blocks.get(item.dataset.id); 
+                    if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } 
+                });
+                // Drag and drop for reordering
+                item.draggable = true;
+                item.addEventListener('dragstart', e => {
+                    this.draggedBlockItem = { id: item.dataset.id, pane: item.dataset.pane };
+                    item.classList.add('dragging');
+                });
+                item.addEventListener('dragend', () => {
+                    item.classList.remove('dragging');
+                    document.querySelectorAll('.block-list-item.drag-over').forEach(el => el.classList.remove('drag-over'));
+                });
+                item.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if (this.draggedBlockItem?.pane === item.dataset.pane) {
+                        item.classList.add('drag-over');
+                    }
+                });
+                item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
+                item.addEventListener('drop', e => {
+                    e.preventDefault();
+                    item.classList.remove('drag-over');
+                    if (!this.draggedBlockItem || this.draggedBlockItem.pane !== item.dataset.pane) return;
+                    this.reorderBlocks(this.draggedBlockItem.id, item.dataset.id, item.dataset.pane);
+                });
+            });
+        }
+        
+        reorderBlocks(draggedId, targetId, paneId) {
+            if (draggedId === targetId) return;
+            const pane = this.getPane(paneId);
+            const draggedBlock = pane.blocks.get(draggedId);
+            const targetBlock = pane.blocks.get(targetId);
+            if (!draggedBlock || !targetBlock) return;
+            
+            this.saveState('reorder');
+            
+            // Get all blocks sorted by Y
+            const blocks = Array.from(pane.blocks.values()).sort((a, b) => a.y - b.y);
+            const draggedIdx = blocks.findIndex(b => b.id === draggedId);
+            const targetIdx = blocks.findIndex(b => b.id === targetId);
+            
+            // Remove dragged and insert at target position
+            blocks.splice(draggedIdx, 1);
+            blocks.splice(targetIdx, 0, draggedBlock);
+            
+            // Reassign Y positions
+            const startY = 100;
+            const gap = 140;
+            blocks.forEach((block, idx) => {
+                block.y = startY + idx * gap;
+                this.updateBlockElement(block, paneId);
+            });
+            
+            this.updateConnections(paneId);
+            this.updateBlockList();
+            this.updateMinimap();
         }
 
         getBlockListItemHtml(block, paneId) {
@@ -4113,6 +4467,10 @@ PROCESS TO CONVERT:
                             
                             html += `
                                 <div class="flow-card" data-flow-id="${flow.id}">
+                                    <div class="flow-card-actions">
+                                        <button class="flow-card-action" data-action="duplicate" title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
+                                        <button class="flow-card-action danger" data-action="delete" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
+                                    </div>
                                     <div class="flow-card-header">
                                         <div class="flow-card-name">${displayName}</div>
                                     </div>
@@ -4148,7 +4506,18 @@ PROCESS TO CONVERT:
             
             // Bind click events
             document.querySelectorAll('.flow-card[data-flow-id]').forEach(card => {
-                card.addEventListener('click', () => {
+                card.addEventListener('click', e => {
+                    // Check if action button was clicked
+                    const actionBtn = e.target.closest('[data-action]');
+                    if (actionBtn) {
+                        e.stopPropagation();
+                        const flowId = card.dataset.flowId;
+                        const action = actionBtn.dataset.action;
+                        if (action === 'duplicate') this.duplicateFlowById(flowId);
+                        else if (action === 'delete') this.deleteFlowFromDashboard(flowId);
+                        return;
+                    }
+                    
                     const flowId = card.dataset.flowId;
                     this.loadFlow(flowId, true);
                     this.hideDashboard();
@@ -4168,6 +4537,423 @@ PROCESS TO CONVERT:
             const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
+        }
+        
+        // ===== FLOW SETTINGS =====
+        showFlowSettingsModal() {
+            if (!this.currentFlowId) return;
+            const flow = this.driveFlows[this.currentFlowId];
+            if (!flow) return;
+            
+            document.getElementById('flowSettingsName').value = flow.name || '';
+            document.getElementById('flowSettingsDesc').value = flow.description || '';
+            document.getElementById('flowSettingsEnv').value = flow.environment || 'other';
+            document.getElementById('flowSettingsCreated').textContent = flow.createdAt ? new Date(flow.createdAt).toLocaleString() : '-';
+            document.getElementById('flowSettingsUpdated').textContent = flow.updatedAt ? new Date(flow.updatedAt).toLocaleString() : '-';
+            document.getElementById('flowSettingsId').textContent = flow.id || '-';
+            
+            this.renderCrossFlowLinks();
+            this.showModal('flowSettingsModal');
+        }
+        
+        saveFlowSettings() {
+            if (!this.currentFlowId) return;
+            const flow = this.driveFlows[this.currentFlowId];
+            if (!flow) return;
+            
+            flow.name = document.getElementById('flowSettingsName').value.trim() || 'Untitled';
+            flow.description = document.getElementById('flowSettingsDesc').value.trim();
+            flow.environment = document.getElementById('flowSettingsEnv').value;
+            flow.updatedAt = new Date().toISOString();
+            
+            this.saveToDrive(flow);
+            this.updateFlowSelector();
+            document.getElementById('flowEnvSelector').value = flow.environment;
+            this.hideModal('flowSettingsModal');
+            this.toast('Settings saved', 'success');
+        }
+        
+        deleteCurrentFlow() {
+            if (!this.currentFlowId) return;
+            if (!confirm('Delete this flow permanently?')) return;
+            this.deleteFlow(this.currentFlowId, true);
+            this.hideModal('flowSettingsModal');
+            this.showDashboard();
+        }
+        
+        // ===== DUPLICATE FLOW =====
+        async duplicateFlow() {
+            if (!this.currentFlowId) return;
+            await this.duplicateFlowById(this.currentFlowId);
+        }
+        
+        async duplicateFlowById(flowId) {
+            const flow = this.driveFlows[flowId];
+            if (!flow) return;
+            
+            const id = 'flow_' + Date.now();
+            const newFlow = JSON.parse(JSON.stringify(flow));
+            newFlow.id = id;
+            newFlow.name = (flow.name || 'Untitled') + ' (copy)';
+            newFlow.createdAt = new Date().toISOString();
+            newFlow.updatedAt = new Date().toISOString();
+            delete newFlow.driveFileId;
+            
+            this.driveFlows[id] = newFlow;
+            await this.saveToDrive(newFlow);
+            this.renderDashboard();
+            this.toast('Flow duplicated', 'success');
+        }
+        
+        deleteFlowFromDashboard(flowId) {
+            const flow = this.driveFlows[flowId];
+            if (!flow) return;
+            if (!confirm(`Delete "${flow.name}"?`)) return;
+            this.deleteFlow(flowId, true);
+            this.renderDashboard();
+        }
+        
+        // ===== BLOCK SEARCH =====
+        searchBlocks(term) {
+            this.blockSearchTerm = term.toLowerCase();
+            this.blockSearchResults = [];
+            this.blockSearchIndex = -1;
+            
+            // Clear previous highlights
+            document.querySelectorAll('.block.search-highlight').forEach(el => el.classList.remove('search-highlight'));
+            
+            if (!term) return;
+            
+            // Find matching blocks in both panes
+            ['current', 'proposed'].forEach(paneId => {
+                const pane = this.getPane(paneId);
+                pane.blocks.forEach(block => {
+                    const nameMatch = (block.name || '').toLowerCase().includes(term);
+                    const descMatch = (block.description || '').toLowerCase().includes(term);
+                    if (nameMatch || descMatch) {
+                        this.blockSearchResults.push({ block, paneId });
+                    }
+                });
+            });
+            
+            if (this.blockSearchResults.length > 0) {
+                this.jumpToNextSearchResult();
+            }
+        }
+        
+        jumpToNextSearchResult() {
+            if (this.blockSearchResults.length === 0) return;
+            
+            this.blockSearchIndex = (this.blockSearchIndex + 1) % this.blockSearchResults.length;
+            const result = this.blockSearchResults[this.blockSearchIndex];
+            
+            // Clear previous highlights
+            document.querySelectorAll('.block.search-highlight').forEach(el => el.classList.remove('search-highlight'));
+            
+            // Highlight and scroll to block
+            const blockEl = document.getElementById(result.block.id);
+            if (blockEl) {
+                blockEl.classList.add('search-highlight');
+                this.selectBlock(result.block.id, result.paneId);
+                this.centerOnBlock(result.block, result.paneId);
+            }
+            
+            this.toast(`Result ${this.blockSearchIndex + 1} of ${this.blockSearchResults.length}`, 'info');
+        }
+        
+        centerOnBlock(block, paneId) {
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            const rect = els.canvasArea.getBoundingClientRect();
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            pane.panX = centerX - (block.x + 100) * pane.zoom;
+            pane.panY = centerY - (block.y + 50) * pane.zoom;
+            
+            this.updateCanvasTransform(paneId);
+        }
+        
+        // ===== MULTI-SELECT =====
+        clearMultiSelect() {
+            this.multiSelectedBlocks.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('multi-selected');
+            });
+            this.multiSelectedBlocks.clear();
+        }
+        
+        toggleMultiSelect(blockId, paneId) {
+            const el = document.getElementById(blockId);
+            if (!el) return;
+            
+            if (this.multiSelectedBlocks.has(blockId)) {
+                this.multiSelectedBlocks.delete(blockId);
+                el.classList.remove('multi-selected');
+            } else {
+                this.multiSelectedBlocks.add(blockId);
+                this.multiSelectPane = paneId;
+                el.classList.add('multi-selected');
+            }
+        }
+        
+        selectAllBlocks() {
+            const paneId = this.activePane;
+            const pane = this.getPane(paneId);
+            
+            this.clearMultiSelect();
+            pane.blocks.forEach(block => {
+                this.multiSelectedBlocks.add(block.id);
+                const el = document.getElementById(block.id);
+                if (el) el.classList.add('multi-selected');
+            });
+            this.multiSelectPane = paneId;
+            this.toast(`Selected ${this.multiSelectedBlocks.size} blocks`, 'info');
+        }
+        
+        deleteMultiSelected() {
+            if (this.multiSelectedBlocks.size === 0) return;
+            if (!confirm(`Delete ${this.multiSelectedBlocks.size} selected blocks?`)) return;
+            
+            this.saveState('delete-multiple');
+            const paneId = this.multiSelectPane;
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            
+            this.multiSelectedBlocks.forEach(blockId => {
+                const el = document.getElementById(blockId);
+                if (el) el.remove();
+                pane.blocks.delete(blockId);
+                pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId);
+            });
+            
+            this.clearMultiSelect();
+            this.updateConnections(paneId);
+            this.updateBlockList();
+            this.updateMinimap();
+            this.renderPanel();
+            this.toast('Blocks deleted', 'success');
+        }
+        
+        // ===== CROSS-FLOW LINKS =====
+        renderCrossFlowLinks() {
+            const container = document.getElementById('crossFlowLinksContainer');
+            if (!container) return;
+            
+            const flow = this.driveFlows[this.currentFlowId];
+            const links = flow?.crossFlowLinks || [];
+            
+            if (links.length === 0) {
+                container.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px 0;">No linked flows</div>';
+                return;
+            }
+            
+            container.innerHTML = links.map((link, idx) => {
+                const linkedFlow = this.driveFlows[link.flowId];
+                const name = linkedFlow?.name || 'Unknown Flow';
+                const env = linkedFlow?.environment || 'other';
+                const envColors = { exhibitor: '🟢', organizer: '🔵', ea: '🟠', valverde: '🟣', other: '⚪' };
+                const typeLabels = { 'triggers': '→', 'triggered-by': '←', 'related': '↔', 'subprocess': '◇' };
+                return `
+                    <div class="crossflow-link" data-idx="${idx}">
+                        <span class="crossflow-link-icon">${typeLabels[link.type] || '↔'}</span>
+                        <span>${envColors[env] || '⚪'}</span>
+                        <span class="crossflow-link-name" data-flow-id="${link.flowId}">${this.escapeHtml(name)}</span>
+                        <button class="crossflow-link-remove" data-action="remove"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+                    </div>
+                `;
+            }).join('');
+            
+            container.querySelectorAll('.crossflow-link').forEach(el => {
+                el.querySelector('[data-action="remove"]')?.addEventListener('click', e => {
+                    e.stopPropagation();
+                    this.removeCrossFlowLink(parseInt(el.dataset.idx));
+                });
+                el.querySelector('.crossflow-link-name')?.addEventListener('click', () => {
+                    const flowId = el.querySelector('.crossflow-link-name').dataset.flowId;
+                    if (flowId && this.driveFlows[flowId]) {
+                        this.hideModal('flowSettingsModal');
+                        this.loadFlow(flowId, true);
+                    }
+                });
+            });
+        }
+        
+        showCrossflowModal() {
+            // Populate the select with available flows
+            const select = document.getElementById('crossflowSelect');
+            const flows = Object.values(this.driveFlows).filter(f => f.id !== this.currentFlowId);
+            const envColors = { exhibitor: '🟢', organizer: '🔵', ea: '🟠', valverde: '🟣', other: '⚪' };
+            
+            select.innerHTML = flows.length === 0 
+                ? '<option value="">No other flows available</option>'
+                : flows.map(f => `<option value="${f.id}">${envColors[f.environment || 'other']} ${this.escapeHtml(f.name || 'Untitled')}</option>`).join('');
+            
+            document.getElementById('crossflowType').value = 'related';
+            this.showModal('crossflowModal');
+        }
+        
+        addCrossFlowLink() {
+            const flowId = document.getElementById('crossflowSelect').value;
+            const type = document.getElementById('crossflowType').value;
+            
+            if (!flowId) {
+                this.toast('Please select a flow', 'error');
+                return;
+            }
+            
+            const flow = this.driveFlows[this.currentFlowId];
+            if (!flow) return;
+            
+            if (!flow.crossFlowLinks) flow.crossFlowLinks = [];
+            if (flow.crossFlowLinks.some(l => l.flowId === flowId)) {
+                this.toast('Flow already linked', 'error');
+                return;
+            }
+            
+            flow.crossFlowLinks.push({ flowId, type });
+            this.renderCrossFlowLinks();
+            this.hideModal('crossflowModal');
+            this.toast('Flow linked', 'success');
+        }
+        
+        removeCrossFlowLink(idx) {
+            const flow = this.driveFlows[this.currentFlowId];
+            if (!flow?.crossFlowLinks) return;
+            flow.crossFlowLinks.splice(idx, 1);
+            this.renderCrossFlowLinks();
+        }
+        
+        // ===== AUTO-LAYOUT =====
+        autoLayout(paneId) {
+            const pane = this.getPane(paneId);
+            if (pane.blocks.size === 0) return;
+            
+            this.saveState('auto-layout');
+            
+            // Build dependency graph from connections
+            const blocks = Array.from(pane.blocks.values());
+            const inDegree = new Map();
+            const children = new Map();
+            
+            blocks.forEach(b => {
+                inDegree.set(b.id, 0);
+                children.set(b.id, []);
+            });
+            
+            pane.connections.forEach(conn => {
+                if (pane.blocks.has(conn.from) && pane.blocks.has(conn.to)) {
+                    inDegree.set(conn.to, (inDegree.get(conn.to) || 0) + 1);
+                    children.get(conn.from)?.push(conn.to);
+                }
+            });
+            
+            // Topological sort with levels
+            const levels = [];
+            const assigned = new Set();
+            
+            while (assigned.size < blocks.length) {
+                const level = [];
+                blocks.forEach(b => {
+                    if (!assigned.has(b.id) && inDegree.get(b.id) === 0) {
+                        level.push(b.id);
+                    }
+                });
+                
+                if (level.length === 0) {
+                    // Handle cycles - just add remaining
+                    blocks.forEach(b => {
+                        if (!assigned.has(b.id)) level.push(b.id);
+                    });
+                }
+                
+                level.forEach(id => {
+                    assigned.add(id);
+                    children.get(id)?.forEach(childId => {
+                        inDegree.set(childId, (inDegree.get(childId) || 0) - 1);
+                    });
+                });
+                
+                levels.push(level);
+                if (level.length === 0) break;
+            }
+            
+            // Position blocks
+            const startX = 100;
+            const startY = 100;
+            const blockWidth = 200;
+            const blockHeight = 80;
+            const gapX = 80;
+            const gapY = 60;
+            
+            levels.forEach((level, levelIdx) => {
+                const levelWidth = level.length * (blockWidth + gapX) - gapX;
+                const offsetX = (levels.length > 1 && level.length > 1) ? -levelWidth / 2 + blockWidth / 2 : 0;
+                
+                level.forEach((blockId, idx) => {
+                    const block = pane.blocks.get(blockId);
+                    if (block) {
+                        block.x = startX + offsetX + idx * (blockWidth + gapX);
+                        block.y = startY + levelIdx * (blockHeight + gapY);
+                        this.updateBlockElement(block, paneId);
+                    }
+                });
+            });
+            
+            this.updateConnections(paneId);
+            this.updateMinimap();
+            this.zoomToFit(paneId);
+            this.toast('Layout applied', 'success');
+        }
+        
+        // ===== ATTACHMENTS =====
+        showAttachmentUpload(blockId, paneId) {
+            this.pendingAttachmentBlockId = blockId;
+            this.pendingAttachmentPane = paneId;
+            document.getElementById('attachmentFileInput').click();
+        }
+        
+        handleAttachmentUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const blockId = this.pendingAttachmentBlockId;
+            const paneId = this.pendingAttachmentPane;
+            const pane = this.getPane(paneId);
+            const block = pane?.blocks.get(blockId);
+            if (!block) return;
+            
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                if (!block.attachments) block.attachments = [];
+                block.attachments.push({
+                    id: 'att_' + Date.now(),
+                    name: file.name,
+                    type: file.type,
+                    data: evt.target.result
+                });
+                this.renderPanelContent();
+                this.updateBlockElement(block, paneId);
+                this.toast('Attachment added', 'success');
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        }
+        
+        removeAttachment(blockId, paneId, attachmentId) {
+            const pane = this.getPane(paneId);
+            const block = pane?.blocks.get(blockId);
+            if (!block?.attachments) return;
+            
+            block.attachments = block.attachments.filter(a => a.id !== attachmentId);
+            this.renderPanelContent();
+            this.updateBlockElement(block, paneId);
+        }
+        
+        showImageViewer(dataUrl) {
+            document.getElementById('imageViewerImg').src = dataUrl;
+            document.getElementById('imageViewer').classList.add('show');
         }
     }
 
