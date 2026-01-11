@@ -254,7 +254,7 @@
         .canvas-instructions svg { width: 36px; height: 36px; margin-bottom: 8px; opacity: 0.3; }
         .canvas-instructions p { font-size: 11px; line-height: 1.4; }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
         .modal-overlay.show { display: flex; }
         .modal { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 10px; width: 460px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
         .modal.lg { width: 640px; }
@@ -321,7 +321,7 @@
         .summary-stat-value.new { color: var(--cyan); }
         .summary-stat-label { font-size: 8px; color: var(--text-muted); text-transform: uppercase; }
 
-        .toast-container { position: fixed; bottom: 16px; right: 16px; z-index: 1001; }
+        .toast-container { position: fixed; bottom: 16px; right: 16px; z-index: 20000; }
         .toast { background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 10px 14px; margin-top: 6px; display: flex; align-items: center; gap: 8px; min-width: 200px; animation: slideIn 0.2s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .toast.success { border-left: 3px solid var(--green); }
@@ -392,7 +392,7 @@
         @keyframes spin { to { transform: rotate(360deg); } }
         
         /* Login Screen */
-        .login-screen { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+        .login-screen { position: fixed; inset: 0; background: var(--bg-primary); display: flex; align-items: center; justify-content: center; z-index: 15000; }
         .login-screen.hidden { display: none; }
         .login-box { text-align: center; max-width: 400px; padding: 40px; }
         .login-logo { font-size: 32px; font-weight: 700; margin-bottom: 8px; background: linear-gradient(135deg, var(--accent), var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
@@ -498,7 +498,8 @@
                 <input type="text" class="form-input" id="dashboardSearch" placeholder="Search flows..." style="max-width:400px; width:100%;" />
             </div>
             <div class="dashboard-actions">
-                <button class="btn" id="newFlowDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Flow</button>
+                <button class="btn" id="importDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
+                <button class="btn btn-primary" id="newFlowDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Flow</button>
                 <button class="btn" id="refreshDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Refresh</button>
             </div>
         </div>
@@ -1028,6 +1029,7 @@ PROCESS TO CONVERT:
         bindDashboardEvents() {
             document.getElementById('backToDashboard')?.addEventListener('click', () => this.showDashboard());
             document.getElementById('newFlowDashBtn')?.addEventListener('click', () => this.showModal('flowModal'));
+            document.getElementById('importDashBtn')?.addEventListener('click', () => document.getElementById('importFileInput').click());
             document.getElementById('refreshDashBtn')?.addEventListener('click', async () => {
                 try {
                     await this.loadDriveFlows();
@@ -1868,14 +1870,20 @@ PROCESS TO CONVERT:
             document.getElementById('importAllFlowsBtn').addEventListener('click', async () => {
                 this.hideModal('importModal');
                 let imported = 0;
+                let lastId = null;
                 for (const flow of flows) {
                     if (flow.current?.blocks?.length || flow.proposed?.blocks?.length) {
-                        await this.importFlowDirect(flow);
+                        lastId = await this.importFlowDirect(flow);
                         imported++;
                     }
                 }
                 this.toast(`Imported ${imported} flows`, 'success');
                 this.renderFlowList();
+                // Load the last imported flow and hide dashboard
+                if (lastId) {
+                    this.loadFlow(lastId, true);
+                    this.hideDashboard();
+                }
             });
             
             document.getElementById('cancelFlowPickerBtn').addEventListener('click', () => {
@@ -1891,6 +1899,7 @@ PROCESS TO CONVERT:
                 id,
                 name: data.name || 'Imported Flow',
                 description: data.description || '',
+                environment: data.environment || 'other',
                 current: { blocks: data.current?.blocks || [], connections: data.current?.connections || [] },
                 proposed: { blocks: data.proposed?.blocks || [], connections: data.proposed?.connections || [] },
                 issueFixLinks: data.issueFixLinks || [],
@@ -2323,10 +2332,12 @@ PROCESS TO CONVERT:
                 data.name = (data.name || 'Imported Flow') + ' (imported)';
                 data.createdAt = data.createdAt || new Date().toISOString();
                 data.updatedAt = new Date().toISOString();
+                data.environment = data.environment || 'other';
                 this.driveFlows[id] = data;
                 this.saveToDrive(data);
                 this.loadFlow(id, true);
                 this.hideModal('importModal');
+                this.hideDashboard();
                 this.toast('Flow imported', 'success');
             }
             
@@ -2368,7 +2379,8 @@ PROCESS TO CONVERT:
                     this.deleteFlow(item.dataset.id, true);
                 } else { 
                     this.loadFlow(item.dataset.id, true); 
-                    this.hideModal('flowModal'); 
+                    this.hideModal('flowModal');
+                    this.hideDashboard();
                 } 
             }));
         }
