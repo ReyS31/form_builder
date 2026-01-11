@@ -3442,10 +3442,10 @@ PROCESS TO CONVERT:
             // Sort blocks by y position
             const sortedBlocks = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0));
             
-            // Step type icons/labels
+            // Step type labels (no emoji - PDF fonts don't support them)
             const stepTypes = {
-                action: '⚡', decision: '◆', api: '🔗', email: '✉', 
-                form: '📝', data: '💾', delay: '⏱', webhook: '🔔'
+                action: 'ACT', decision: 'DEC', api: 'API', email: 'EML', 
+                form: 'FRM', data: 'DAT', delay: 'DLY', webhook: 'WHK'
             };
             
             let currentY = y;
@@ -3498,17 +3498,21 @@ PROCESS TO CONVERT:
                 pdf.setTextColor(255, 255, 255);
                 pdf.text(String(idx + 1), x + 6, currentY + blockHeight/2 + 1.5, { align: 'center' });
                 
-                // Step type indicator
-                const typeIcon = stepTypes[block.stepType] || '•';
-                pdf.setFontSize(8);
-                pdf.setTextColor(...colors.gray);
-                pdf.text(typeIcon, x + 14, currentY + blockHeight/2 + 1.5);
+                // Step type indicator (small label)
+                const typeLabel = stepTypes[block.stepType] || '';
+                if (typeLabel) {
+                    pdf.setFontSize(5);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text(typeLabel, x + 12, currentY + blockHeight/2 + 1);
+                }
                 
                 // Block name
                 pdf.setFontSize(9);
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(...colors.dark);
                 const nameMaxWidth = width - 50;
+                const nameX = typeLabel ? x + 24 : x + 14;
                 let name = block.name || 'Untitled';
                 if (pdf.getTextWidth(name) > nameMaxWidth) {
                     while (pdf.getTextWidth(name + '...') > nameMaxWidth && name.length > 0) {
@@ -3516,7 +3520,7 @@ PROCESS TO CONVERT:
                     }
                     name += '...';
                 }
-                pdf.text(name, x + 22, currentY + 7);
+                pdf.text(name, nameX, currentY + 7);
                 
                 // Description (truncated)
                 if (block.description) {
@@ -3530,7 +3534,7 @@ PROCESS TO CONVERT:
                         }
                         desc += '...';
                     }
-                    pdf.text(desc, x + 22, currentY + 13);
+                    pdf.text(desc, nameX, currentY + 13);
                 }
                 
                 // Issue/Change badge
@@ -3755,7 +3759,7 @@ PROCESS TO CONVERT:
                         pdf.setFontSize(7);
                         pdf.setFont('helvetica', 'normal');
                         pdf.setTextColor(...colors.dark);
-                        pdf.text(`${issue.name}  →  ${fix.name}`, x + 3, y + 4);
+                        pdf.text(`${issue.name}  -->  ${fix.name}`, x + 3, y + 4);
                         y += 6;
                     }
                 });
