@@ -5734,11 +5734,11 @@ PROCESS TO CONVERT:
             const blocks = Array.from(pane.blocks.values());
             const blockWidth = 260;
             const blockHeight = 120;
-            const gapX = 60;  // Horizontal gap
-            const gapY = 80;  // Vertical gap
+            const gapX = 40;  // Horizontal gap
+            const gapY = 60;  // Vertical gap
             const startX = 100;
             const startY = 80;
-            const maxPerRow = 5; // Maximum blocks per row
+            const blocksPerRow = 4; // Target blocks per row
             
             // Build connection graph
             const hasIncoming = new Set();
@@ -5761,24 +5761,14 @@ PROCESS TO CONVERT:
             });
             
             // Find root nodes (no incoming connections)
-            const roots = blocks.filter(b => !hasIncoming.has(b.id));
+            let roots = blocks.filter(b => !hasIncoming.has(b.id));
+            if (roots.length === 0) roots = [blocks[0]];
             
-            // If no clear roots, find nodes with no outgoing (possible entry points)
-            if (roots.length === 0) {
-                const isolated = blocks.filter(b => !hasOutgoing.has(b.id) && !hasIncoming.has(b.id));
-                if (isolated.length > 0) {
-                    roots.push(...isolated);
-                } else {
-                    // Just pick first block
-                    roots.push(blocks[0]);
-                }
-            }
-            
-            // Assign levels using BFS from roots
+            // Assign levels using BFS
             const blockLevel = new Map();
             const queue = [];
             
-            roots.forEach((b, i) => {
+            roots.forEach(b => {
                 blockLevel.set(b.id, 0);
                 queue.push(b.id);
             });
@@ -5787,8 +5777,7 @@ PROCESS TO CONVERT:
                 const blockId = queue.shift();
                 const level = blockLevel.get(blockId);
                 
-                const childIds = children.get(blockId) || [];
-                childIds.forEach(childId => {
+                (children.get(blockId) || []).forEach(childId => {
                     if (!blockLevel.has(childId)) {
                         blockLevel.set(childId, level + 1);
                         queue.push(childId);
@@ -5799,7 +5788,6 @@ PROCESS TO CONVERT:
             // Assign unvisited blocks
             blocks.forEach(b => {
                 if (!blockLevel.has(b.id)) {
-                    // Find if any parent has a level
                     const parentIds = parents.get(b.id) || [];
                     let maxParentLevel = -1;
                     parentIds.forEach(pid => {
@@ -5812,43 +5800,56 @@ PROCESS TO CONVERT:
             });
             
             // Group blocks by level
-            const levels = [];
+            const levelGroups = new Map();
             blocks.forEach(b => {
                 const level = blockLevel.get(b.id) || 0;
-                while (levels.length <= level) levels.push([]);
-                levels[level].push(b);
+                if (!levelGroups.has(level)) levelGroups.set(level, []);
+                levelGroups.get(level).push(b);
             });
             
-            // Split wide levels into multiple rows
-            const rows = [];
-            levels.forEach((level, levelIdx) => {
-                if (level.length <= maxPerRow) {
-                    rows.push({ blocks: level, originalLevel: levelIdx });
-                } else {
-                    // Split into multiple rows
-                    for (let i = 0; i < level.length; i += maxPerRow) {
-                        rows.push({ 
-                            blocks: level.slice(i, i + maxPerRow), 
-                            originalLevel: levelIdx 
-                        });
-                    }
-                }
-            });
+            // Check if flow is mostly linear (avg <1.5 blocks per level)
+            const maxLevel = Math.max(...blockLevel.values());
+            const avgBlocksPerLevel = blocks.length / (maxLevel + 1);
+            const isLinearFlow = avgBlocksPerLevel < 1.5;
             
-            // Position blocks - center each row
-            const maxRowWidth = maxPerRow * (blockWidth + gapX) - gapX;
-            
-            rows.forEach((row, rowIdx) => {
-                const rowWidth = row.blocks.length * (blockWidth + gapX) - gapX;
-                const offsetX = (maxRowWidth - rowWidth) / 2;
+            if (isLinearFlow && blocks.length > 6) {
+                // Use serpentine/grid layout for linear flows
+                // Arrange in rows of blocksPerRow, zigzagging
+                const sortedBlocks = [...blocks].sort((a, b) => 
+                    (blockLevel.get(a.id) || 0) - (blockLevel.get(b.id) || 0)
+                );
                 
-                row.blocks.forEach((block, idx) => {
-                    block.x = startX + offsetX + idx * (blockWidth + gapX);
-                    block.y = startY + rowIdx * (blockHeight + gapY);
+                sortedBlocks.forEach((block, idx) => {
+                    const row = Math.floor(idx / blocksPerRow);
+                    const col = idx % blocksPerRow;
+                    // Zigzag: even rows left-to-right, odd rows right-to-left
+                    const actualCol = row % 2 === 0 ? col : (blocksPerRow - 1 - col);
+                    
+                    block.x = startX + actualCol * (blockWidth + gapX);
+                    block.y = startY + row * (blockHeight + gapY);
                 });
-            });
+            } else {
+                // Use level-based layout for branching flows
+                const levels = [];
+                for (let i = 0; i <= maxLevel; i++) {
+                    levels.push(levelGroups.get(i) || []);
+                }
+                
+                // Position each level, centering blocks
+                const maxWidth = blocksPerRow * (blockWidth + gapX) - gapX;
+                
+                levels.forEach((level, levelIdx) => {
+                    const levelWidth = level.length * (blockWidth + gapX) - gapX;
+                    const offsetX = Math.max(0, (maxWidth - levelWidth) / 2);
+                    
+                    level.forEach((block, idx) => {
+                        block.x = startX + offsetX + idx * (blockWidth + gapX);
+                        block.y = startY + levelIdx * (blockHeight + gapY);
+                    });
+                });
+            }
             
-            // Clear all waypoints for cleaner bezier curves
+            // Clear all waypoints for clean bezier curves
             pane.connections.forEach(conn => {
                 conn.waypoints = [];
             });
