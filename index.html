@@ -131,6 +131,16 @@
         .header-spacer { flex: 1; }
         .header-actions { display: flex; align-items: center; gap: 4px; }
         
+        /* View toggle in header */
+        .view-toggle-header { display: flex; align-items: center; background: var(--bg-tertiary); border-radius: var(--radius-sm); padding: 2px; gap: 2px; }
+        .view-btn-sm { display: flex; align-items: center; justify-content: center; width: 28px; height: 26px; border: none; background: transparent; color: var(--text-muted); border-radius: 4px; cursor: pointer; transition: all var(--transition); }
+        .view-btn-sm:hover { background: var(--bg-hover); color: var(--text-primary); }
+        .view-btn-sm.active { background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .view-btn-sm .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .view-btn-sm .dot.current { background: var(--orange); }
+        .view-btn-sm .dot.proposed { background: var(--green); }
+        .view-btn-sm svg { width: 14px; height: 14px; }
+        
         /* Mode toggle - simplified */
         .mode-toggle {
             display: flex;
@@ -401,8 +411,7 @@
         .pane-indicator.current { background: var(--orange); }
         .pane-indicator.proposed { background: var(--green); }
         
-        .pane-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
-        .pane-header:hover .pane-actions { opacity: 1; }
+        .pane-actions { display: flex; gap: 4px; }
         .pane-btn {
             font-family: inherit;
             font-size: 10px;
@@ -894,8 +903,7 @@
         .pane-indicator { width: 6px; height: 6px; border-radius: 50%; }
         .pane-indicator.current { background: var(--orange); }
         .pane-indicator.proposed { background: var(--green); }
-        .pane-actions { display: flex; gap: 4px; opacity: 0; transition: opacity var(--transition); }
-        .pane-header:hover .pane-actions { opacity: 1; }
+        .pane-actions { display: flex; gap: 4px; }
         .pane-btn { font-family: inherit; font-size: 10px; font-weight: 500; padding: 5px 10px; border-radius: 4px; border: 1px solid var(--border-subtle); background: var(--bg-tertiary); color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 4px; transition: all var(--transition); }
         .pane-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
         .pane-btn.primary { background: var(--accent); border-color: var(--accent); color: white; }
@@ -1433,6 +1441,12 @@
                 <button class="icon-btn" id="exportBtn" title="Export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
                 <button class="icon-btn" id="helpBtn" title="Help & Shortcuts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></button>
                 <div class="header-divider"></div>
+                <div class="view-toggle-header">
+                    <button class="view-btn-sm" id="viewCurrentBtn" title="Current State Only"><span class="dot current"></span></button>
+                    <button class="view-btn-sm active" id="viewSplitBtn" title="Split View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg></button>
+                    <button class="view-btn-sm" id="viewProposedBtn" title="Proposed State Only"><span class="dot proposed"></span></button>
+                </div>
+                <div class="header-divider"></div>
                 <button class="btn btn-primary" id="saveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/></svg>Save</button>
                 <div class="google-auth" id="googleAuth">
                     <img class="user-avatar" id="googleUserPhoto" title="Account" />
@@ -1492,11 +1506,6 @@
             </aside>
             
             <div class="canvas-wrapper">
-                <div class="view-toggle">
-                    <button class="view-btn" id="viewCurrentBtn" title="Current State Only"><span class="dot current"></span>Current Only</button>
-                    <button class="view-btn active" id="viewSplitBtn" title="Split View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Split View</button>
-                    <button class="view-btn" id="viewProposedBtn" title="Proposed State Only"><span class="dot proposed"></span>Proposed Only</button>
-                </div>
                 <div class="canvas-split" id="canvasSplit">
                 <div class="canvas-pane" id="currentPane">
                     <div class="pane-header">
