@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowBuilder Pro - Process Analysis</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --bg-primary: #0a0b0d; --bg-secondary: #111318; --bg-tertiary: #1a1d24; --bg-elevated: #22262f;
             --border-subtle: #2a2f3a; --border-default: #3d444d;
             --text-primary: #e6edf3; --text-secondary: #8b949e; --text-muted: #6e7681;
-            --accent: #3b82f6; --accent-hover: #2563eb;
-            --green: #22c55e; --green-dim: rgba(34, 197, 94, 0.15);
-            --orange: #f97316; --orange-dim: rgba(249, 115, 22, 0.15);
+            --accent: #3b82f6; --accent-hover: #2563eb; --accent-bg: rgba(59, 130, 246, 0.15);
+            --green: #22c55e; --green-dim: rgba(34, 197, 94, 0.15); --green-bg: rgba(34, 197, 94, 0.15);
+            --orange: #f97316; --orange-dim: rgba(249, 115, 22, 0.15); --orange-bg: rgba(249, 115, 22, 0.15);
             --red: #ef4444; --red-dim: rgba(239, 68, 68, 0.15);
             --purple: #a855f7; --purple-dim: rgba(168, 85, 247, 0.15);
             --cyan: #06b6d4; --cyan-dim: rgba(6, 182, 212, 0.15);
@@ -449,6 +450,8 @@
                     <div class="google-user" id="googleUser"><img id="googleUserPhoto" /><span id="googleUserName"></span></div>
                 </div>
                 <div class="header-divider"></div>
+                <button class="btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 015 5v2"/><polyline points="3 10 7 6"/><polyline points="3 10 7 14"/></svg></button>
+                <button class="btn" id="redoBtn" title="Redo (Ctrl+Y)" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10H11a5 5 0 00-5 5v2"/><polyline points="21 10 17 6"/><polyline points="21 10 17 14"/></svg></button>
                 <button class="btn" id="helpBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Help</button>
                 <button class="btn" id="validateBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>Validate</button>
                 <button class="btn" id="exportBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
@@ -531,7 +534,20 @@
         </main>
     </div>
     <div class="modal-overlay" id="flowModal"><div class="modal"><div class="modal-header"><span class="modal-title">Process Analyses</span><button class="modal-close" id="closeFlowModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div id="localFlowsSection"><div class="form-group"><label class="form-label">Create New</label><div class="form-row"><input type="text" class="form-input" id="newFlowName" placeholder="Process name..." /><button class="btn btn-primary" id="createFlowBtn" style="flex-shrink:0;">Create</button></div></div><div class="section-divider"><div class="section-title">Templates</div><div class="template-grid" id="templateGrid"></div></div><div class="section-divider"><div class="section-title">Recent (Google Drive)</div><div class="flow-list" id="flowList"></div></div></div></div><div class="modal-footer"><span class="saving-indicator" id="savingIndicator"><span class="spinner"></span>Saving...</span><button class="btn" id="importFlowBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button></div></div></div>
-    <div class="modal-overlay" id="exportModal"><div class="modal"><div class="modal-header"><span class="modal-title">Export Analysis</span><button class="modal-close" id="closeExportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body"><div class="export-options"><div class="export-option" data-export="json"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">JSON Data</div><div class="export-option-desc">Full data export for backup or import</div></div></div><div class="export-option" data-export="report"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="export-option-info"><div class="export-option-name">Change Report (HTML)</div><div class="export-option-desc">Detailed report of all issues and fixes</div></div></div><div class="export-option" data-export="summary"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="export-option-info"><div class="export-option-name">Executive Summary</div><div class="export-option-desc">High-level overview for stakeholders</div></div></div><div class="export-option" data-export="print"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg></div><div class="export-option-info"><div class="export-option-name">Print View</div><div class="export-option-desc">Print-friendly layout</div></div></div></div></div></div></div>
+    <div class="modal-overlay" id="exportModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Export Analysis</span><button class="modal-close" id="closeExportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+        <div class="section-title">PDF Export</div>
+        <div class="export-options">
+            <div class="export-option" data-export="pdf-current"><div class="export-option-icon" style="background:var(--orange-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">Current State (PDF)</div><div class="export-option-desc">Export the AS-IS process flow</div></div></div>
+            <div class="export-option" data-export="pdf-proposed"><div class="export-option-icon" style="background:var(--green-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">Proposed State (PDF)</div><div class="export-option-desc">Export the TO-BE process flow</div></div></div>
+            <div class="export-option" data-export="pdf-comparison"><div class="export-option-icon" style="background:var(--accent-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="2" y="3" width="8" height="18" rx="1"/><rect x="14" y="3" width="8" height="18" rx="1"/></svg></div><div class="export-option-info"><div class="export-option-name">Comparison (PDF)</div><div class="export-option-desc">Both flows side by side with change summary</div></div></div>
+        </div>
+        <div class="section-divider"><div class="section-title">Data Export</div></div>
+        <div class="export-options">
+            <div class="export-option" data-export="json"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div><div class="export-option-info"><div class="export-option-name">JSON Data</div><div class="export-option-desc">Full data export for backup or import</div></div></div>
+            <div class="export-option" data-export="report"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="export-option-info"><div class="export-option-name">Change Report (HTML)</div><div class="export-option-desc">Detailed report of all issues and fixes</div></div></div>
+            <div class="export-option" data-export="summary"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="export-option-info"><div class="export-option-name">Executive Summary</div><div class="export-option-desc">High-level overview for stakeholders</div></div></div>
+        </div>
+    </div></div></div>
     <div class="modal-overlay" id="validationModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Validation Results</span><button class="modal-close" id="closeValidationModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="validationModalBody"></div></div></div>
     <div class="modal-overlay" id="importModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Import Analysis</span><button class="modal-close" id="closeImportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="importModalBody"></div><div class="modal-footer" id="importModalFooter"></div></div></div>
     <div class="modal-overlay" id="helpModal"><div class="modal xl"><div class="modal-header"><span class="modal-title">FlowBuilder Pro - User Guide</span><button class="modal-close" id="closeHelpModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body help-content">
@@ -571,6 +587,13 @@
                 <tr><td><strong>Remove bend</strong></td><td>Double-click the waypoint circle</td></tr>
                 <tr><td><strong>Delete connection</strong></td><td>Right-click on the connection line</td></tr>
             </table>
+            
+            <h3>📌 Output Ports</h3>
+            <table class="help-table">
+                <tr><td><strong>Add port</strong></td><td>Click the dashed + circle on the block</td></tr>
+                <tr><td><strong>Delete port</strong></td><td>Right-click on an output port (removes port and its connections)</td></tr>
+            </table>
+            <p>Decision blocks typically need 2+ output ports for different branches (Yes/No, Success/Error).</p>
             
             <h3>🔍 Navigation</h3>
             <table class="help-table">
@@ -613,8 +636,19 @@
                 <tr><td><strong>Promote</strong></td><td>Replaces Current with Proposed (when changes are implemented)</td></tr>
             </table>
             
+            <h3>📄 Export Options</h3>
+            <table class="help-table">
+                <tr><td><strong>Current PDF</strong></td><td>Export AS-IS flow with all step details</td></tr>
+                <tr><td><strong>Proposed PDF</strong></td><td>Export TO-BE flow with all step details</td></tr>
+                <tr><td><strong>Comparison PDF</strong></td><td>Side-by-side view with change summary</td></tr>
+                <tr><td><strong>JSON</strong></td><td>Full data backup for re-import</td></tr>
+                <tr><td><strong>HTML Report</strong></td><td>Detailed issues and fixes report</td></tr>
+            </table>
+            
             <h3>⌨️ Keyboard Shortcuts</h3>
             <table class="help-table">
+                <tr><td><strong>Ctrl+Z</strong></td><td>Undo</td></tr>
+                <tr><td><strong>Ctrl+Y</strong></td><td>Redo (also Ctrl+Shift+Z)</td></tr>
                 <tr><td><strong>Ctrl+S</strong></td><td>Save</td></tr>
                 <tr><td><strong>Delete</strong></td><td>Delete selected step</td></tr>
                 <tr><td><strong>Escape</strong></td><td>Cancel connection / Close modal</td></tr>
@@ -843,6 +877,11 @@ PROCESS TO CONVERT:
             this.isConnecting = false;
             this.issueFixLinks = [];
             this.versionHistory = [];
+            // Undo/Redo
+            this.undoStack = [];
+            this.redoStack = [];
+            this.maxHistorySize = 50;
+            this.isUndoRedo = false; // Flag to prevent saving state during undo/redo
             // Google Drive
             this.googleUser = null;
             this.driveFlows = {};
@@ -1305,9 +1344,13 @@ PROCESS TO CONVERT:
             document.getElementById('closeImportModal').addEventListener('click', () => this.hideModal('importModal'));
             document.getElementById('saveBtn').addEventListener('click', () => this.saveCurrentFlow());
             document.getElementById('searchInput').addEventListener('input', e => this.filterBlocks(e.target.value));
+            document.getElementById('undoBtn').addEventListener('click', () => this.undo());
+            document.getElementById('redoBtn').addEventListener('click', () => this.redo());
             document.addEventListener('keydown', e => {
                 if (e.key === 'Delete' && this.selectedBlock && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) this.deleteSelectedBlock();
                 if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); this.saveCurrentFlow(); }
+                if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) { e.preventDefault(); this.undo(); }
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.key === 'z' && e.shiftKey))) { e.preventDefault(); this.redo(); }
                 if (e.key === 'Escape') { this.cancelConnecting(); this.hideModal('flowModal'); this.hideModal('exportModal'); this.hideModal('validationModal'); this.hideModal('importModal'); this.hideModal('helpModal'); this.selectBlock(null, this.activePane); }
             });
         }
@@ -1323,6 +1366,150 @@ PROCESS TO CONVERT:
 
         loadFlows() { const saved = localStorage.getItem('fb_pro_flows'); this.flows = saved ? JSON.parse(saved) : {}; }
         saveFlows() { localStorage.setItem('fb_pro_flows', JSON.stringify(this.flows)); }
+
+        // Undo/Redo functionality
+        saveState(action = 'change') {
+            if (this.isUndoRedo) return; // Don't save during undo/redo operations
+            
+            // Create a snapshot of current state
+            const state = {
+                action,
+                timestamp: Date.now(),
+                current: {
+                    blocks: Array.from(this.current.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.current.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                proposed: {
+                    blocks: Array.from(this.proposed.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.proposed.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                issueFixLinks: this.issueFixLinks.map(l => ({ ...l })),
+                selectedBlockId: this.selectedBlock?.id,
+                activePane: this.activePane
+            };
+            
+            this.undoStack.push(state);
+            
+            // Limit history size
+            if (this.undoStack.length > this.maxHistorySize) {
+                this.undoStack.shift();
+            }
+            
+            // Clear redo stack when new action is performed
+            this.redoStack = [];
+            
+            this.updateUndoRedoButtons();
+        }
+        
+        restoreState(state) {
+            // Restore current pane
+            this.current.blocks.clear();
+            state.current.blocks.forEach(([id, block]) => this.current.blocks.set(id, { ...block }));
+            this.current.connections = state.current.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }));
+            
+            // Restore proposed pane
+            this.proposed.blocks.clear();
+            state.proposed.blocks.forEach(([id, block]) => this.proposed.blocks.set(id, { ...block }));
+            this.proposed.connections = state.proposed.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }));
+            
+            // Restore issue-fix links
+            this.issueFixLinks = state.issueFixLinks.map(l => ({ ...l }));
+            
+            // Re-render everything
+            this.renderBlocks('current');
+            this.renderBlocks('proposed');
+            this.updateConnections('current');
+            this.updateConnections('proposed');
+            this.updateInstructions();
+            this.updateBlockList();
+            this.updateMinimap();
+            this.updateValidation();
+            
+            // Restore selection
+            if (state.selectedBlockId) {
+                const block = this.getPane(state.activePane).blocks.get(state.selectedBlockId);
+                if (block) {
+                    this.selectBlock(block, state.activePane);
+                } else {
+                    this.selectBlock(null, state.activePane);
+                }
+            } else {
+                this.selectBlock(null, this.activePane);
+            }
+        }
+        
+        undo() {
+            if (this.undoStack.length === 0) return;
+            
+            // Save current state to redo stack before undoing
+            const currentState = {
+                action: 'before-undo',
+                timestamp: Date.now(),
+                current: {
+                    blocks: Array.from(this.current.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.current.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                proposed: {
+                    blocks: Array.from(this.proposed.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.proposed.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                issueFixLinks: this.issueFixLinks.map(l => ({ ...l })),
+                selectedBlockId: this.selectedBlock?.id,
+                activePane: this.activePane
+            };
+            this.redoStack.push(currentState);
+            
+            // Pop and restore the previous state
+            const prevState = this.undoStack.pop();
+            this.isUndoRedo = true;
+            this.restoreState(prevState);
+            this.isUndoRedo = false;
+            
+            this.updateUndoRedoButtons();
+            this.toast('Undo', 'info');
+        }
+        
+        redo() {
+            if (this.redoStack.length === 0) return;
+            
+            // Save current state to undo stack before redoing
+            const currentState = {
+                action: 'before-redo',
+                timestamp: Date.now(),
+                current: {
+                    blocks: Array.from(this.current.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.current.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                proposed: {
+                    blocks: Array.from(this.proposed.blocks.entries()).map(([id, block]) => [id, { ...block }]),
+                    connections: this.proposed.connections.map(c => ({ ...c, waypoints: c.waypoints ? [...c.waypoints] : undefined }))
+                },
+                issueFixLinks: this.issueFixLinks.map(l => ({ ...l })),
+                selectedBlockId: this.selectedBlock?.id,
+                activePane: this.activePane
+            };
+            this.undoStack.push(currentState);
+            
+            // Pop and restore the redo state
+            const redoState = this.redoStack.pop();
+            this.isUndoRedo = true;
+            this.restoreState(redoState);
+            this.isUndoRedo = false;
+            
+            this.updateUndoRedoButtons();
+            this.toast('Redo', 'info');
+        }
+        
+        updateUndoRedoButtons() {
+            document.getElementById('undoBtn').disabled = this.undoStack.length === 0;
+            document.getElementById('redoBtn').disabled = this.redoStack.length === 0;
+        }
+        
+        clearHistory() {
+            this.undoStack = [];
+            this.redoStack = [];
+            this.updateUndoRedoButtons();
+        }
 
         async createFlow(templateId = 'blank') {
             const nameInput = document.getElementById('newFlowName');
@@ -1402,6 +1589,7 @@ PROCESS TO CONVERT:
             this.updateMinimap();
             this.updateValidation();
             this.updateInstructions();
+            this.clearHistory(); // Clear undo/redo history when loading a new flow
             setTimeout(() => { this.zoomToFit('current'); this.zoomToFit('proposed'); }, 100);
         }
 
@@ -2281,6 +2469,7 @@ PROCESS TO CONVERT:
 
         addBlock(paneId) {
             if (!this.currentFlowId) { this.showFlowModal(); return; }
+            this.saveState('add-block');
             const pane = this.getPane(paneId);
             const els = this.getPaneElements(paneId);
             const rect = els.canvasArea.getBoundingClientRect();
@@ -2342,7 +2531,8 @@ PROCESS TO CONVERT:
                 if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return; 
                 e.stopPropagation(); 
                 this.isDragging = true; 
-                this.dragBlock = block; 
+                this.dragBlock = block;
+                this.dragStartPos = { x: block.x, y: block.y }; // Track original position
                 this.dragPane = paneId; 
                 const rect = el.getBoundingClientRect(); 
                 this.dragOffset = { x: (e.clientX - rect.left) / pane.zoom, y: (e.clientY - rect.top) / pane.zoom }; 
@@ -2359,15 +2549,48 @@ PROCESS TO CONVERT:
                 this.selectBlock(block, paneId); 
             });
             // Click on output port to START connection
-            el.querySelectorAll('.port-out').forEach(port => port.addEventListener('click', e => { 
-                e.stopPropagation(); 
-                // If already connecting from this port, cancel
-                if (this.isConnecting && this.connectingFrom.id === block.id && this.connectingPortIndex === (parseInt(port.dataset.index) || 0)) {
-                    this.cancelConnecting();
-                    return;
-                }
-                this.startConnecting(block, paneId, parseInt(port.dataset.index) || 0);
-            }));
+            el.querySelectorAll('.port-out').forEach(port => {
+                port.addEventListener('click', e => { 
+                    e.stopPropagation(); 
+                    // If already connecting from this port, cancel
+                    if (this.isConnecting && this.connectingFrom.id === block.id && this.connectingPortIndex === (parseInt(port.dataset.index) || 0)) {
+                        this.cancelConnecting();
+                        return;
+                    }
+                    this.startConnecting(block, paneId, parseInt(port.dataset.index) || 0);
+                });
+                // Right-click to delete output port
+                port.addEventListener('contextmenu', e => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const portIndex = parseInt(port.dataset.index) || 0;
+                    const numOutputs = block.outputs || 1;
+                    
+                    if (numOutputs <= 1) {
+                        this.toast('Cannot delete the last output port', 'error');
+                        return;
+                    }
+                    
+                    this.saveState('delete-port');
+                    
+                    // Delete connections from this port
+                    const pane = this.getPane(paneId);
+                    pane.connections = pane.connections.filter(c => !(c.from === block.id && c.portIndex === portIndex));
+                    
+                    // Adjust port indices for connections from higher-indexed ports
+                    pane.connections.forEach(c => {
+                        if (c.from === block.id && c.portIndex > portIndex) {
+                            c.portIndex--;
+                        }
+                    });
+                    
+                    // Reduce output count
+                    block.outputs = numOutputs - 1;
+                    this.updateBlockElement(block, paneId);
+                    this.updateConnections(paneId);
+                    this.toast('Output port deleted', 'success');
+                });
+            });
             // Click on input port to COMPLETE connection
             el.querySelector('.port-in')?.addEventListener('click', e => { 
                 e.stopPropagation(); 
@@ -2376,7 +2599,7 @@ PROCESS TO CONVERT:
                     this.cancelConnecting();
                 }
             });
-            el.querySelector('.add-output')?.addEventListener('click', e => { e.stopPropagation(); block.outputs = (block.outputs || 1) + 1; this.updateBlockElement(block, paneId); this.updateConnections(paneId); });
+            el.querySelector('.add-output')?.addEventListener('click', e => { e.stopPropagation(); this.saveState('add-port'); block.outputs = (block.outputs || 1) + 1; this.updateBlockElement(block, paneId); this.updateConnections(paneId); });
         }
         
         startConnecting(block, paneId, portIndex) {
@@ -2424,9 +2647,9 @@ PROCESS TO CONVERT:
 
         updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
         selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(block.id)?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
-        deleteSelectedBlock() { if (!this.selectedBlock) return; const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
+        deleteSelectedBlock() { if (!this.selectedBlock) return; this.saveState('delete-block'); const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
 
-        createConnection(fromId, portIndex, toId, paneId) { const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId, label: '' }); this.updateConnections(paneId); this.updateValidation(); }
+        createConnection(fromId, portIndex, toId, paneId) { this.saveState('create-connection'); const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId, label: '' }); this.updateConnections(paneId); this.updateValidation(); }
 
         updateConnections(paneId) {
             const pane = this.getPane(paneId);
@@ -2437,6 +2660,23 @@ PROCESS TO CONVERT:
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             defs.innerHTML = `<marker id="arrowhead-${paneId}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="connection-arrow"/></marker>`;
             els.connectionsSvg.appendChild(defs);
+            
+            // Get all block rectangles for collision detection
+            const blockRects = [];
+            pane.blocks.forEach((block, id) => {
+                const el = document.getElementById(id);
+                if (el) {
+                    blockRects.push({
+                        id: id,
+                        x: block.x,
+                        y: block.y,
+                        width: el.offsetWidth || 200,
+                        height: el.offsetHeight || 80,
+                        right: block.x + (el.offsetWidth || 200),
+                        bottom: block.y + (el.offsetHeight || 80)
+                    });
+                }
+            });
             
             pane.connections.forEach(conn => {
                 const fromEl = document.getElementById(conn.from);
@@ -2457,24 +2697,23 @@ PROCESS TO CONVERT:
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 group.classList.add('connection-group');
                 
-                // Get waypoints or use defaults
-                const waypoints = conn.waypoints || [];
+                // Get manual waypoints
+                const manualWaypoints = conn.waypoints || [];
+                
+                // Calculate path waypoints (manual or auto-route around obstacles)
+                let pathWaypoints = manualWaypoints.length > 0 
+                    ? manualWaypoints 
+                    : this.calculateSmartRoute(x1, y1, x2, y2, conn.from, conn.to, blockRects);
                 
                 // Build path with waypoints
                 let pathD;
-                if (waypoints.length === 0) {
-                    // Default bezier curve
+                if (pathWaypoints.length === 0) {
+                    // Simple bezier curve (no obstacles)
                     pathD = `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.5} ${x2},${y2 - Math.abs(y2-y1)*0.5} ${x2},${y2}`;
                 } else {
-                    // Path through waypoints
-                    const points = [{x: x1, y: y1}, ...waypoints, {x: x2, y: y2}];
-                    pathD = `M${points[0].x},${points[0].y}`;
-                    for (let i = 1; i < points.length; i++) {
-                        const p0 = points[i - 1];
-                        const p1 = points[i];
-                        const midY = (p0.y + p1.y) / 2;
-                        pathD += ` C${p0.x},${midY} ${p1.x},${midY} ${p1.x},${p1.y}`;
-                    }
+                    // Path through waypoints with smooth curves
+                    const points = [{x: x1, y: y1}, ...pathWaypoints, {x: x2, y: y2}];
+                    pathD = this.buildSmoothPath(points);
                 }
                 
                 // Hit area (invisible wider path for easier clicking) - add first so it's behind
@@ -2495,16 +2734,16 @@ PROCESS TO CONVERT:
                 path.style.pointerEvents = 'none'; // Let hitArea handle events
                 group.appendChild(path);
                 
-                // Label position
+                // Label position - use path waypoints for positioning
                 let midX, midY;
-                if (waypoints.length > 0) {
-                    const midIdx = Math.floor(waypoints.length / 2);
-                    if (waypoints.length % 2 === 0) {
-                        midX = (waypoints[midIdx - 1].x + waypoints[midIdx].x) / 2;
-                        midY = (waypoints[midIdx - 1].y + waypoints[midIdx].y) / 2;
+                if (pathWaypoints.length > 0) {
+                    const midIdx = Math.floor(pathWaypoints.length / 2);
+                    if (pathWaypoints.length % 2 === 0) {
+                        midX = (pathWaypoints[midIdx - 1].x + pathWaypoints[midIdx].x) / 2;
+                        midY = (pathWaypoints[midIdx - 1].y + pathWaypoints[midIdx].y) / 2;
                     } else {
-                        midX = waypoints[midIdx].x;
-                        midY = waypoints[midIdx].y;
+                        midX = pathWaypoints[midIdx].x;
+                        midY = pathWaypoints[midIdx].y;
                     }
                 } else {
                     midX = (x1 + x2) / 2;
@@ -2539,7 +2778,8 @@ PROCESS TO CONVERT:
                 label.addEventListener('click', e => {
                     e.stopPropagation();
                     const newLabel = prompt('Connection label (e.g., Yes, No, Success, Error):', conn.label || '');
-                    if (newLabel !== null) {
+                    if (newLabel !== null && newLabel !== conn.label) {
+                        this.saveState('edit-label');
                         conn.label = newLabel;
                         this.updateConnections(paneId);
                     }
@@ -2548,6 +2788,7 @@ PROCESS TO CONVERT:
                 // Double-click on hitArea to add waypoint
                 hitArea.addEventListener('dblclick', e => {
                     e.stopPropagation();
+                    this.saveState('add-waypoint');
                     const rect = els.canvas.getBoundingClientRect();
                     const wx = (e.clientX - rect.left) / pane.zoom;
                     const wy = (e.clientY - rect.top) / pane.zoom;
@@ -2573,17 +2814,19 @@ PROCESS TO CONVERT:
                     e.preventDefault();
                     e.stopPropagation(); 
                     if (confirm('Delete connection?')) { 
+                        this.saveState('delete-connection');
                         pane.connections = pane.connections.filter(c => c.id !== conn.id); 
                         this.updateConnections(paneId); 
                         this.updateValidation(); 
                     } 
                 });
                 
-                // Add bend hints between segments (show "+" on hover)
-                const allPoints = [{x: x1, y: y1}, ...waypoints, {x: x2, y: y2}];
-                for (let i = 0; i < allPoints.length - 1; i++) {
-                    const p1 = allPoints[i];
-                    const p2 = allPoints[i + 1];
+                // Add bend hints between segments for manual waypoints only
+                // Use manual waypoints for the interactive editing points
+                const editPoints = [{x: x1, y: y1}, ...manualWaypoints, {x: x2, y: y2}];
+                for (let i = 0; i < editPoints.length - 1; i++) {
+                    const p1 = editPoints[i];
+                    const p2 = editPoints[i + 1];
                     const hintX = (p1.x + p2.x) / 2;
                     const hintY = (p1.y + p2.y) / 2;
                     
@@ -2603,6 +2846,7 @@ PROCESS TO CONVERT:
                     hint.addEventListener('click', e => {
                         e.stopPropagation();
                         e.preventDefault();
+                        this.saveState('add-waypoint');
                         if (!conn.waypoints) conn.waypoints = [];
                         conn.waypoints.splice(segmentIdx, 0, { x: hintX, y: hintY });
                         this.updateConnections(paneId);
@@ -2610,8 +2854,8 @@ PROCESS TO CONVERT:
                     group.appendChild(hint);
                 }
                 
-                // Render waypoints
-                waypoints.forEach((wp, idx) => {
+                // Render manual waypoints only (not auto-calculated ones)
+                manualWaypoints.forEach((wp, idx) => {
                     const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     circle.setAttribute('cx', wp.x);
                     circle.setAttribute('cy', wp.y);
@@ -2647,6 +2891,7 @@ PROCESS TO CONVERT:
                     circle.addEventListener('dblclick', e => {
                         e.stopPropagation();
                         e.preventDefault();
+                        this.saveState('remove-waypoint');
                         conn.waypoints.splice(waypointIdx, 1);
                         this.updateConnections(paneId);
                     });
@@ -2657,13 +2902,205 @@ PROCESS TO CONVERT:
                 els.connectionsSvg.appendChild(group);
             });
         }
+        
+        // Calculate smart route that avoids blocks using orthogonal routing
+        calculateSmartRoute(x1, y1, x2, y2, fromId, toId, blockRects) {
+            const padding = 25; // Space around blocks
+            const cornerRadius = 8;
+            
+            // Get blocks that might be in the way (exclude source and target)
+            const obstacles = blockRects.filter(r => r.id !== fromId && r.id !== toId);
+            
+            // If no obstacles or going straight down with no blocks in path, return empty
+            if (obstacles.length === 0) return [];
+            
+            // Check if any block is in the direct vertical path
+            const minX = Math.min(x1, x2) - 10;
+            const maxX = Math.max(x1, x2) + 10;
+            const minY = Math.min(y1, y2);
+            const maxY = Math.max(y1, y2);
+            
+            const blockingObstacles = obstacles.filter(block => {
+                // Check if block overlaps with the vertical corridor between points
+                const blockInXRange = block.right > minX && block.x < maxX;
+                const blockInYRange = block.bottom > minY && block.y < maxY;
+                return blockInXRange && blockInYRange;
+            });
+            
+            if (blockingObstacles.length === 0) return [];
+            
+            // Sort by Y position
+            blockingObstacles.sort((a, b) => a.y - b.y);
+            
+            // Determine best side to route around
+            // Calculate total "cost" for going left vs right
+            let leftClear = true;
+            let rightClear = true;
+            let leftX = Math.min(x1, x2);
+            let rightX = Math.max(x1, x2);
+            
+            for (const block of blockingObstacles) {
+                leftX = Math.min(leftX, block.x - padding);
+                rightX = Math.max(rightX, block.right + padding);
+            }
+            
+            // Check if other blocks would obstruct the left or right routes
+            for (const block of obstacles) {
+                if (block.right > leftX - 10 && block.x < leftX + 10 && 
+                    block.bottom > minY && block.y < maxY) {
+                    leftClear = false;
+                }
+                if (block.right > rightX - 10 && block.x < rightX + 10 && 
+                    block.bottom > minY && block.y < maxY) {
+                    rightClear = false;
+                }
+            }
+            
+            // Choose side - prefer the one closer to the start/end points
+            let routeX;
+            const distToLeft = Math.abs(x1 - leftX) + Math.abs(x2 - leftX);
+            const distToRight = Math.abs(x1 - rightX) + Math.abs(x2 - rightX);
+            
+            if (leftClear && (!rightClear || distToLeft <= distToRight)) {
+                routeX = leftX;
+            } else if (rightClear) {
+                routeX = rightX;
+            } else {
+                // Both sides have obstacles, pick the shorter path
+                routeX = distToLeft < distToRight ? leftX - padding : rightX + padding;
+            }
+            
+            // Build waypoints for orthogonal route
+            const waypoints = [];
+            
+            // Find the Y range we need to go around
+            let obstacleTopY = Infinity;
+            let obstacleBottomY = -Infinity;
+            for (const block of blockingObstacles) {
+                obstacleTopY = Math.min(obstacleTopY, block.y);
+                obstacleBottomY = Math.max(obstacleBottomY, block.bottom);
+            }
+            
+            // Going downward (normal flow)
+            if (y2 > y1) {
+                // First waypoint: go horizontal to the side
+                const startY = Math.min(y1 + 30, obstacleTopY - padding);
+                waypoints.push({ x: routeX, y: startY });
+                
+                // Second waypoint: go down past the obstacles
+                const endY = obstacleBottomY + padding;
+                waypoints.push({ x: routeX, y: endY });
+                
+                // If target is not aligned, add point to turn back
+                if (Math.abs(routeX - x2) > 20) {
+                    waypoints.push({ x: routeX, y: Math.max(endY, y2 - 30) });
+                }
+            } else {
+                // Going upward (backwards connection)
+                const startY = Math.max(y1 - 30, obstacleBottomY + padding);
+                waypoints.push({ x: routeX, y: startY });
+                
+                const endY = obstacleTopY - padding;
+                waypoints.push({ x: routeX, y: endY });
+                
+                if (Math.abs(routeX - x2) > 20) {
+                    waypoints.push({ x: routeX, y: Math.min(endY, y2 + 30) });
+                }
+            }
+            
+            return waypoints;
+        }
+        
+        // Check if a bezier curve path intersects a rectangle
+        lineIntersectsRect(x1, y1, x2, y2, rx, ry, rx2, ry2) {
+            // Sample points along the bezier curve
+            for (let t = 0; t <= 1; t += 0.05) {
+                const ct = 1 - t;
+                const midY1 = y1 + Math.abs(y2 - y1) * 0.5;
+                const midY2 = y2 - Math.abs(y2 - y1) * 0.5;
+                
+                // Cubic bezier control points for vertical flow
+                const px = ct*ct*ct*x1 + 3*ct*ct*t*x1 + 3*ct*t*t*x2 + t*t*t*x2;
+                const py = ct*ct*ct*y1 + 3*ct*ct*t*midY1 + 3*ct*t*t*midY2 + t*t*t*y2;
+                
+                if (px >= rx && px <= rx2 && py >= ry && py <= ry2) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        
+        // Build smooth SVG path through points with rounded corners
+        buildSmoothPath(points) {
+            if (points.length < 2) return '';
+            
+            const radius = 12; // Corner radius
+            let path = `M${points[0].x},${points[0].y}`;
+            
+            for (let i = 1; i < points.length; i++) {
+                const p0 = points[i - 1];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                
+                if (p2) {
+                    // There's a next point, so we need to handle the corner
+                    const dx1 = p1.x - p0.x;
+                    const dy1 = p1.y - p0.y;
+                    const dx2 = p2.x - p1.x;
+                    const dy2 = p2.y - p1.y;
+                    
+                    const len1 = Math.sqrt(dx1*dx1 + dy1*dy1);
+                    const len2 = Math.sqrt(dx2*dx2 + dy2*dy2);
+                    
+                    // Limit radius to half the segment length
+                    const r = Math.min(radius, len1/2, len2/2);
+                    
+                    // Point before the corner
+                    const beforeX = p1.x - (dx1/len1) * r;
+                    const beforeY = p1.y - (dy1/len1) * r;
+                    
+                    // Point after the corner
+                    const afterX = p1.x + (dx2/len2) * r;
+                    const afterY = p1.y + (dy2/len2) * r;
+                    
+                    // Line to before corner, then quadratic curve through corner
+                    path += ` L${beforeX},${beforeY}`;
+                    path += ` Q${p1.x},${p1.y} ${afterX},${afterY}`;
+                } else {
+                    // Last point, just line to it
+                    path += ` L${p1.x},${p1.y}`;
+                }
+            }
+            
+            return path;
+        }
 
         drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
         onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.dragBlock.id); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
-        onCanvasMouseUp(e, paneId) { const els = this.getPaneElements(paneId); this.isDragging = false; this.dragBlock = null; if (this.panningPane === paneId) { this.isPanning = false; els.canvasArea.style.cursor = ''; } }
+        onCanvasMouseUp(e, paneId) { 
+            const els = this.getPaneElements(paneId); 
+            // Save state if block was actually moved
+            if (this.isDragging && this.dragBlock && this.dragStartPos) {
+                if (this.dragBlock.x !== this.dragStartPos.x || this.dragBlock.y !== this.dragStartPos.y) {
+                    // Temporarily restore original position for the saveState snapshot
+                    const newX = this.dragBlock.x;
+                    const newY = this.dragBlock.y;
+                    this.dragBlock.x = this.dragStartPos.x;
+                    this.dragBlock.y = this.dragStartPos.y;
+                    this.saveState('move-block');
+                    // Then set to new position
+                    this.dragBlock.x = newX;
+                    this.dragBlock.y = newY;
+                }
+            }
+            this.isDragging = false; 
+            this.dragBlock = null; 
+            this.dragStartPos = null;
+            if (this.panningPane === paneId) { this.isPanning = false; els.canvasArea.style.cursor = ''; } 
+        }
         onCanvasWheel(e, paneId) { 
             e.preventDefault(); 
             const pane = this.getPane(paneId);
@@ -2790,7 +3227,541 @@ PROCESS TO CONVERT:
             if (type === 'json') this.exportJSON();
             else if (type === 'report') this.exportReport();
             else if (type === 'summary') this.exportSummary();
-            else if (type === 'print') window.print();
+            else if (type === 'pdf-current') this.exportPDF('current');
+            else if (type === 'pdf-proposed') this.exportPDF('proposed');
+            else if (type === 'pdf-comparison') this.exportPDF('comparison');
+        }
+
+        exportPDF(mode) {
+            const { jsPDF } = window.jspdf;
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            const currentBlocks = Array.from(this.current.blocks.values());
+            const proposedBlocks = Array.from(this.proposed.blocks.values());
+            
+            // Create PDF - A4 landscape for better flow visualization
+            const isComparison = mode === 'comparison';
+            const pdf = new jsPDF({
+                orientation: isComparison ? 'landscape' : 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
+            
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const margin = 15;
+            const contentWidth = pageWidth - (margin * 2);
+            
+            // Colors
+            const colors = {
+                primary: [59, 130, 246],
+                green: [34, 197, 94],
+                orange: [249, 115, 22],
+                red: [239, 68, 68],
+                gray: [100, 116, 139],
+                lightGray: [241, 245, 249],
+                dark: [26, 26, 46]
+            };
+            
+            // Helper functions
+            const setColor = (color, type = 'fill') => {
+                if (type === 'fill') pdf.setFillColor(...color);
+                else if (type === 'draw') pdf.setDrawColor(...color);
+                else if (type === 'text') pdf.setTextColor(...color);
+            };
+            
+            const drawRoundedRect = (x, y, w, h, r, style = 'F') => {
+                pdf.roundedRect(x, y, w, h, r, r, style);
+            };
+            
+            let yPos = margin;
+            
+            // Title
+            pdf.setFontSize(20);
+            pdf.setFont('helvetica', 'bold');
+            setColor(colors.dark, 'text');
+            pdf.text(flow.name || 'Process Flow', margin, yPos + 7);
+            yPos += 12;
+            
+            // Subtitle based on mode
+            pdf.setFontSize(11);
+            pdf.setFont('helvetica', 'normal');
+            setColor(colors.gray, 'text');
+            const subtitle = mode === 'current' ? 'Current State (AS-IS)' : 
+                           mode === 'proposed' ? 'Proposed State (TO-BE)' : 
+                           'Current vs Proposed Comparison';
+            pdf.text(subtitle, margin, yPos);
+            yPos += 8;
+            
+            // Date
+            pdf.setFontSize(9);
+            pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yPos);
+            yPos += 10;
+            
+            // Divider line
+            setColor(colors.primary, 'draw');
+            pdf.setLineWidth(0.5);
+            pdf.line(margin, yPos, pageWidth - margin, yPos);
+            yPos += 8;
+            
+            if (isComparison) {
+                // Side by side comparison
+                const colWidth = (contentWidth - 10) / 2;
+                
+                // Summary stats
+                this.drawPDFSummaryStats(pdf, margin, yPos, contentWidth, colors, currentBlocks, proposedBlocks);
+                yPos += 35;
+                
+                // Column headers
+                pdf.setFontSize(12);
+                pdf.setFont('helvetica', 'bold');
+                setColor(colors.orange, 'text');
+                pdf.text('CURRENT STATE', margin, yPos);
+                setColor(colors.green, 'text');
+                pdf.text('PROPOSED STATE', margin + colWidth + 10, yPos);
+                yPos += 8;
+                
+                // Draw both flows
+                const currentY = this.drawPDFFlowBlocks(pdf, margin, yPos, colWidth, colors, currentBlocks, this.current.connections, 'current');
+                const proposedY = this.drawPDFFlowBlocks(pdf, margin + colWidth + 10, yPos, colWidth, colors, proposedBlocks, this.proposed.connections, 'proposed');
+                
+                yPos = Math.max(currentY, proposedY) + 10;
+                
+                // Change summary on new page if needed
+                if (yPos > pageHeight - 60) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+                
+                this.drawPDFChangeSummary(pdf, margin, yPos, contentWidth, colors, currentBlocks, proposedBlocks);
+                
+            } else {
+                // Single flow export
+                const blocks = mode === 'current' ? currentBlocks : proposedBlocks;
+                const connections = mode === 'current' ? this.current.connections : this.proposed.connections;
+                
+                // Summary stats for single flow
+                this.drawPDFSingleStats(pdf, margin, yPos, contentWidth, colors, blocks, mode);
+                yPos += 25;
+                
+                // Flow blocks
+                yPos = this.drawPDFFlowBlocks(pdf, margin, yPos, contentWidth, colors, blocks, connections, mode);
+                
+                // Block details table
+                if (yPos > pageHeight - 40) {
+                    pdf.addPage();
+                    yPos = margin;
+                }
+                
+                this.drawPDFBlockDetails(pdf, margin, yPos, contentWidth, colors, blocks, mode);
+            }
+            
+            // Save
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const filename = `${(flow.name || 'flow').replace(/\s+/g, '_')}_${mode}_${timestamp}.pdf`;
+            pdf.save(filename);
+            this.toast('PDF exported', 'success');
+        }
+        
+        drawPDFSummaryStats(pdf, x, y, width, colors, currentBlocks, proposedBlocks) {
+            const issues = currentBlocks.filter(b => b.issueType);
+            const fixes = proposedBlocks.filter(b => b.changeType === 'fix');
+            const newSteps = proposedBlocks.filter(b => b.changeType === 'new');
+            const modified = proposedBlocks.filter(b => b.changeType === 'modified');
+            
+            const stats = [
+                { label: 'Current Steps', value: currentBlocks.length, color: colors.gray },
+                { label: 'Issues', value: issues.filter(b => b.issueType === 'error').length, color: colors.red },
+                { label: 'Warnings', value: issues.filter(b => b.issueType === 'warning').length, color: colors.orange },
+                { label: 'Fixes', value: fixes.length, color: colors.green },
+                { label: 'New Steps', value: newSteps.length, color: colors.primary },
+                { label: 'Modified', value: modified.length, color: colors.gray }
+            ];
+            
+            const boxWidth = (width - 25) / 6;
+            stats.forEach((stat, i) => {
+                const bx = x + (i * (boxWidth + 5));
+                pdf.setFillColor(245, 247, 250);
+                pdf.roundedRect(bx, y, boxWidth, 25, 2, 2, 'F');
+                
+                pdf.setFontSize(16);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...stat.color);
+                pdf.text(String(stat.value), bx + boxWidth/2, y + 12, { align: 'center' });
+                
+                pdf.setFontSize(7);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(...colors.gray);
+                pdf.text(stat.label, bx + boxWidth/2, y + 20, { align: 'center' });
+            });
+        }
+        
+        drawPDFSingleStats(pdf, x, y, width, colors, blocks, mode) {
+            const isProposed = mode === 'proposed';
+            let stats;
+            
+            if (isProposed) {
+                stats = [
+                    { label: 'Total Steps', value: blocks.length, color: colors.primary },
+                    { label: 'Fixes', value: blocks.filter(b => b.changeType === 'fix').length, color: colors.green },
+                    { label: 'New', value: blocks.filter(b => b.changeType === 'new').length, color: colors.primary },
+                    { label: 'Modified', value: blocks.filter(b => b.changeType === 'modified').length, color: colors.orange }
+                ];
+            } else {
+                stats = [
+                    { label: 'Total Steps', value: blocks.length, color: colors.primary },
+                    { label: 'Errors', value: blocks.filter(b => b.issueType === 'error').length, color: colors.red },
+                    { label: 'Warnings', value: blocks.filter(b => b.issueType === 'warning').length, color: colors.orange },
+                    { label: 'OK', value: blocks.filter(b => !b.issueType).length, color: colors.green }
+                ];
+            }
+            
+            const boxWidth = (width - 15) / 4;
+            stats.forEach((stat, i) => {
+                const bx = x + (i * (boxWidth + 5));
+                pdf.setFillColor(245, 247, 250);
+                pdf.roundedRect(bx, y, boxWidth, 18, 2, 2, 'F');
+                
+                pdf.setFontSize(14);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...stat.color);
+                pdf.text(String(stat.value), bx + 8, y + 11);
+                
+                pdf.setFontSize(8);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(...colors.gray);
+                pdf.text(stat.label, bx + 22, y + 11);
+            });
+        }
+        
+        drawPDFFlowBlocks(pdf, x, y, width, colors, blocks, connections, mode) {
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const blockHeight = 18;
+            const blockGap = 6;
+            const maxBlocksPerPage = Math.floor((pageHeight - y - 20) / (blockHeight + blockGap));
+            
+            // Sort blocks by y position
+            const sortedBlocks = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0));
+            
+            // Step type icons/labels
+            const stepTypes = {
+                action: '⚡', decision: '◆', api: '🔗', email: '✉', 
+                form: '📝', data: '💾', delay: '⏱', webhook: '🔔'
+            };
+            
+            let currentY = y;
+            let blockIndex = 0;
+            
+            sortedBlocks.forEach((block, idx) => {
+                // Check if we need a new page
+                if (currentY + blockHeight > pageHeight - 15) {
+                    pdf.addPage();
+                    currentY = 15;
+                }
+                
+                // Determine block color based on type
+                let bgColor = [255, 255, 255];
+                let borderColor = colors.gray;
+                let textColor = colors.dark;
+                
+                if (mode === 'current') {
+                    if (block.issueType === 'error') {
+                        bgColor = [254, 242, 242];
+                        borderColor = colors.red;
+                    } else if (block.issueType === 'warning') {
+                        bgColor = [255, 247, 237];
+                        borderColor = colors.orange;
+                    }
+                } else if (mode === 'proposed') {
+                    if (block.changeType === 'fix') {
+                        bgColor = [240, 253, 244];
+                        borderColor = colors.green;
+                    } else if (block.changeType === 'new') {
+                        bgColor = [239, 246, 255];
+                        borderColor = colors.primary;
+                    } else if (block.changeType === 'modified') {
+                        bgColor = [255, 247, 237];
+                        borderColor = colors.orange;
+                    }
+                }
+                
+                // Draw block background
+                pdf.setFillColor(...bgColor);
+                pdf.setDrawColor(...borderColor);
+                pdf.setLineWidth(0.4);
+                pdf.roundedRect(x, currentY, width, blockHeight, 2, 2, 'FD');
+                
+                // Step number
+                pdf.setFillColor(...borderColor);
+                pdf.circle(x + 6, currentY + blockHeight/2, 4, 'F');
+                pdf.setFontSize(7);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(255, 255, 255);
+                pdf.text(String(idx + 1), x + 6, currentY + blockHeight/2 + 1.5, { align: 'center' });
+                
+                // Step type indicator
+                const typeIcon = stepTypes[block.stepType] || '•';
+                pdf.setFontSize(8);
+                pdf.setTextColor(...colors.gray);
+                pdf.text(typeIcon, x + 14, currentY + blockHeight/2 + 1.5);
+                
+                // Block name
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.dark);
+                const nameMaxWidth = width - 50;
+                let name = block.name || 'Untitled';
+                if (pdf.getTextWidth(name) > nameMaxWidth) {
+                    while (pdf.getTextWidth(name + '...') > nameMaxWidth && name.length > 0) {
+                        name = name.slice(0, -1);
+                    }
+                    name += '...';
+                }
+                pdf.text(name, x + 22, currentY + 7);
+                
+                // Description (truncated)
+                if (block.description) {
+                    pdf.setFontSize(7);
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setTextColor(...colors.gray);
+                    let desc = block.description;
+                    if (pdf.getTextWidth(desc) > nameMaxWidth) {
+                        while (pdf.getTextWidth(desc + '...') > nameMaxWidth && desc.length > 0) {
+                            desc = desc.slice(0, -1);
+                        }
+                        desc += '...';
+                    }
+                    pdf.text(desc, x + 22, currentY + 13);
+                }
+                
+                // Issue/Change badge
+                let badge = '';
+                let badgeColor = colors.gray;
+                if (mode === 'current' && block.issueType) {
+                    badge = block.issueType.toUpperCase();
+                    badgeColor = block.issueType === 'error' ? colors.red : colors.orange;
+                } else if (mode === 'proposed' && block.changeType) {
+                    badge = block.changeType.toUpperCase();
+                    badgeColor = block.changeType === 'fix' ? colors.green : 
+                                block.changeType === 'new' ? colors.primary : colors.orange;
+                }
+                
+                if (badge) {
+                    const badgeWidth = pdf.getTextWidth(badge) + 4;
+                    pdf.setFillColor(...badgeColor);
+                    pdf.roundedRect(x + width - badgeWidth - 4, currentY + 3, badgeWidth, 6, 1, 1, 'F');
+                    pdf.setFontSize(5);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.text(badge, x + width - badgeWidth/2 - 4, currentY + 7, { align: 'center' });
+                }
+                
+                // Connection arrow to next block
+                if (idx < sortedBlocks.length - 1) {
+                    const arrowY = currentY + blockHeight + 1;
+                    pdf.setDrawColor(...colors.gray);
+                    pdf.setLineWidth(0.3);
+                    pdf.line(x + width/2, arrowY, x + width/2, arrowY + blockGap - 2);
+                    // Arrow head
+                    pdf.setFillColor(...colors.gray);
+                    pdf.triangle(
+                        x + width/2, arrowY + blockGap - 1,
+                        x + width/2 - 1.5, arrowY + blockGap - 3,
+                        x + width/2 + 1.5, arrowY + blockGap - 3,
+                        'F'
+                    );
+                }
+                
+                currentY += blockHeight + blockGap;
+                blockIndex++;
+            });
+            
+            return currentY;
+        }
+        
+        drawPDFBlockDetails(pdf, x, y, width, colors, blocks, mode) {
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            // Section header
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...colors.primary);
+            pdf.text('STEP DETAILS', x, y);
+            y += 8;
+            
+            // Sort blocks
+            const sortedBlocks = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0));
+            
+            sortedBlocks.forEach((block, idx) => {
+                // Check page break
+                if (y + 30 > pageHeight - 15) {
+                    pdf.addPage();
+                    y = 15;
+                }
+                
+                // Block header
+                pdf.setFillColor(245, 247, 250);
+                pdf.roundedRect(x, y, width, 8, 1, 1, 'F');
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.dark);
+                pdf.text(`${idx + 1}. ${block.name || 'Untitled'}`, x + 3, y + 5.5);
+                y += 10;
+                
+                // Details
+                const details = [];
+                if (block.description) details.push(['Description', block.description]);
+                if (block.stepType) details.push(['Type', block.stepType.charAt(0).toUpperCase() + block.stepType.slice(1)]);
+                if (mode === 'current' && block.issueText) details.push(['Issue', block.issueText]);
+                if (mode === 'proposed' && block.fixText) details.push(['Fix', block.fixText]);
+                if (block.owner) details.push(['Owner', block.owner]);
+                if (block.systems) details.push(['Systems', block.systems]);
+                if (block.timeEstimate) details.push(['Time', block.timeEstimate]);
+                
+                details.forEach(([label, value]) => {
+                    if (y + 6 > pageHeight - 15) {
+                        pdf.addPage();
+                        y = 15;
+                    }
+                    
+                    pdf.setFontSize(7);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text(label + ':', x + 3, y + 4);
+                    
+                    pdf.setFont('helvetica', 'normal');
+                    pdf.setTextColor(...colors.dark);
+                    
+                    // Word wrap long values
+                    const maxWidth = width - 30;
+                    const valueX = x + 28;
+                    let text = value || '-';
+                    const lines = pdf.splitTextToSize(text, maxWidth);
+                    lines.forEach((line, lineIdx) => {
+                        pdf.text(line, valueX, y + 4 + (lineIdx * 4));
+                    });
+                    y += Math.max(6, lines.length * 4 + 2);
+                });
+                
+                y += 4;
+            });
+            
+            return y;
+        }
+        
+        drawPDFChangeSummary(pdf, x, y, width, colors, currentBlocks, proposedBlocks) {
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            
+            // Section header
+            pdf.setFontSize(12);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...colors.primary);
+            pdf.text('CHANGE SUMMARY', x, y);
+            y += 8;
+            
+            // Issues and their fixes
+            const issues = currentBlocks.filter(b => b.issueType);
+            const fixes = proposedBlocks.filter(b => b.changeType === 'fix');
+            
+            if (issues.length > 0) {
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.red);
+                pdf.text('Issues Identified:', x, y);
+                y += 6;
+                
+                issues.forEach((issue, idx) => {
+                    if (y + 10 > pageHeight - 15) {
+                        pdf.addPage();
+                        y = 15;
+                    }
+                    
+                    pdf.setFillColor(254, 242, 242);
+                    pdf.roundedRect(x, y, width, 10, 1, 1, 'F');
+                    
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.dark);
+                    pdf.text(`• ${issue.name}`, x + 3, y + 4);
+                    
+                    if (issue.issueText) {
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.setTextColor(...colors.gray);
+                        const truncated = issue.issueText.length > 80 ? issue.issueText.slice(0, 77) + '...' : issue.issueText;
+                        pdf.text(truncated, x + 5, y + 8);
+                    }
+                    
+                    y += 12;
+                });
+                
+                y += 4;
+            }
+            
+            if (fixes.length > 0) {
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.green);
+                pdf.text('Proposed Fixes:', x, y);
+                y += 6;
+                
+                fixes.forEach((fix, idx) => {
+                    if (y + 10 > pageHeight - 15) {
+                        pdf.addPage();
+                        y = 15;
+                    }
+                    
+                    pdf.setFillColor(240, 253, 244);
+                    pdf.roundedRect(x, y, width, 10, 1, 1, 'F');
+                    
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.dark);
+                    pdf.text(`• ${fix.name}`, x + 3, y + 4);
+                    
+                    if (fix.fixText) {
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.setTextColor(...colors.gray);
+                        const truncated = fix.fixText.length > 80 ? fix.fixText.slice(0, 77) + '...' : fix.fixText;
+                        pdf.text(truncated, x + 5, y + 8);
+                    }
+                    
+                    y += 12;
+                });
+            }
+            
+            // Traceability section
+            if (this.issueFixLinks.length > 0) {
+                y += 6;
+                if (y + 20 > pageHeight - 15) {
+                    pdf.addPage();
+                    y = 15;
+                }
+                
+                pdf.setFontSize(10);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.primary);
+                pdf.text('Issue-Fix Traceability:', x, y);
+                y += 6;
+                
+                this.issueFixLinks.forEach(link => {
+                    if (y + 8 > pageHeight - 15) {
+                        pdf.addPage();
+                        y = 15;
+                    }
+                    
+                    const issue = this.current.blocks.get(link.issueId);
+                    const fix = this.proposed.blocks.get(link.fixId);
+                    
+                    if (issue && fix) {
+                        pdf.setFontSize(7);
+                        pdf.setFont('helvetica', 'normal');
+                        pdf.setTextColor(...colors.dark);
+                        pdf.text(`${issue.name}  →  ${fix.name}`, x + 3, y + 4);
+                        y += 6;
+                    }
+                });
+            }
+            
+            return y;
         }
 
         exportJSON() {
