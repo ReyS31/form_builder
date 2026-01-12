@@ -147,8 +147,12 @@
             background: var(--bg-tertiary);
             border-radius: var(--radius-sm);
             padding: 2px;
+            gap: 2px;
         }
         .mode-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
             padding: 5px 10px;
             font-size: 11px;
             font-weight: 500;
@@ -159,8 +163,9 @@
             cursor: pointer;
             transition: all var(--transition);
         }
-        .mode-btn:hover { color: var(--text-secondary); }
-        .mode-btn.active { background: var(--accent); color: white; }
+        .mode-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
+        .mode-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+        .mode-btn.active { background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         
         /* Icon buttons */
         .icon-btn {
@@ -1417,6 +1422,23 @@
             </div>
             <div class="header-divider"></div>
             
+            <!-- Mode toggle -->
+            <div class="mode-toggle" id="modeToggle">
+                <button class="mode-btn active" id="sketchModeBtn" title="Sketch: Quick flow capture">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
+                    Sketch
+                </button>
+                <button class="mode-btn" id="configureModeBtn" title="Configure: Add types and connections">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                    Configure
+                </button>
+                <button class="mode-btn" id="detailModeBtn" title="Detail: Full documentation">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    Detail
+                </button>
+            </div>
+            <div class="header-divider"></div>
+            
             <!-- Flow info - centered -->
             <div class="header-flow">
                 <button class="flow-title-btn" id="flowSelector" title="Click to change flow">
@@ -1522,6 +1544,7 @@
                             <span class="zoom-level" id="currentZoomLevel">100%</span>
                             <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
                             <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
@@ -1543,6 +1566,7 @@
                             <span class="zoom-level" id="proposedZoomLevel">100%</span>
                             <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
                             <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                            <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
                             <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
                         </div>
                     </div>
@@ -2483,6 +2507,7 @@ PROCESS TO CONVERT:
                         if (action === 'in') this.setZoom(pane.zoom + 0.1, paneId);
                         else if (action === 'out') this.setZoom(pane.zoom - 0.1, paneId);
                         else if (action === 'fit') this.zoomToFit(paneId);
+                        else if (action === 'snap-grid') this.snapAllToGrid(paneId);
                         else if (action === 'auto-layout') this.autoLayout(paneId);
                     });
                 });
@@ -2867,6 +2892,9 @@ PROCESS TO CONVERT:
             this.issueFixLinks = flow.issueFixLinks || [];
             (flow.current?.blocks || []).forEach(block => {
                 const b = { ...block, comments: block.comments || [] };
+                // Snap to grid on load
+                b.x = this.snapToGrid(b.x);
+                b.y = this.snapToGrid(b.y);
                 this.current.blocks.set(b.id, b);
                 this.renderBlock(b, 'current');
                 const num = parseInt(b.id.split('_')[1]) || 0;
@@ -2875,6 +2903,9 @@ PROCESS TO CONVERT:
             this.current.connections = [...(flow.current?.connections || [])];
             (flow.proposed?.blocks || []).forEach(block => {
                 const b = { ...block, comments: block.comments || [] };
+                // Snap to grid on load
+                b.x = this.snapToGrid(b.x);
+                b.y = this.snapToGrid(b.y);
                 this.proposed.blocks.set(b.id, b);
                 this.renderBlock(b, 'proposed');
                 const num = parseInt(b.id.split('_')[1]) || 0;
@@ -3069,13 +3100,21 @@ PROCESS TO CONVERT:
         
         async importFlowDirect(data) {
             const id = 'flow_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+            
+            // Snap all blocks to grid before saving
+            const snapBlocks = (blocks) => (blocks || []).map(b => ({
+                ...b,
+                x: this.snapToGrid(b.x || 96),
+                y: this.snapToGrid(b.y || 96)
+            }));
+            
             const newFlow = {
                 id,
                 name: data.name || 'Imported Flow',
                 description: data.description || '',
                 environment: data.environment || 'other',
-                current: { blocks: data.current?.blocks || [], connections: data.current?.connections || [] },
-                proposed: { blocks: data.proposed?.blocks || [], connections: data.proposed?.connections || [] },
+                current: { blocks: snapBlocks(data.current?.blocks), connections: data.current?.connections || [] },
+                proposed: { blocks: snapBlocks(data.proposed?.blocks), connections: data.proposed?.connections || [] },
                 issueFixLinks: data.issueFixLinks || [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
@@ -3159,8 +3198,8 @@ PROCESS TO CONVERT:
                         id: 'block_' + blockIdCounter,
                         name: name,
                         description: '',
-                        x: 100,
-                        y: 100 + (flow[currentSection]?.blocks.length || 0) * 160,
+                        x: 96,
+                        y: 96 + (flow[currentSection]?.blocks.length || 0) * 168,
                         outputs: 1,
                         issueType: issueType,
                         issueText: '',
@@ -3446,8 +3485,10 @@ PROCESS TO CONVERT:
                     const isCurrentPane = (data.current?.blocks || []).some(cb => cb.id === b.id);
                     const pane = isCurrentPane ? this.current : this.proposed;
                     const paneId = isCurrentPane ? 'current' : 'proposed';
-                    pane.blocks.set(b.id, { ...b, comments: b.comments || [] });
-                    this.renderBlock(b, paneId);
+                    // Snap to grid
+                    const block = { ...b, comments: b.comments || [], x: this.snapToGrid(b.x), y: this.snapToGrid(b.y) };
+                    pane.blocks.set(b.id, block);
+                    this.renderBlock(block, paneId);
                     const num = parseInt(b.id.split('_')[1]) || 0;
                     if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
                 });
@@ -3507,6 +3548,23 @@ PROCESS TO CONVERT:
                 data.createdAt = data.createdAt || new Date().toISOString();
                 data.updatedAt = new Date().toISOString();
                 data.environment = data.environment || 'other';
+                
+                // Snap all blocks to grid before saving
+                if (data.current?.blocks) {
+                    data.current.blocks = data.current.blocks.map(b => ({
+                        ...b,
+                        x: this.snapToGrid(b.x || 96),
+                        y: this.snapToGrid(b.y || 96)
+                    }));
+                }
+                if (data.proposed?.blocks) {
+                    data.proposed.blocks = data.proposed.blocks.map(b => ({
+                        ...b,
+                        x: this.snapToGrid(b.x || 96),
+                        y: this.snapToGrid(b.y || 96)
+                    }));
+                }
+                
                 this.driveFlows[id] = data;
                 this.saveToDrive(data);
                 this.loadFlow(id, true);
@@ -4605,6 +4663,36 @@ PROCESS TO CONVERT:
             list.querySelectorAll('.validation-item').forEach(item => item.addEventListener('click', () => { const blockId = item.dataset.blockId; const paneId = item.dataset.pane; if (blockId && paneId) { const block = this.getPane(paneId).blocks.get(blockId); if (block) { this.selectBlock(block, paneId); this.panToBlock(block, paneId); } } })); }
             // Update validation badge
             this.updateValidationBadge();
+        }
+        
+        // Snap value to grid (24px grid)
+        snapToGrid(val) {
+            const gridSize = 24;
+            return Math.round(val / gridSize) * gridSize;
+        }
+        
+        // Snap all blocks in a pane to grid
+        snapAllToGrid(paneId) {
+            const pane = this.getPane(paneId);
+            let snapped = 0;
+            pane.blocks.forEach(block => {
+                const newX = this.snapToGrid(block.x);
+                const newY = this.snapToGrid(block.y);
+                if (newX !== block.x || newY !== block.y) {
+                    block.x = newX;
+                    block.y = newY;
+                    snapped++;
+                }
+                this.updateBlockElement(block, paneId);
+            });
+            this.updateConnections(paneId);
+            this.updateMinimap();
+            if (snapped > 0) {
+                this.saveState('snap-grid');
+                this.toast(`Snapped ${snapped} block${snapped > 1 ? 's' : ''} to grid`, 'success');
+            } else {
+                this.toast('All blocks already on grid', 'info');
+            }
         }
 
         runValidation() {
@@ -5762,12 +5850,12 @@ PROCESS TO CONVERT:
             this.saveState('auto-layout');
             
             const blocks = Array.from(pane.blocks.values());
-            const blockWidth = 260;
-            const blockHeight = 120;
-            const gapX = 40;  // Horizontal gap
-            const gapY = 60;  // Vertical gap
-            const startX = 100;
-            const startY = 80;
+            const blockWidth = 264;  // 24 * 11
+            const blockHeight = 120; // 24 * 5
+            const gapX = 48;  // Horizontal gap (24 * 2)
+            const gapY = 72;  // Vertical gap (24 * 3)
+            const startX = 96;  // 24 * 4
+            const startY = 72;  // 24 * 3
             const blocksPerRow = 4; // Target blocks per row
             
             // Build connection graph
@@ -5855,8 +5943,8 @@ PROCESS TO CONVERT:
                     // Zigzag: even rows left-to-right, odd rows right-to-left
                     const actualCol = row % 2 === 0 ? col : (blocksPerRow - 1 - col);
                     
-                    block.x = startX + actualCol * (blockWidth + gapX);
-                    block.y = startY + row * (blockHeight + gapY);
+                    block.x = this.snapToGrid(startX + actualCol * (blockWidth + gapX));
+                    block.y = this.snapToGrid(startY + row * (blockHeight + gapY));
                 });
             } else {
                 // Use level-based layout for branching flows
@@ -5873,8 +5961,8 @@ PROCESS TO CONVERT:
                     const offsetX = Math.max(0, (maxWidth - levelWidth) / 2);
                     
                     level.forEach((block, idx) => {
-                        block.x = startX + offsetX + idx * (blockWidth + gapX);
-                        block.y = startY + levelIdx * (blockHeight + gapY);
+                        block.x = this.snapToGrid(startX + offsetX + idx * (blockWidth + gapX));
+                        block.y = this.snapToGrid(startY + levelIdx * (blockHeight + gapY));
                     });
                 });
             }
