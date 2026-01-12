@@ -1258,6 +1258,23 @@
         .flow-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
         .flow-card-name { font-size: 14px; font-weight: 600; color: var(--text-primary); line-height: 1.3; }
         .flow-card-env { font-size: 9px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+        .flow-card-status { font-size: 9px; padding: 3px 8px; border-radius: 10px; font-weight: 500; margin-top: 6px; display: inline-block; }
+        .flow-card-status.draft { background: var(--bg-tertiary); color: var(--text-muted); }
+        .flow-card-status.documenting { background: var(--orange-bg); color: var(--orange); }
+        .flow-card-status.ready-dev { background: var(--accent-bg); color: var(--accent); }
+        .flow-card-status.in-dev { background: var(--purple-bg); color: var(--purple); }
+        .flow-card-status.ready-review { background: var(--yellow-bg); color: var(--yellow); }
+        .flow-card-status.approved { background: var(--green-bg); color: var(--green); }
+        
+        /* Flow status selector in header */
+        .flow-status-select { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); cursor: pointer; margin-left: 8px; }
+        .flow-status-select:hover { border-color: var(--accent); }
+        .flow-status-select.draft { border-color: var(--text-muted); }
+        .flow-status-select.documenting { border-color: var(--orange); background: var(--orange-bg); }
+        .flow-status-select.ready-dev { border-color: var(--accent); background: var(--accent-bg); }
+        .flow-status-select.in-dev { border-color: var(--purple); background: var(--purple-bg); }
+        .flow-status-select.ready-review { border-color: var(--yellow); background: var(--yellow-bg); }
+        .flow-status-select.approved { border-color: var(--green); background: var(--green-bg); }
         .flow-card-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .flow-card-stats { display: flex; gap: 12px; font-size: 11px; }
         .flow-card-stat { display: flex; align-items: center; gap: 4px; color: var(--text-secondary); }
@@ -1473,10 +1490,11 @@
         <div class="dashboard-header">
             <div class="dashboard-logo">FlowBuilder Pro</div>
             <div style="flex:1; display:flex; justify-content:center;">
-                <input type="text" class="form-input" id="dashboardSearch" placeholder="Search flows..." style="max-width:400px; width:100%;" />
+                <input type="text" class="form-input" id="dashboardSearch" placeholder="Search briefs & flows..." style="max-width:400px; width:100%;" />
             </div>
             <div class="dashboard-actions">
                 <button class="btn" id="importDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
+                <button class="btn" id="newBriefDashBtn" style="border-color:var(--purple);color:var(--purple);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg>New Brief</button>
                 <button class="btn btn-primary" id="newFlowDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New Flow</button>
                 <button class="btn" id="refreshDashBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg>Refresh</button>
             </div>
@@ -1519,6 +1537,14 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
                 </button>
                 <span class="env-badge" id="envBadge"></span>
+                <select class="form-input flow-status-select" id="flowStatusSelector" style="display:none;">
+                    <option value="draft">📝 Draft</option>
+                    <option value="documenting">✏️ Documenting</option>
+                    <option value="ready-dev">🚀 Ready for Dev</option>
+                    <option value="in-dev">👨‍💻 In Development</option>
+                    <option value="ready-review">👀 Ready for Review</option>
+                    <option value="approved">✅ Approved</option>
+                </select>
             </div>
             
             <div class="header-spacer"></div>
@@ -2001,6 +2027,17 @@ PROCESS TO CONVERT:
                     <option value="other">⚪ Other</option>
                 </select>
             </div>
+            <div class="form-group">
+                <label class="form-label">Status</label>
+                <select class="form-input" id="flowSettingsStatus">
+                    <option value="draft">📝 Draft - Just started</option>
+                    <option value="documenting">✏️ Documenting - Still working on it</option>
+                    <option value="ready-dev">🚀 Ready for Dev - Programmer can start</option>
+                    <option value="in-dev">👨‍💻 In Development - Being built</option>
+                    <option value="ready-review">👀 Ready for Review - Done, needs checking</option>
+                    <option value="approved">✅ Approved - Verified correct</option>
+                </select>
+            </div>
             <div class="section-divider"><div class="section-title">Cross-Flow Links</div></div>
             <div id="crossFlowLinksContainer"></div>
             <button class="btn" id="addCrossFlowLinkBtn" style="margin-top:8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Link to Another Flow</button>
@@ -2236,6 +2273,7 @@ PROCESS TO CONVERT:
         bindDashboardEvents() {
             document.getElementById('backToDashboard')?.addEventListener('click', () => this.showDashboard());
             document.getElementById('newFlowDashBtn')?.addEventListener('click', () => this.showModal('flowModal'));
+            document.getElementById('newBriefDashBtn')?.addEventListener('click', () => this.showBriefModal());
             document.getElementById('importDashBtn')?.addEventListener('click', () => document.getElementById('importFileInput').click());
             document.getElementById('refreshDashBtn')?.addEventListener('click', async () => {
                 try {
@@ -2251,8 +2289,8 @@ PROCESS TO CONVERT:
             // Search functionality
             document.getElementById('dashboardSearch')?.addEventListener('input', e => {
                 this.dashboardSearchTerm = e.target.value.toLowerCase();
-                this.renderBriefsSection();
                 this.renderFlowMap();
+                this.renderBriefsSection();
             });
             
             // Environment selector in header
@@ -2263,6 +2301,28 @@ PROCESS TO CONVERT:
                         flow.environment = e.target.value;
                         this.saveToDrive(flow);
                         this.toast(`Environment changed to ${e.target.value}`, 'success');
+                    }
+                }
+            });
+            
+            // Flow status selector in header
+            document.getElementById('flowStatusSelector')?.addEventListener('change', e => {
+                if (this.currentFlowId && this.currentFlowIsDrive) {
+                    const flow = this.driveFlows[this.currentFlowId];
+                    if (flow) {
+                        flow.flowStatus = e.target.value;
+                        flow.updatedAt = new Date().toISOString();
+                        this.saveToDrive(flow);
+                        this.updateFlowStatusBadge();
+                        const labels = {
+                            'draft': 'Draft',
+                            'documenting': 'Documenting',
+                            'ready-dev': 'Ready for Dev',
+                            'in-dev': 'In Development',
+                            'ready-review': 'Ready for Review',
+                            'approved': 'Approved'
+                        };
+                        this.toast(`Status: ${labels[e.target.value]}`, 'success');
                     }
                 }
             });
@@ -3104,6 +3164,14 @@ PROCESS TO CONVERT:
             if (envSelector) {
                 envSelector.style.display = 'block';
                 envSelector.value = flow.environment || 'other';
+            }
+            
+            // Update flow status selector
+            const statusSelector = document.getElementById('flowStatusSelector');
+            if (statusSelector) {
+                statusSelector.style.display = 'block';
+                statusSelector.value = flow.flowStatus || 'draft';
+                this.updateFlowStatusBadge();
             }
             
             // Show flow action buttons
@@ -5750,6 +5818,7 @@ PROCESS TO CONVERT:
             document.getElementById('dashboardScreen').classList.add('show');
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('flowEnvSelector').style.display = 'none';
+            document.getElementById('flowStatusSelector').style.display = 'none';
             // Clear search
             this.dashboardSearchTerm = '';
             const searchInput = document.getElementById('dashboardSearch');
@@ -5762,10 +5831,22 @@ PROCESS TO CONVERT:
             document.getElementById('mainApp').style.display = 'flex';
         }
         
+        updateFlowStatusBadge() {
+            const selector = document.getElementById('flowStatusSelector');
+            if (!selector) return;
+            
+            // Remove all status classes
+            selector.classList.remove('draft', 'documenting', 'ready-dev', 'in-dev', 'ready-review', 'approved');
+            
+            // Add current status class
+            const status = selector.value || 'draft';
+            selector.classList.add(status);
+        }
+        
         renderDashboard() {
             this.renderDashboardMetrics();
-            this.renderBriefsSection();
             this.renderFlowMap();
+            this.renderBriefsSection(); // Must be after renderFlowMap since it prepends
         }
         
         renderBriefsSection() {
@@ -5792,7 +5873,7 @@ PROCESS TO CONVERT:
             };
             
             let html = `
-                <div class="dashboard-section">
+                <div class="dashboard-section" id="briefsSection">
                     <div class="dashboard-section-header">
                         <div class="dashboard-section-title">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
@@ -5859,14 +5940,9 @@ PROCESS TO CONVERT:
             
             html += `</div></div>`;
             
-            // Insert briefs section at start of flowMapContainer or create new element
+            // Prepend briefs section to flowMapContainer
             const container = document.getElementById('flowMapContainer');
-            const existingBriefs = container.querySelector('.dashboard-section');
-            if (existingBriefs) {
-                existingBriefs.outerHTML = html;
-            } else {
-                container.insertAdjacentHTML('afterbegin', html);
-            }
+            container.insertAdjacentHTML('afterbegin', html);
             
             // Bind brief events
             document.getElementById('newBriefCard')?.addEventListener('click', () => this.showBriefModal());
@@ -6009,6 +6085,17 @@ PROCESS TO CONVERT:
                                 displayDesc = displayDesc.replace(regex, '<mark style="background:var(--accent-bg);color:var(--accent);padding:0 2px;border-radius:2px;">$1</mark>');
                             }
                             
+                            const flowStatusLabels = {
+                                'draft': '📝 Draft',
+                                'documenting': '✏️ Documenting',
+                                'ready-dev': '🚀 Ready for Dev',
+                                'in-dev': '👨‍💻 In Development',
+                                'ready-review': '👀 Ready for Review',
+                                'approved': '✅ Approved'
+                            };
+                            const flowStatus = flow.flowStatus || 'draft';
+                            const flowStatusLabel = flowStatusLabels[flowStatus] || flowStatusLabels['draft'];
+                            
                             html += `
                                 <div class="flow-card" data-flow-id="${flow.id}">
                                     <div class="flow-card-actions">
@@ -6033,7 +6120,10 @@ PROCESS TO CONVERT:
                                             ${fixes} fixes
                                         </div>` : ''}
                                     </div>
-                                    <div class="flow-card-date">Updated: ${updatedDate}</div>
+                                    <div class="flow-card-date">
+                                        <span class="flow-card-status ${flowStatus}">${flowStatusLabel}</span>
+                                        <span style="float:right;">Updated: ${updatedDate}</span>
+                                    </div>
                                 </div>
                             `;
                         });
@@ -6095,6 +6185,7 @@ PROCESS TO CONVERT:
             document.getElementById('flowSettingsCreated').textContent = flow.createdAt ? new Date(flow.createdAt).toLocaleString() : '-';
             document.getElementById('flowSettingsUpdated').textContent = flow.updatedAt ? new Date(flow.updatedAt).toLocaleString() : '-';
             document.getElementById('flowSettingsId').textContent = flow.id || '-';
+            document.getElementById('flowSettingsStatus').value = flow.flowStatus || 'draft';
             
             this.renderCrossFlowLinks();
             this.showModal('flowSettingsModal');
@@ -6108,10 +6199,12 @@ PROCESS TO CONVERT:
             flow.name = document.getElementById('flowSettingsName').value.trim() || 'Untitled';
             flow.description = document.getElementById('flowSettingsDesc').value.trim();
             flow.environment = document.getElementById('flowSettingsEnv').value;
+            flow.flowStatus = document.getElementById('flowSettingsStatus').value;
             flow.updatedAt = new Date().toISOString();
             
             this.saveToDrive(flow);
             this.updateFlowSelector();
+            this.updateFlowStatusBadge();
             document.getElementById('flowEnvSelector').value = flow.environment;
             this.hideModal('flowSettingsModal');
             this.toast('Settings saved', 'success');
