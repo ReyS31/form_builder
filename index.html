@@ -301,33 +301,6 @@
         }
         .block-list-item-meta { font-size: 10px; color: var(--text-muted); }
         
-        /* Minimap section */
-        .minimap-section {
-            padding: 12px;
-            border-top: 1px solid var(--border-subtle);
-        }
-        .minimap-section-title {
-            font-size: 10px;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-        }
-        .minimap {
-            height: 70px;
-            background: var(--bg-tertiary);
-            border-radius: var(--radius-sm);
-            position: relative;
-            overflow: hidden;
-        }
-        .minimap-block {
-            position: absolute;
-            background: var(--text-faint);
-            border-radius: 1px;
-        }
-        .minimap-block.issue { background: var(--red); }
-        .minimap-block.fix { background: var(--green); }
-        
         /* Validation section */
         .validation-section { padding: 12px; border-top: 1px solid var(--border-subtle); }
         .validation-list { max-height: 100px; overflow-y: auto; }
@@ -1399,15 +1372,37 @@
         .brief-add-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-bg); }
         .brief-add-btn svg { width: 12px; height: 12px; }
         
-        /* Brief Reference in Flow Sidebar */
-        .brief-reference { background: linear-gradient(135deg, var(--purple-bg), var(--bg-tertiary)); border: 1px solid var(--purple); border-radius: 8px; padding: 10px; margin-bottom: 12px; }
-        .brief-reference-header { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--purple); margin-bottom: 6px; }
+        /* Brief Reference in Flow Sidebar - Expanded */
+        .brief-reference { background: linear-gradient(135deg, var(--purple-bg), var(--bg-tertiary)); border: 1px solid var(--purple); border-radius: 8px; padding: 12px; }
+        .brief-reference-header { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 600; color: var(--purple); margin-bottom: 8px; }
         .brief-reference-header svg { width: 14px; height: 14px; }
-        .brief-reference-name { font-size: 12px; font-weight: 500; color: var(--text-primary); margin-bottom: 4px; cursor: pointer; }
+        .brief-reference-name { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; cursor: pointer; }
         .brief-reference-name:hover { text-decoration: underline; }
-        .brief-reference-criteria { font-size: 10px; color: var(--text-muted); }
-        .brief-reference-progress { height: 4px; background: var(--bg-secondary); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+        .brief-reference-status { font-size: 9px; padding: 2px 6px; border-radius: 8px; font-weight: 500; display: inline-block; margin-bottom: 10px; }
+        .brief-reference-status.draft { background: var(--bg-tertiary); color: var(--text-muted); }
+        .brief-reference-status.agreed { background: var(--green-bg); color: var(--green); }
+        .brief-reference-status.in-progress { background: var(--accent-bg); color: var(--accent); }
+        .brief-reference-status.validating { background: var(--orange-bg); color: var(--orange); }
+        .brief-reference-status.complete { background: var(--purple-bg); color: var(--purple); }
+        .brief-reference-section { margin-bottom: 10px; }
+        .brief-reference-section-title { font-size: 9px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+        .brief-reference-section-content { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
+        .brief-reference-solution { white-space: pre-wrap; }
+        .brief-reference-criteria { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; }
+        .brief-reference-progress { height: 4px; background: var(--bg-secondary); border-radius: 2px; margin-bottom: 8px; overflow: hidden; }
         .brief-reference-progress-bar { height: 100%; background: var(--green); border-radius: 2px; transition: width 0.3s; }
+        .brief-criteria-mini { display: flex; flex-direction: column; gap: 4px; max-height: 150px; overflow-y: auto; }
+        .brief-criteria-mini-item { display: flex; align-items: flex-start; gap: 6px; font-size: 10px; padding: 4px 6px; background: var(--bg-secondary); border-radius: 4px; }
+        .brief-criteria-mini-check { width: 12px; height: 12px; border: 1.5px solid var(--border-default); border-radius: 3px; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .brief-criteria-mini-check.checked { background: var(--green); border-color: var(--green); }
+        .brief-criteria-mini-check svg { width: 8px; height: 8px; color: white; display: none; }
+        .brief-criteria-mini-check.checked svg { display: block; }
+        .brief-criteria-mini-text { color: var(--text-secondary); line-height: 1.3; }
+        .brief-criteria-mini-text.checked { text-decoration: line-through; color: var(--text-muted); }
+        .brief-reference-edit { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border-subtle); }
+        .brief-reference-edit-btn { font-size: 10px; color: var(--purple); cursor: pointer; display: flex; align-items: center; gap: 4px; }
+        .brief-reference-edit-btn:hover { text-decoration: underline; }
+        .brief-reference-edit-btn svg { width: 12px; height: 12px; }
         .flow-card:hover .flow-card-actions { opacity: 1; }
         .flow-card-action { padding: 4px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: 4px; cursor: pointer; color: var(--text-muted); }
         .flow-card-action:hover { background: var(--accent); color: white; border-color: var(--accent); }
@@ -1586,7 +1581,7 @@
         <main class="main">
             <aside class="sidebar-left" id="sidebarLeft">
                 <!-- Brief Reference -->
-                <div id="briefReference" style="padding:12px;display:none;"></div>
+                <div id="briefReference" style="padding:12px;display:none;border-bottom:1px solid var(--border-subtle);"></div>
                 
                 <!-- Search header -->
                 <div class="sidebar-header">
@@ -1599,19 +1594,6 @@
                 <!-- Block list - main content -->
                 <div class="block-list-container">
                     <div class="block-list" id="blockList"></div>
-                </div>
-                
-                <!-- Accordion: Minimap -->
-                <div class="sidebar-accordion open" id="minimapAccordion">
-                    <div class="accordion-header">
-                        <span class="accordion-title">Minimap</span>
-                        <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
-                    </div>
-                    <div class="accordion-body">
-                        <div class="accordion-content">
-                            <div class="minimap" id="minimap"></div>
-                        </div>
-                    </div>
                 </div>
                 
                 <!-- Accordion: Validation -->
@@ -1756,7 +1738,6 @@
                 <tr><td><strong>Zoom</strong></td><td>Scroll wheel (zooms to cursor position)</td></tr>
                 <tr><td><strong>Zoom buttons</strong></td><td>Use +/- buttons in bottom-left of canvas</td></tr>
                 <tr><td><strong>Fit all</strong></td><td>Click the fit button (⛶) to see all blocks</td></tr>
-                <tr><td><strong>Minimap</strong></td><td>Shows overview in left sidebar</td></tr>
             </table>
             
             <h3>📝 Editing Steps</h3>
@@ -4892,15 +4873,7 @@ PROCESS TO CONVERT:
         panToBlock(block, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvasArea.getBoundingClientRect(); pane.panX = rect.width / 2 - (block.x + 130) * pane.zoom; pane.panY = rect.height / 2 - (block.y + 60) * pane.zoom; this.applyTransform(paneId); this.updateMinimap(); }
 
         updateMinimap() {
-            const minimap = document.getElementById('minimap');
-            const allBlocks = [...Array.from(this.current.blocks.values()), ...Array.from(this.proposed.blocks.values())];
-            if (allBlocks.length === 0) { minimap.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-muted);font-size:9px;">No blocks</div>'; return; }
-            const minX = Math.min(...allBlocks.map(b => b.x)); const minY = Math.min(...allBlocks.map(b => b.y)); const maxX = Math.max(...allBlocks.map(b => b.x + 260)); const maxY = Math.max(...allBlocks.map(b => b.y + 120));
-            const contentW = maxX - minX + 80; const contentH = maxY - minY + 80;
-            const scale = Math.min(minimap.offsetWidth / contentW, minimap.offsetHeight / contentH) * 0.9;
-            let html = '';
-            allBlocks.forEach(block => { const x = (block.x - minX + 40) * scale; const y = (block.y - minY + 40) * scale; const w = 260 * scale; const h = 30 * scale; let cls = 'minimap-block'; if (block.issueType) cls += ' issue'; else if (block.changeType === 'fix' || block.fixText) cls += ' fix'; html += `<div class="${cls}" style="left:${x}px;top:${y}px;width:${w}px;height:${h}px;"></div>`; });
-            minimap.innerHTML = html;
+            // Minimap removed - no-op
         }
 
         updateValidation() {
@@ -6980,6 +6953,17 @@ PROCESS TO CONVERT:
             const criteria = brief.criteria || [];
             const checkedCount = criteria.filter(c => c.checked).length;
             const progress = criteria.length > 0 ? Math.round((checkedCount / criteria.length) * 100) : 0;
+            const statusLabels = {
+                'draft': 'Draft',
+                'agreed': 'Agreed',
+                'in-progress': 'In Progress',
+                'validating': 'Validating',
+                'complete': 'Complete'
+            };
+            
+            // Truncate problem/solution for display
+            const problemPreview = (brief.problem || '').substring(0, 150) + ((brief.problem || '').length > 150 ? '...' : '');
+            const solutionPreview = (brief.solution || '').substring(0, 200) + ((brief.solution || '').length > 200 ? '...' : '');
             
             container.style.display = 'block';
             container.innerHTML = `
@@ -6989,13 +6973,67 @@ PROCESS TO CONVERT:
                         Project Brief
                     </div>
                     <div class="brief-reference-name" id="briefRefName">${this.escapeHtml(brief.title || 'Untitled Brief')}</div>
-                    <div class="brief-reference-criteria">${checkedCount}/${criteria.length} acceptance criteria met</div>
-                    <div class="brief-reference-progress"><div class="brief-reference-progress-bar" style="width:${progress}%"></div></div>
+                    <span class="brief-reference-status ${brief.status || 'draft'}">${statusLabels[brief.status] || 'Draft'}</span>
+                    
+                    ${brief.problem ? `
+                    <div class="brief-reference-section">
+                        <div class="brief-reference-section-title">Problem</div>
+                        <div class="brief-reference-section-content">${this.escapeHtml(problemPreview)}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${brief.solution ? `
+                    <div class="brief-reference-section">
+                        <div class="brief-reference-section-title">Agreed Solution</div>
+                        <div class="brief-reference-section-content brief-reference-solution">${this.escapeHtml(solutionPreview)}</div>
+                    </div>
+                    ` : ''}
+                    
+                    ${criteria.length > 0 ? `
+                    <div class="brief-reference-section">
+                        <div class="brief-reference-section-title">Acceptance Criteria</div>
+                        <div class="brief-reference-criteria">${checkedCount}/${criteria.length} met</div>
+                        <div class="brief-reference-progress"><div class="brief-reference-progress-bar" style="width:${progress}%"></div></div>
+                        <div class="brief-criteria-mini" id="briefCriteriaMini">
+                            ${criteria.map((c, idx) => `
+                                <div class="brief-criteria-mini-item">
+                                    <div class="brief-criteria-mini-check ${c.checked ? 'checked' : ''}" data-idx="${idx}">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </div>
+                                    <span class="brief-criteria-mini-text ${c.checked ? 'checked' : ''}">${this.escapeHtml(c.text)}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="brief-reference-edit">
+                        <span class="brief-reference-edit-btn" id="briefRefEditBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            Open Full Brief
+                        </span>
+                    </div>
                 </div>
             `;
             
+            // Bind click to open brief modal
             document.getElementById('briefRefName')?.addEventListener('click', () => {
                 this.showBriefModal(brief.id);
+            });
+            document.getElementById('briefRefEditBtn')?.addEventListener('click', () => {
+                this.showBriefModal(brief.id);
+            });
+            
+            // Bind criteria checkbox toggles
+            container.querySelectorAll('.brief-criteria-mini-check').forEach(cb => {
+                cb.addEventListener('click', async () => {
+                    const idx = parseInt(cb.dataset.idx);
+                    brief.criteria[idx].checked = !brief.criteria[idx].checked;
+                    brief.updatedAt = new Date().toISOString();
+                    this.briefs[brief.id] = brief;
+                    await this.saveBriefsToDrive();
+                    this.updateBriefReference();
+                });
             });
         }
         
