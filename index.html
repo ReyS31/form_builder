@@ -6444,133 +6444,160 @@ PROCESS TO CONVERT:
             this.saveState('auto-layout');
             
             const blocks = Array.from(pane.blocks.values());
-            const blockWidth = 264;  // 24 * 11
-            const blockHeight = 120; // 24 * 5
-            const gapX = 48;  // Horizontal gap (24 * 2)
-            const gapY = 72;  // Vertical gap (24 * 3)
-            const startX = 96;  // 24 * 4
-            const startY = 72;  // 24 * 3
-            const blocksPerRow = 4; // Target blocks per row
+            const blockWidth = 264;
+            const blockHeight = 144;
+            const horizontalGap = 72;
+            const verticalGap = 96;
+            const startX = 120;
+            const startY = 96;
             
             // Build connection graph
-            const hasIncoming = new Set();
-            const hasOutgoing = new Set();
             const children = new Map();
             const parents = new Map();
+            const inDegree = new Map();
             
             blocks.forEach(b => {
                 children.set(b.id, []);
                 parents.set(b.id, []);
+                inDegree.set(b.id, 0);
             });
             
             pane.connections.forEach(conn => {
                 if (pane.blocks.has(conn.from) && pane.blocks.has(conn.to)) {
-                    hasIncoming.add(conn.to);
-                    hasOutgoing.add(conn.from);
                     children.get(conn.from)?.push(conn.to);
                     parents.get(conn.to)?.push(conn.from);
+                    inDegree.set(conn.to, (inDegree.get(conn.to) || 0) + 1);
                 }
             });
             
-            // Find root nodes (no incoming connections)
-            let roots = blocks.filter(b => !hasIncoming.has(b.id));
+            // Find root nodes (no incoming) or use first block
+            let roots = blocks.filter(b => inDegree.get(b.id) === 0);
             if (roots.length === 0) roots = [blocks[0]];
             
-            // Assign levels using BFS
-            const blockLevel = new Map();
-            const queue = [];
-            
-            roots.forEach(b => {
-                blockLevel.set(b.id, 0);
-                queue.push(b.id);
-            });
+            // Assign levels (rows) using topological sort
+            const level = new Map();
+            const queue = [...roots.map(r => r.id)];
+            roots.forEach(r => level.set(r.id, 0));
             
             while (queue.length > 0) {
-                const blockId = queue.shift();
-                const level = blockLevel.get(blockId);
+                const nodeId = queue.shift();
+                const nodeLevel = level.get(nodeId);
                 
-                (children.get(blockId) || []).forEach(childId => {
-                    if (!blockLevel.has(childId)) {
-                        blockLevel.set(childId, level + 1);
+                for (const childId of (children.get(nodeId) || [])) {
+                    // Child level is at least parent + 1
+                    const currentChildLevel = level.get(childId);
+                    const newLevel = nodeLevel + 1;
+                    
+                    if (currentChildLevel === undefined || newLevel > currentChildLevel) {
+                        level.set(childId, newLevel);
+                    }
+                    
+                    // Add to queue if not visited yet
+                    if (currentChildLevel === undefined) {
                         queue.push(childId);
                     }
-                });
+                }
             }
             
-            // Assign unvisited blocks
+            // Assign disconnected blocks to level 0
             blocks.forEach(b => {
-                if (!blockLevel.has(b.id)) {
-                    const parentIds = parents.get(b.id) || [];
-                    let maxParentLevel = -1;
-                    parentIds.forEach(pid => {
-                        if (blockLevel.has(pid)) {
-                            maxParentLevel = Math.max(maxParentLevel, blockLevel.get(pid));
+                if (!level.has(b.id)) level.set(b.id, 0);
+            });
+            
+            // Group by level
+            const levels = new Map();
+            blocks.forEach(b => {
+                const l = level.get(b.id);
+                if (!levels.has(l)) levels.set(l, []);
+                levels.get(l).push(b);
+            });
+            
+            // Sort levels array
+            const sortedLevels = Array.from(levels.keys()).sort((a, b) => a - b);
+            
+            // Calculate positions - center each level
+            const maxLevelWidth = Math.max(...Array.from(levels.values()).map(arr => arr.length));
+            const totalWidth = maxLevelWidth * (blockWidth + horizontalGap) - horizontalGap;
+            
+            // Sort blocks within each level to minimize crossings
+            sortedLevels.forEach((levelNum, idx) => {
+                const levelBlocks = levels.get(levelNum);
+                
+                if (idx > 0) {
+                    // Sort by average parent position
+                    levelBlocks.sort((a, b) => {
+                        const aParents = parents.get(a.id) || [];
+                        const bParents = parents.get(b.id) || [];
+                        
+                        const aAvgX = aParents.length > 0 
+                            ? aParents.reduce((sum, pid) => sum + (pane.blocks.get(pid)?.x || 0), 0) / aParents.length
+                            : 0;
+                        const bAvgX = bParents.length > 0 
+                            ? bParents.reduce((sum, pid) => sum + (pane.blocks.get(pid)?.x || 0), 0) / bParents.length
+                            : 0;
+                        
+                        return aAvgX - bAvgX;
+                    });
+                }
+                
+                // Position blocks in this level
+                const levelWidth = levelBlocks.length * (blockWidth + horizontalGap) - horizontalGap;
+                const offsetX = (totalWidth - levelWidth) / 2;
+                
+                levelBlocks.forEach((block, blockIdx) => {
+                    block.x = this.snapToGrid(startX + offsetX + blockIdx * (blockWidth + horizontalGap));
+                    block.y = this.snapToGrid(startY + levelNum * (blockHeight + verticalGap));
+                });
+            });
+            
+            // Second pass: adjust for better parent-child alignment
+            for (let pass = 0; pass < 3; pass++) {
+                sortedLevels.forEach(levelNum => {
+                    const levelBlocks = levels.get(levelNum);
+                    
+                    levelBlocks.forEach(block => {
+                        const blockChildren = children.get(block.id) || [];
+                        const blockParents = parents.get(block.id) || [];
+                        
+                        // If single child, try to align parent above child
+                        if (blockChildren.length === 1) {
+                            const child = pane.blocks.get(blockChildren[0]);
+                            if (child) {
+                                const targetX = child.x;
+                                // Only move if no collision
+                                const collision = levelBlocks.some(other => 
+                                    other.id !== block.id && 
+                                    Math.abs(other.x - targetX) < blockWidth + horizontalGap / 2
+                                );
+                                if (!collision) {
+                                    block.x = this.snapToGrid(targetX);
+                                }
+                            }
+                        }
+                        
+                        // If multiple children, center above them
+                        if (blockChildren.length > 1) {
+                            const childBlocks = blockChildren.map(cid => pane.blocks.get(cid)).filter(Boolean);
+                            const avgChildX = childBlocks.reduce((sum, c) => sum + c.x, 0) / childBlocks.length;
+                            const collision = levelBlocks.some(other => 
+                                other.id !== block.id && 
+                                Math.abs(other.x - avgChildX) < blockWidth + horizontalGap / 2
+                            );
+                            if (!collision) {
+                                block.x = this.snapToGrid(avgChildX);
+                            }
                         }
                     });
-                    blockLevel.set(b.id, maxParentLevel + 1);
-                }
-            });
-            
-            // Group blocks by level
-            const levelGroups = new Map();
-            blocks.forEach(b => {
-                const level = blockLevel.get(b.id) || 0;
-                if (!levelGroups.has(level)) levelGroups.set(level, []);
-                levelGroups.get(level).push(b);
-            });
-            
-            // Check if flow is mostly linear (avg <1.5 blocks per level)
-            const maxLevel = Math.max(...blockLevel.values());
-            const avgBlocksPerLevel = blocks.length / (maxLevel + 1);
-            const isLinearFlow = avgBlocksPerLevel < 1.5;
-            
-            if (isLinearFlow && blocks.length > 6) {
-                // Use serpentine/grid layout for linear flows
-                // Arrange in rows of blocksPerRow, zigzagging
-                const sortedBlocks = [...blocks].sort((a, b) => 
-                    (blockLevel.get(a.id) || 0) - (blockLevel.get(b.id) || 0)
-                );
-                
-                sortedBlocks.forEach((block, idx) => {
-                    const row = Math.floor(idx / blocksPerRow);
-                    const col = idx % blocksPerRow;
-                    // Zigzag: even rows left-to-right, odd rows right-to-left
-                    const actualCol = row % 2 === 0 ? col : (blocksPerRow - 1 - col);
-                    
-                    block.x = this.snapToGrid(startX + actualCol * (blockWidth + gapX));
-                    block.y = this.snapToGrid(startY + row * (blockHeight + gapY));
-                });
-            } else {
-                // Use level-based layout for branching flows
-                const levels = [];
-                for (let i = 0; i <= maxLevel; i++) {
-                    levels.push(levelGroups.get(i) || []);
-                }
-                
-                // Position each level, centering blocks
-                const maxWidth = blocksPerRow * (blockWidth + gapX) - gapX;
-                
-                levels.forEach((level, levelIdx) => {
-                    const levelWidth = level.length * (blockWidth + gapX) - gapX;
-                    const offsetX = Math.max(0, (maxWidth - levelWidth) / 2);
-                    
-                    level.forEach((block, idx) => {
-                        block.x = this.snapToGrid(startX + offsetX + idx * (blockWidth + gapX));
-                        block.y = this.snapToGrid(startY + levelIdx * (blockHeight + gapY));
-                    });
                 });
             }
             
-            // Clear all waypoints for clean bezier curves
+            // Clear waypoints for clean curves
             pane.connections.forEach(conn => {
                 conn.waypoints = [];
             });
             
-            // Update all elements
-            blocks.forEach(block => {
-                this.updateBlockElement(block, paneId);
-            });
-            
+            // Update all
+            blocks.forEach(block => this.updateBlockElement(block, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
