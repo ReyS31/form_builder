@@ -2195,6 +2195,7 @@ PROCESS TO CONVERT:
             this.dashboardSearchTerm = '';
             // Briefs
             this.briefs = {};
+            this.briefsFileId = null;
             this.currentBriefId = null;
             this.editingBrief = null;
             // Multi-select
@@ -6830,7 +6831,10 @@ PROCESS TO CONVERT:
         }
         
         async saveBrief() {
-            if (!this.editingBrief) return;
+            if (!this.editingBrief) {
+                console.error('No editingBrief to save');
+                return;
+            }
             
             // Update from form
             this.editingBrief.title = document.getElementById('briefTitle').value.trim() || 'Untitled Brief';
@@ -6840,15 +6844,18 @@ PROCESS TO CONVERT:
             this.editingBrief.notes = document.getElementById('briefNotes').value.trim();
             this.editingBrief.updatedAt = new Date().toISOString();
             
-            // Save to briefs object
-            this.briefs[this.editingBrief.id] = this.editingBrief;
+            // Deep copy the brief to store
+            this.briefs[this.editingBrief.id] = JSON.parse(JSON.stringify(this.editingBrief));
             
-            // Save briefs to Drive (in a briefs.json file)
-            await this.saveBriefsToDrive();
+            // Save briefs to Drive
+            const success = await this.saveBriefsToDrive();
             
             this.hideModal('briefModal');
             this.renderDashboard();
-            this.toast('Brief saved', 'success');
+            
+            if (success) {
+                this.toast('Brief saved to Drive', 'success');
+            }
         }
         
         async deleteBrief() {
@@ -6857,61 +6864,78 @@ PROCESS TO CONVERT:
             if (!confirm('Delete this brief? This cannot be undone.')) return;
             
             delete this.briefs[this.currentBriefId];
-            await this.saveBriefsToDrive();
+            const success = await this.saveBriefsToDrive();
             
             this.hideModal('briefModal');
             this.renderDashboard();
-            this.toast('Brief deleted', 'success');
+            if (success) {
+                this.toast('Brief deleted', 'success');
+            }
         }
         
         async saveBriefsToDrive() {
-            if (!this.authenticated || !this.driveFolderId) return;
+            if (!this.googleUser) {
+                this.toast('Sign in to save briefs', 'error');
+                return false;
+            }
+            
+            await this.ensureDriveFolder();
+            
+            const content = JSON.stringify(this.briefs, null, 2);
+            const token = gapi.client.getToken().access_token;
             
             try {
-                const content = JSON.stringify(this.briefs, null, 2);
-                const blob = new Blob([content], { type: 'application/json' });
-                
-                // Check if briefs.json exists
+                // Always search for existing file
                 const searchResponse = await gapi.client.drive.files.list({
                     q: `name='briefs.json' and '${this.driveFolderId}' in parents and trashed=false`,
                     fields: 'files(id)'
                 });
                 
-                const existingFile = searchResponse.result.files?.[0];
+                const existingFileId = searchResponse.result.files?.[0]?.id;
                 
-                if (existingFile) {
-                    // Update existing file
-                    await gapi.client.request({
-                        path: `/upload/drive/v3/files/${existingFile.id}`,
+                if (existingFileId) {
+                    // Update existing
+                    const resp = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media&supportsAllDrives=true`, {
                         method: 'PATCH',
-                        params: { uploadType: 'media' },
-                        body: blob
+                        headers: {
+                            'Authorization': 'Bearer ' + token,
+                            'Content-Type': 'application/json'
+                        },
+                        body: content
                     });
+                    if (!resp.ok) throw new Error('Update failed: ' + resp.status);
                 } else {
-                    // Create new file
+                    // Create new
                     const metadata = {
                         name: 'briefs.json',
-                        parents: [this.driveFolderId],
-                        mimeType: 'application/json'
+                        mimeType: 'application/json',
+                        parents: [this.driveFolderId]
                     };
                     
                     const form = new FormData();
                     form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                    form.append('file', blob);
+                    form.append('file', new Blob([content], { type: 'application/json' }));
                     
-                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    const resp = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true', {
                         method: 'POST',
-                        headers: { Authorization: `Bearer ${gapi.client.getToken().access_token}` },
+                        headers: { 'Authorization': 'Bearer ' + token },
                         body: form
                     });
+                    if (!resp.ok) throw new Error('Create failed: ' + resp.status);
                 }
+                return true;
             } catch (e) {
                 console.error('Failed to save briefs:', e);
+                this.toast('Failed to save briefs to Drive', 'error');
+                return false;
             }
         }
         
         async loadBriefsFromDrive() {
-            if (!this.authenticated || !this.driveFolderId) return;
+            if (!this.googleUser || !this.driveFolderId) {
+                this.briefs = {};
+                return;
+            }
             
             try {
                 const searchResponse = await gapi.client.drive.files.list({
@@ -6920,7 +6944,10 @@ PROCESS TO CONVERT:
                 });
                 
                 const file = searchResponse.result.files?.[0];
-                if (!file) return;
+                if (!file) {
+                    this.briefs = {};
+                    return;
+                }
                 
                 const response = await gapi.client.drive.files.get({
                     fileId: file.id,
