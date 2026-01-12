@@ -4823,7 +4823,7 @@ PROCESS TO CONVERT:
             yPos += 8;
             
             if (isComparison) {
-                // Side by side comparison
+                // Side by side comparison with aligned steps
                 const colWidth = (contentWidth - 10) / 2;
                 
                 // Summary stats
@@ -4839,11 +4839,8 @@ PROCESS TO CONVERT:
                 pdf.text('PROPOSED STATE', margin + colWidth + 10, yPos);
                 yPos += 8;
                 
-                // Draw both flows
-                const currentY = this.drawPDFFlowBlocks(pdf, margin, yPos, colWidth, colors, currentBlocks, this.current.connections, 'current');
-                const proposedY = this.drawPDFFlowBlocks(pdf, margin + colWidth + 10, yPos, colWidth, colors, proposedBlocks, this.proposed.connections, 'proposed');
-                
-                yPos = Math.max(currentY, proposedY) + 10;
+                // Draw aligned comparison
+                yPos = this.drawPDFComparisonAligned(pdf, margin, yPos, colWidth, colors, currentBlocks, proposedBlocks);
                 
                 // Change summary on new page if needed
                 if (yPos > pageHeight - 60) {
@@ -5099,6 +5096,248 @@ PROCESS TO CONVERT:
             });
             
             return currentY;
+        }
+        
+        drawPDFComparisonAligned(pdf, x, y, colWidth, colors, currentBlocks, proposedBlocks) {
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const blockHeight = 18;
+            const blockGap = 6;
+            const rowHeight = blockHeight + blockGap;
+            
+            // Sort blocks by y position
+            const sortedCurrent = [...currentBlocks].sort((a, b) => (a.y || 0) - (b.y || 0));
+            const sortedProposed = [...proposedBlocks].sort((a, b) => (a.y || 0) - (b.y || 0));
+            
+            // Create matched pairs using multiple strategies
+            const pairs = [];
+            const usedCurrent = new Set();
+            const usedProposed = new Set();
+            
+            // Strategy 1: Match by issue-fix links
+            this.issueFixLinks.forEach(link => {
+                const currentBlock = currentBlocks.find(b => b.id === link.issueId);
+                const proposedBlock = proposedBlocks.find(b => b.id === link.fixId);
+                if (currentBlock && proposedBlock) {
+                    pairs.push({ current: currentBlock, proposed: proposedBlock, matchType: 'linked' });
+                    usedCurrent.add(currentBlock.id);
+                    usedProposed.add(proposedBlock.id);
+                }
+            });
+            
+            // Strategy 2: Match by exact name
+            sortedCurrent.forEach(cb => {
+                if (usedCurrent.has(cb.id)) return;
+                const match = sortedProposed.find(pb => 
+                    !usedProposed.has(pb.id) && 
+                    pb.name?.toLowerCase().trim() === cb.name?.toLowerCase().trim()
+                );
+                if (match) {
+                    pairs.push({ current: cb, proposed: match, matchType: 'name' });
+                    usedCurrent.add(cb.id);
+                    usedProposed.add(match.id);
+                }
+            });
+            
+            // Strategy 3: Match by position order (remaining unmatched)
+            const remainingCurrent = sortedCurrent.filter(b => !usedCurrent.has(b.id));
+            const remainingProposed = sortedProposed.filter(b => !usedProposed.has(b.id));
+            
+            // Interleave remaining blocks
+            const maxRemaining = Math.max(remainingCurrent.length, remainingProposed.length);
+            for (let i = 0; i < maxRemaining; i++) {
+                pairs.push({
+                    current: remainingCurrent[i] || null,
+                    proposed: remainingProposed[i] || null,
+                    matchType: 'position'
+                });
+            }
+            
+            // Sort pairs by the y position of current block (or proposed if current is null)
+            pairs.sort((a, b) => {
+                const aY = a.current?.y ?? a.proposed?.y ?? 0;
+                const bY = b.current?.y ?? b.proposed?.y ?? 0;
+                return aY - bY;
+            });
+            
+            // Step type labels
+            const stepTypes = {
+                action: 'ACT', decision: 'DEC', api: 'API', email: 'EML', 
+                form: 'FRM', data: 'DAT', delay: 'DLY', webhook: 'WHK'
+            };
+            
+            let currentY = y;
+            let currentStepNum = 0;
+            let proposedStepNum = 0;
+            
+            // Draw each pair side by side
+            pairs.forEach((pair, rowIdx) => {
+                // Check page break
+                if (currentY + blockHeight > pageHeight - 15) {
+                    pdf.addPage();
+                    currentY = 15;
+                    
+                    // Redraw headers on new page
+                    pdf.setFontSize(10);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.orange);
+                    pdf.text('CURRENT STATE (cont.)', x, currentY);
+                    pdf.setTextColor(...colors.green);
+                    pdf.text('PROPOSED STATE (cont.)', x + colWidth + 10, currentY);
+                    currentY += 8;
+                }
+                
+                // Draw current block (left column)
+                if (pair.current) {
+                    currentStepNum++;
+                    this.drawPDFSingleBlock(pdf, x, currentY, colWidth, blockHeight, colors, pair.current, currentStepNum, 'current', stepTypes);
+                } else {
+                    // Empty placeholder with dashed border
+                    pdf.setDrawColor(...colors.gray);
+                    pdf.setLineDashPattern([2, 2], 0);
+                    pdf.setLineWidth(0.3);
+                    pdf.roundedRect(x, currentY, colWidth, blockHeight, 2, 2, 'D');
+                    pdf.setLineDashPattern([], 0);
+                    
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text('(no corresponding step)', x + colWidth/2, currentY + blockHeight/2 + 2, { align: 'center' });
+                }
+                
+                // Draw proposed block (right column)
+                const rightX = x + colWidth + 10;
+                if (pair.proposed) {
+                    proposedStepNum++;
+                    this.drawPDFSingleBlock(pdf, rightX, currentY, colWidth, blockHeight, colors, pair.proposed, proposedStepNum, 'proposed', stepTypes);
+                } else {
+                    // Empty placeholder with dashed border
+                    pdf.setDrawColor(...colors.gray);
+                    pdf.setLineDashPattern([2, 2], 0);
+                    pdf.setLineWidth(0.3);
+                    pdf.roundedRect(rightX, currentY, colWidth, blockHeight, 2, 2, 'D');
+                    pdf.setLineDashPattern([], 0);
+                    
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text('(no corresponding step)', rightX + colWidth/2, currentY + blockHeight/2 + 2, { align: 'center' });
+                }
+                
+                // Draw connector line between matched blocks
+                if (pair.current && pair.proposed && pair.matchType === 'linked') {
+                    pdf.setDrawColor(...colors.green);
+                    pdf.setLineWidth(0.4);
+                    pdf.setLineDashPattern([1, 1], 0);
+                    pdf.line(x + colWidth + 1, currentY + blockHeight/2, rightX - 1, currentY + blockHeight/2);
+                    pdf.setLineDashPattern([], 0);
+                }
+                
+                currentY += rowHeight;
+            });
+            
+            return currentY;
+        }
+        
+        drawPDFSingleBlock(pdf, x, y, width, height, colors, block, stepNum, mode, stepTypes) {
+            // Determine block color based on type
+            let bgColor = [255, 255, 255];
+            let borderColor = colors.gray;
+            
+            if (mode === 'current') {
+                if (block.issueType === 'error') {
+                    bgColor = [254, 242, 242];
+                    borderColor = colors.red;
+                } else if (block.issueType === 'warning') {
+                    bgColor = [255, 247, 237];
+                    borderColor = colors.orange;
+                }
+            } else if (mode === 'proposed') {
+                if (block.changeType === 'fix') {
+                    bgColor = [240, 253, 244];
+                    borderColor = colors.green;
+                } else if (block.changeType === 'new') {
+                    bgColor = [239, 246, 255];
+                    borderColor = colors.primary;
+                } else if (block.changeType === 'modified') {
+                    bgColor = [255, 247, 237];
+                    borderColor = colors.orange;
+                }
+            }
+            
+            // Draw block background
+            pdf.setFillColor(...bgColor);
+            pdf.setDrawColor(...borderColor);
+            pdf.setLineWidth(0.4);
+            pdf.roundedRect(x, y, width, height, 2, 2, 'FD');
+            
+            // Step number
+            pdf.setFillColor(...borderColor);
+            pdf.circle(x + 6, y + height/2, 4, 'F');
+            pdf.setFontSize(7);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(255, 255, 255);
+            pdf.text(String(stepNum), x + 6, y + height/2 + 1.5, { align: 'center' });
+            
+            // Step type indicator
+            const typeLabel = stepTypes[block.stepType] || '';
+            if (typeLabel) {
+                pdf.setFontSize(5);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(...colors.gray);
+                pdf.text(typeLabel, x + 12, y + height/2 + 1);
+            }
+            
+            // Block name
+            pdf.setFontSize(9);
+            pdf.setFont('helvetica', 'bold');
+            pdf.setTextColor(...colors.dark);
+            const nameMaxWidth = width - 50;
+            const nameX = typeLabel ? x + 24 : x + 14;
+            let name = block.name || 'Untitled';
+            if (pdf.getTextWidth(name) > nameMaxWidth) {
+                while (pdf.getTextWidth(name + '...') > nameMaxWidth && name.length > 0) {
+                    name = name.slice(0, -1);
+                }
+                name += '...';
+            }
+            pdf.text(name, nameX, y + 7);
+            
+            // Description
+            if (block.description) {
+                pdf.setFontSize(7);
+                pdf.setFont('helvetica', 'normal');
+                pdf.setTextColor(...colors.gray);
+                let desc = block.description;
+                if (pdf.getTextWidth(desc) > nameMaxWidth) {
+                    while (pdf.getTextWidth(desc + '...') > nameMaxWidth && desc.length > 0) {
+                        desc = desc.slice(0, -1);
+                    }
+                    desc += '...';
+                }
+                pdf.text(desc, nameX, y + 13);
+            }
+            
+            // Issue/Change badge
+            let badge = '';
+            let badgeColor = colors.gray;
+            if (mode === 'current' && block.issueType) {
+                badge = block.issueType.toUpperCase();
+                badgeColor = block.issueType === 'error' ? colors.red : colors.orange;
+            } else if (mode === 'proposed' && block.changeType) {
+                badge = block.changeType.toUpperCase();
+                badgeColor = block.changeType === 'fix' ? colors.green : 
+                            block.changeType === 'new' ? colors.primary : colors.orange;
+            }
+            
+            if (badge) {
+                const badgeWidth = pdf.getTextWidth(badge) + 4;
+                pdf.setFillColor(...badgeColor);
+                pdf.roundedRect(x + width - badgeWidth - 4, y + 3, badgeWidth, 6, 1, 1, 'F');
+                pdf.setFontSize(5);
+                pdf.setFont('helvetica', 'bold');
+                pdf.setTextColor(255, 255, 255);
+                pdf.text(badge, x + width - badgeWidth/2 - 4, y + 7, { align: 'center' });
+            }
         }
         
         drawPDFBlockDetails(pdf, x, y, width, colors, blocks, mode) {
