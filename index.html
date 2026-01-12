@@ -1239,6 +1239,22 @@
         .flow-card-status.ready-review { background: var(--yellow-bg); color: var(--yellow); }
         .flow-card-status.approved { background: var(--green-bg); color: var(--green); }
         
+        /* Editing indicator on flow cards */
+        .flow-card-editing { border-color: var(--orange) !important; }
+        .flow-card-editing-indicator { display: flex; align-items: center; gap: 6px; font-size: 10px; color: var(--orange); margin-top: 8px; padding: 6px 8px; background: var(--orange-bg); border-radius: 6px; }
+        .flow-card-editing-indicator svg { width: 12px; height: 12px; flex-shrink: 0; }
+        .flow-card-editing-indicator .editing-user { font-weight: 600; }
+        .flow-card-editing-indicator .editing-time { color: var(--text-muted); }
+        
+        /* Conflict warning modal */
+        .conflict-warning { background: var(--orange-bg); border: 1px solid var(--orange); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .conflict-warning-title { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--orange); margin-bottom: 8px; }
+        .conflict-warning-title svg { width: 20px; height: 20px; }
+        .conflict-warning-text { font-size: 13px; color: var(--text-secondary); line-height: 1.5; }
+        .conflict-warning-user { font-weight: 600; color: var(--text-primary); }
+        .conflict-actions { display: flex; gap: 12px; margin-top: 16px; }
+        .conflict-actions .btn { flex: 1; }
+        
         /* Flow status selector in header */
         .flow-status-select { font-size: 11px; padding: 4px 8px; border-radius: 6px; background: var(--bg-tertiary); border: 1px solid var(--border-subtle); color: var(--text-primary); cursor: pointer; margin-left: 8px; }
         .flow-status-select:hover { border-color: var(--accent); }
@@ -2133,6 +2149,48 @@ PROCESS TO CONVERT:
         <div class="flow-list" id="linkFlowList" style="max-height:300px; overflow-y:auto;"></div>
     </div></div></div>
     
+    <!-- Editing Conflict Modal -->
+    <div class="modal-overlay" id="editingConflictModal"><div class="modal" style="max-width:450px;"><div class="modal-header"><span class="modal-title">⚠️ Flow In Use</span><button class="modal-close" id="closeEditingConflictModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+        <div class="conflict-warning">
+            <div class="conflict-warning-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Someone is editing this flow
+            </div>
+            <div class="conflict-warning-text">
+                <span class="conflict-warning-user" id="conflictUserName">Someone</span> is currently editing this flow.
+                <br><br>
+                Last activity: <span id="conflictLastActivity">a few minutes ago</span>
+                <br><br>
+                Opening it now may cause conflicts if you both save changes.
+            </div>
+        </div>
+        <div class="conflict-actions">
+            <button class="btn" id="conflictCancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="conflictOpenAnywayBtn">Open Anyway</button>
+        </div>
+    </div></div></div>
+    
+    <!-- Save Conflict Modal -->
+    <div class="modal-overlay" id="saveConflictModal"><div class="modal" style="max-width:450px;"><div class="modal-header"><span class="modal-title">⚠️ Save Conflict</span><button class="modal-close" id="closeSaveConflictModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+        <div class="conflict-warning">
+            <div class="conflict-warning-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                Flow was modified
+            </div>
+            <div class="conflict-warning-text">
+                This flow was modified by <span class="conflict-warning-user" id="saveConflictUser">someone</span> while you were editing.
+                <br><br>
+                Modified: <span id="saveConflictTime">recently</span>
+                <br><br>
+                What would you like to do?
+            </div>
+        </div>
+        <div class="conflict-actions" style="flex-direction: column;">
+            <button class="btn" id="saveConflictReloadBtn">↻ Reload Their Version (lose my changes)</button>
+            <button class="btn btn-primary" id="saveConflictOverwriteBtn">💾 Save My Version (overwrite theirs)</button>
+        </div>
+    </div></div></div>
+    
     <!-- Image Viewer -->
     <div class="image-viewer" id="imageViewer"><img id="imageViewerImg" /></div>
     <div class="toast-container" id="toastContainer"></div>
@@ -2198,6 +2256,12 @@ PROCESS TO CONVERT:
             this.briefsFileId = null;
             this.currentBriefId = null;
             this.editingBrief = null;
+            // Collaboration / Editing Sessions
+            this.editingSessions = {};
+            this.sessionUpdateInterval = null;
+            this.flowLoadedAt = null;  // Track when we loaded the current flow
+            this.sessionExpiryMinutes = 10;  // Sessions expire after 10 min inactivity
+            this.pendingFlowId = null;  // Flow awaiting conflict resolution
             // Multi-select
             this.multiSelectedBlocks = new Set();
             this.multiSelectPane = null;
@@ -2261,6 +2325,7 @@ PROCESS TO CONVERT:
                 try {
                     await this.loadDriveFlows();
                     await this.loadBriefsFromDrive();
+                    await this.loadEditingSessions();
                     this.renderDashboard();
                     this.toast('Dashboard refreshed', 'success');
                 } catch (e) {
@@ -2324,6 +2389,14 @@ PROCESS TO CONVERT:
             });
             document.getElementById('briefLinkFlowBtn')?.addEventListener('click', () => this.showLinkFlowModal());
             document.getElementById('closeLinkFlowModal')?.addEventListener('click', () => this.hideModal('linkFlowModal'));
+            
+            // Conflict modal events
+            document.getElementById('closeEditingConflictModal')?.addEventListener('click', () => this.hideModal('editingConflictModal'));
+            document.getElementById('conflictCancelBtn')?.addEventListener('click', () => this.hideModal('editingConflictModal'));
+            document.getElementById('conflictOpenAnywayBtn')?.addEventListener('click', () => this.confirmOpenFlow());
+            document.getElementById('closeSaveConflictModal')?.addEventListener('click', () => this.hideModal('saveConflictModal'));
+            document.getElementById('saveConflictReloadBtn')?.addEventListener('click', () => this.reloadConflictedFlow());
+            document.getElementById('saveConflictOverwriteBtn')?.addEventListener('click', () => this.overwriteConflictedFlow());
         }
         
         loginWithGoogle() {
@@ -2403,6 +2476,7 @@ PROCESS TO CONVERT:
                     await this.ensureDriveFolder();
                     await this.loadDriveFlows();
                     await this.loadBriefsFromDrive();
+                    await this.loadEditingSessions();
                     this.initApp();
                 } catch (e) {
                     // Token expired or invalid
@@ -2444,6 +2518,7 @@ PROCESS TO CONVERT:
                 await this.ensureDriveFolder();
                 await this.loadDriveFlows();
                 await this.loadBriefsFromDrive();
+                await this.loadEditingSessions();
                 
                 // Initialize the app now that we're authenticated
                 this.initApp();
@@ -3166,8 +3241,15 @@ PROCESS TO CONVERT:
             setTimeout(() => { this.zoomToFit('current'); this.zoomToFit('proposed'); }, 100);
         }
 
-        saveCurrentFlow() {
+        async saveCurrentFlow() {
             if (!this.currentFlowId) { this.showFlowModal(); return; }
+            
+            // Check for conflicts before saving (Drive only)
+            if (this.currentFlowIsDrive) {
+                const hasConflict = await this.checkSaveConflict();
+                if (hasConflict) return; // Modal will be shown
+            }
+            
             this.addToHistory();
             
             const isDrive = this.currentFlowIsDrive;
@@ -3179,7 +3261,8 @@ PROCESS TO CONVERT:
             flow.updatedAt = new Date().toISOString();
             
             if (isDrive) {
-                this.saveToDrive(flow);
+                await this.saveToDrive(flow);
+                this.flowLoadedAt = Date.now(); // Update loaded time after successful save
             } else {
                 this.saveFlows();
                 this.toast('Saved', 'success');
@@ -5788,7 +5871,12 @@ PROCESS TO CONVERT:
         hideModal(id) { document.getElementById(id).classList.remove('show'); }
         
         // Dashboard Methods
-        showDashboard() {
+        async showDashboard() {
+            // End current editing session
+            if (this.currentFlowId) {
+                await this.endEditingSession(this.currentFlowId);
+            }
+            
             document.getElementById('dashboardScreen').classList.add('show');
             document.getElementById('mainApp').style.display = 'none';
             document.getElementById('flowEnvSelector').style.display = 'none';
@@ -5797,6 +5885,9 @@ PROCESS TO CONVERT:
             this.dashboardSearchTerm = '';
             const searchInput = document.getElementById('dashboardSearch');
             if (searchInput) searchInput.value = '';
+            
+            // Load editing sessions before rendering
+            await this.loadEditingSessions();
             this.renderDashboard();
         }
         
@@ -6070,8 +6161,19 @@ PROCESS TO CONVERT:
                             const flowStatus = flow.flowStatus || 'draft';
                             const flowStatusLabel = flowStatusLabels[flowStatus] || flowStatusLabels['draft'];
                             
+                            // Check if someone is editing this flow
+                            const editingSession = this.getActiveSession(flow.id);
+                            const isBeingEdited = !!editingSession;
+                            const editingIndicatorHtml = editingSession ? `
+                                <div class="flow-card-editing-indicator">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                    <span class="editing-user">${this.escapeHtml(editingSession.userName)}</span>
+                                    <span class="editing-time">· ${this.formatTimeAgo(editingSession.lastActivity)}</span>
+                                </div>
+                            ` : '';
+                            
                             html += `
-                                <div class="flow-card" data-flow-id="${flow.id}">
+                                <div class="flow-card ${isBeingEdited ? 'flow-card-editing' : ''}" data-flow-id="${flow.id}">
                                     <div class="flow-card-actions">
                                         <button class="flow-card-action" data-action="duplicate" title="Duplicate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg></button>
                                         <button class="flow-card-action danger" data-action="delete" title="Delete"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg></button>
@@ -6098,6 +6200,7 @@ PROCESS TO CONVERT:
                                         <span class="flow-card-status ${flowStatus}">${flowStatusLabel}</span>
                                         <span style="float:right;">Updated: ${updatedDate}</span>
                                     </div>
+                                    ${editingIndicatorHtml}
                                 </div>
                             `;
                         });
@@ -6127,8 +6230,8 @@ PROCESS TO CONVERT:
                     }
                     
                     const flowId = card.dataset.flowId;
-                    this.loadFlow(flowId, true);
-                    this.hideDashboard();
+                    // Check for editing conflicts before opening
+                    this.checkAndOpenFlow(flowId);
                 });
             });
             
@@ -6444,62 +6547,58 @@ PROCESS TO CONVERT:
             this.saveState('auto-layout');
             
             const blocks = Array.from(pane.blocks.values());
-            const blockWidth = 264;
-            const blockHeight = 144;
-            const horizontalGap = 72;
-            const verticalGap = 96;
+            const blockWidth = 288;
+            const blockHeight = 168;
+            const horizontalGap = 96;  // More space between siblings
+            const verticalGap = 120;   // More space between levels
             const startX = 120;
             const startY = 96;
             
             // Build connection graph
             const children = new Map();
             const parents = new Map();
-            const inDegree = new Map();
             
             blocks.forEach(b => {
                 children.set(b.id, []);
                 parents.set(b.id, []);
-                inDegree.set(b.id, 0);
             });
             
             pane.connections.forEach(conn => {
                 if (pane.blocks.has(conn.from) && pane.blocks.has(conn.to)) {
-                    children.get(conn.from)?.push(conn.to);
-                    parents.get(conn.to)?.push(conn.from);
-                    inDegree.set(conn.to, (inDegree.get(conn.to) || 0) + 1);
+                    if (!children.get(conn.from).includes(conn.to)) {
+                        children.get(conn.from).push(conn.to);
+                    }
+                    if (!parents.get(conn.to).includes(conn.from)) {
+                        parents.get(conn.to).push(conn.from);
+                    }
                 }
             });
             
-            // Find root nodes (no incoming) or use first block
-            let roots = blocks.filter(b => inDegree.get(b.id) === 0);
+            // Find root nodes (no incoming)
+            let roots = blocks.filter(b => parents.get(b.id).length === 0);
             if (roots.length === 0) roots = [blocks[0]];
             
-            // Assign levels (rows) using topological sort
+            // Assign levels using longest path (ensures children are always below parents)
             const level = new Map();
-            const queue = [...roots.map(r => r.id)];
-            roots.forEach(r => level.set(r.id, 0));
+            const visited = new Set();
             
-            while (queue.length > 0) {
-                const nodeId = queue.shift();
-                const nodeLevel = level.get(nodeId);
-                
-                for (const childId of (children.get(nodeId) || [])) {
-                    // Child level is at least parent + 1
-                    const currentChildLevel = level.get(childId);
-                    const newLevel = nodeLevel + 1;
-                    
-                    if (currentChildLevel === undefined || newLevel > currentChildLevel) {
-                        level.set(childId, newLevel);
-                    }
-                    
-                    // Add to queue if not visited yet
-                    if (currentChildLevel === undefined) {
-                        queue.push(childId);
-                    }
+            const assignLevel = (blockId, currentLevel) => {
+                const existingLevel = level.get(blockId);
+                if (existingLevel === undefined || currentLevel > existingLevel) {
+                    level.set(blockId, currentLevel);
                 }
-            }
+                
+                if (visited.has(blockId)) return;
+                visited.add(blockId);
+                
+                for (const childId of children.get(blockId) || []) {
+                    assignLevel(childId, level.get(blockId) + 1);
+                }
+            };
             
-            // Assign disconnected blocks to level 0
+            roots.forEach(r => assignLevel(r.id, 0));
+            
+            // Handle disconnected blocks
             blocks.forEach(b => {
                 if (!level.has(b.id)) level.set(b.id, 0);
             });
@@ -6512,84 +6611,109 @@ PROCESS TO CONVERT:
                 levels.get(l).push(b);
             });
             
-            // Sort levels array
-            const sortedLevels = Array.from(levels.keys()).sort((a, b) => a - b);
+            const sortedLevelNums = Array.from(levels.keys()).sort((a, b) => a - b);
             
-            // Calculate positions - center each level
-            const maxLevelWidth = Math.max(...Array.from(levels.values()).map(arr => arr.length));
-            const totalWidth = maxLevelWidth * (blockWidth + horizontalGap) - horizontalGap;
+            // Calculate subtree widths for proper spacing
+            const subtreeWidth = new Map();
             
-            // Sort blocks within each level to minimize crossings
-            sortedLevels.forEach((levelNum, idx) => {
-                const levelBlocks = levels.get(levelNum);
+            const calcSubtreeWidth = (blockId) => {
+                if (subtreeWidth.has(blockId)) return subtreeWidth.get(blockId);
                 
-                if (idx > 0) {
-                    // Sort by average parent position
-                    levelBlocks.sort((a, b) => {
-                        const aParents = parents.get(a.id) || [];
-                        const bParents = parents.get(b.id) || [];
-                        
-                        const aAvgX = aParents.length > 0 
-                            ? aParents.reduce((sum, pid) => sum + (pane.blocks.get(pid)?.x || 0), 0) / aParents.length
-                            : 0;
-                        const bAvgX = bParents.length > 0 
-                            ? bParents.reduce((sum, pid) => sum + (pane.blocks.get(pid)?.x || 0), 0) / bParents.length
-                            : 0;
-                        
-                        return aAvgX - bAvgX;
-                    });
+                const blockChildren = children.get(blockId) || [];
+                if (blockChildren.length === 0) {
+                    subtreeWidth.set(blockId, blockWidth);
+                    return blockWidth;
                 }
                 
-                // Position blocks in this level
-                const levelWidth = levelBlocks.length * (blockWidth + horizontalGap) - horizontalGap;
-                const offsetX = (totalWidth - levelWidth) / 2;
+                let totalChildWidth = 0;
+                blockChildren.forEach((childId, idx) => {
+                    totalChildWidth += calcSubtreeWidth(childId);
+                    if (idx > 0) totalChildWidth += horizontalGap;
+                });
                 
-                levelBlocks.forEach((block, blockIdx) => {
-                    block.x = this.snapToGrid(startX + offsetX + blockIdx * (blockWidth + horizontalGap));
-                    block.y = this.snapToGrid(startY + levelNum * (blockHeight + verticalGap));
+                const width = Math.max(blockWidth, totalChildWidth);
+                subtreeWidth.set(blockId, width);
+                return width;
+            };
+            
+            roots.forEach(r => calcSubtreeWidth(r.id));
+            blocks.forEach(b => {
+                if (!subtreeWidth.has(b.id)) calcSubtreeWidth(b.id);
+            });
+            
+            // Position blocks using subtree widths
+            const blockX = new Map();
+            const positioned = new Set();
+            
+            const positionBlock = (blockId, leftX) => {
+                if (positioned.has(blockId)) return;
+                positioned.add(blockId);
+                
+                const block = pane.blocks.get(blockId);
+                if (!block) return;
+                
+                const myWidth = subtreeWidth.get(blockId) || blockWidth;
+                const blockChildren = children.get(blockId) || [];
+                
+                if (blockChildren.length === 0) {
+                    // Leaf node - center in allocated space
+                    block.x = this.snapToGrid(leftX + (myWidth - blockWidth) / 2);
+                } else {
+                    // Position children first
+                    let childLeftX = leftX;
+                    blockChildren.forEach((childId, idx) => {
+                        const childWidth = subtreeWidth.get(childId) || blockWidth;
+                        positionBlock(childId, childLeftX);
+                        childLeftX += childWidth + horizontalGap;
+                    });
+                    
+                    // Center parent above children
+                    const firstChild = pane.blocks.get(blockChildren[0]);
+                    const lastChild = pane.blocks.get(blockChildren[blockChildren.length - 1]);
+                    if (firstChild && lastChild) {
+                        const centerX = (firstChild.x + lastChild.x + blockWidth) / 2 - blockWidth / 2;
+                        block.x = this.snapToGrid(centerX);
+                    } else {
+                        block.x = this.snapToGrid(leftX + (myWidth - blockWidth) / 2);
+                    }
+                }
+                
+                block.y = this.snapToGrid(startY + level.get(blockId) * (blockHeight + verticalGap));
+                blockX.set(blockId, block.x);
+            };
+            
+            // Position from roots
+            let currentX = startX;
+            roots.forEach(root => {
+                positionBlock(root.id, currentX);
+                currentX += (subtreeWidth.get(root.id) || blockWidth) + horizontalGap;
+            });
+            
+            // Position any unpositioned blocks (disconnected)
+            sortedLevelNums.forEach(levelNum => {
+                const levelBlocks = levels.get(levelNum);
+                levelBlocks.forEach(block => {
+                    if (!positioned.has(block.id)) {
+                        block.x = this.snapToGrid(currentX);
+                        block.y = this.snapToGrid(startY + levelNum * (blockHeight + verticalGap));
+                        currentX += blockWidth + horizontalGap;
+                        positioned.add(block.id);
+                    }
                 });
             });
             
-            // Second pass: adjust for better parent-child alignment
-            for (let pass = 0; pass < 3; pass++) {
-                sortedLevels.forEach(levelNum => {
-                    const levelBlocks = levels.get(levelNum);
-                    
-                    levelBlocks.forEach(block => {
-                        const blockChildren = children.get(block.id) || [];
-                        const blockParents = parents.get(block.id) || [];
-                        
-                        // If single child, try to align parent above child
-                        if (blockChildren.length === 1) {
-                            const child = pane.blocks.get(blockChildren[0]);
-                            if (child) {
-                                const targetX = child.x;
-                                // Only move if no collision
-                                const collision = levelBlocks.some(other => 
-                                    other.id !== block.id && 
-                                    Math.abs(other.x - targetX) < blockWidth + horizontalGap / 2
-                                );
-                                if (!collision) {
-                                    block.x = this.snapToGrid(targetX);
-                                }
-                            }
-                        }
-                        
-                        // If multiple children, center above them
-                        if (blockChildren.length > 1) {
-                            const childBlocks = blockChildren.map(cid => pane.blocks.get(cid)).filter(Boolean);
-                            const avgChildX = childBlocks.reduce((sum, c) => sum + c.x, 0) / childBlocks.length;
-                            const collision = levelBlocks.some(other => 
-                                other.id !== block.id && 
-                                Math.abs(other.x - avgChildX) < blockWidth + horizontalGap / 2
-                            );
-                            if (!collision) {
-                                block.x = this.snapToGrid(avgChildX);
-                            }
-                        }
-                    });
-                });
-            }
+            // Resolve any remaining overlaps at same level
+            sortedLevelNums.forEach(levelNum => {
+                const levelBlocks = levels.get(levelNum).sort((a, b) => a.x - b.x);
+                for (let i = 1; i < levelBlocks.length; i++) {
+                    const prev = levelBlocks[i - 1];
+                    const curr = levelBlocks[i];
+                    const minX = prev.x + blockWidth + horizontalGap;
+                    if (curr.x < minX) {
+                        curr.x = this.snapToGrid(minX);
+                    }
+                }
+            });
             
             // Clear waypoints for clean curves
             pane.connections.forEach(conn => {
@@ -6995,6 +7119,296 @@ PROCESS TO CONVERT:
         
         getBriefForFlow(flowId) {
             return Object.values(this.briefs).find(b => (b.linkedFlows || []).includes(flowId));
+        }
+        
+        // ===== EDITING SESSIONS (Collaboration) =====
+        
+        async saveEditingSessions() {
+            if (!this.googleUser || !this.driveFolderId) return;
+            
+            try {
+                const content = JSON.stringify(this.editingSessions, null, 2);
+                const token = gapi.client.getToken()?.access_token;
+                if (!token) return;
+                
+                const searchResponse = await gapi.client.drive.files.list({
+                    q: `name='_sessions.json' and '${this.driveFolderId}' in parents and trashed=false`,
+                    fields: 'files(id)'
+                });
+                
+                const existingFileId = searchResponse.result.files?.[0]?.id;
+                
+                if (existingFileId) {
+                    await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media&supportsAllDrives=true`, {
+                        method: 'PATCH',
+                        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+                        body: content
+                    });
+                } else {
+                    const metadata = { name: '_sessions.json', mimeType: 'application/json', parents: [this.driveFolderId] };
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', new Blob([content], { type: 'application/json' }));
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id&supportsAllDrives=true', {
+                        method: 'POST',
+                        headers: { 'Authorization': 'Bearer ' + token },
+                        body: form
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to save sessions:', e);
+            }
+        }
+        
+        async loadEditingSessions() {
+            if (!this.googleUser || !this.driveFolderId) {
+                this.editingSessions = {};
+                return;
+            }
+            
+            try {
+                const searchResponse = await gapi.client.drive.files.list({
+                    q: `name='_sessions.json' and '${this.driveFolderId}' in parents and trashed=false`,
+                    fields: 'files(id)'
+                });
+                
+                const file = searchResponse.result.files?.[0];
+                if (!file) {
+                    this.editingSessions = {};
+                    return;
+                }
+                
+                const response = await gapi.client.drive.files.get({ fileId: file.id, alt: 'media' });
+                this.editingSessions = JSON.parse(response.body) || {};
+                
+                // Clean up expired sessions
+                this.cleanupExpiredSessions();
+            } catch (e) {
+                console.error('Failed to load sessions:', e);
+                this.editingSessions = {};
+            }
+        }
+        
+        cleanupExpiredSessions() {
+            const now = Date.now();
+            const expiryMs = this.sessionExpiryMinutes * 60 * 1000;
+            let changed = false;
+            
+            Object.keys(this.editingSessions).forEach(flowId => {
+                const session = this.editingSessions[flowId];
+                if (now - session.lastActivity > expiryMs) {
+                    delete this.editingSessions[flowId];
+                    changed = true;
+                }
+            });
+            
+            if (changed) {
+                this.saveEditingSessions();
+            }
+        }
+        
+        getUserDisplayName() {
+            return this.googleUser?.name || this.googleUser?.email || 'Someone';
+        }
+        
+        async startEditingSession(flowId) {
+            if (!flowId) return;
+            
+            await this.loadEditingSessions();
+            
+            this.editingSessions[flowId] = {
+                userName: this.getUserDisplayName(),
+                userEmail: this.googleUser?.email,
+                lastActivity: Date.now(),
+                startedAt: Date.now()
+            };
+            
+            await this.saveEditingSessions();
+            
+            // Update session every 60 seconds
+            this.stopEditingSession(); // Clear any existing interval
+            this.sessionUpdateInterval = setInterval(() => {
+                this.updateEditingSession(flowId);
+            }, 60000);
+        }
+        
+        async updateEditingSession(flowId) {
+            if (!flowId || !this.editingSessions[flowId]) return;
+            
+            this.editingSessions[flowId].lastActivity = Date.now();
+            await this.saveEditingSessions();
+        }
+        
+        stopEditingSession() {
+            if (this.sessionUpdateInterval) {
+                clearInterval(this.sessionUpdateInterval);
+                this.sessionUpdateInterval = null;
+            }
+        }
+        
+        async endEditingSession(flowId) {
+            this.stopEditingSession();
+            
+            if (!flowId) return;
+            
+            await this.loadEditingSessions();
+            
+            // Only delete if it's our session
+            const session = this.editingSessions[flowId];
+            if (session && session.userEmail === this.googleUser?.email) {
+                delete this.editingSessions[flowId];
+                await this.saveEditingSessions();
+            }
+        }
+        
+        getActiveSession(flowId) {
+            if (!flowId) return null;
+            
+            const session = this.editingSessions[flowId];
+            if (!session) return null;
+            
+            // Check if expired
+            const now = Date.now();
+            const expiryMs = this.sessionExpiryMinutes * 60 * 1000;
+            if (now - session.lastActivity > expiryMs) {
+                return null;
+            }
+            
+            // Check if it's our own session
+            if (session.userEmail === this.googleUser?.email) {
+                return null; // Don't warn about our own session
+            }
+            
+            return session;
+        }
+        
+        formatTimeAgo(timestamp) {
+            const seconds = Math.floor((Date.now() - timestamp) / 1000);
+            if (seconds < 60) return 'just now';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+            const hours = Math.floor(minutes / 60);
+            return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+        }
+        
+        // Called when clicking a flow card - check for conflicts first
+        async checkAndOpenFlow(flowId) {
+            this.pendingFlowId = flowId;
+            
+            await this.loadEditingSessions();
+            const activeSession = this.getActiveSession(flowId);
+            
+            if (activeSession) {
+                // Show warning modal
+                document.getElementById('conflictUserName').textContent = activeSession.userName;
+                document.getElementById('conflictLastActivity').textContent = this.formatTimeAgo(activeSession.lastActivity);
+                this.showModal('editingConflictModal');
+            } else {
+                // No conflict, open directly
+                this.confirmOpenFlow();
+            }
+        }
+        
+        async confirmOpenFlow() {
+            this.hideModal('editingConflictModal');
+            
+            const flowId = this.pendingFlowId;
+            if (!flowId) return;
+            
+            // End any previous session
+            if (this.currentFlowId) {
+                await this.endEditingSession(this.currentFlowId);
+            }
+            
+            // Load the flow
+            this.loadFlow(flowId, true);
+            this.hideDashboard();
+            
+            // Start editing session
+            await this.startEditingSession(flowId);
+            
+            // Track when we loaded for conflict detection on save
+            this.flowLoadedAt = Date.now();
+        }
+        
+        // Check for save conflicts
+        async checkSaveConflict() {
+            if (!this.currentFlowId || !this.currentFlowIsDrive) return false;
+            
+            const flow = this.driveFlows[this.currentFlowId];
+            if (!flow || !flow.driveFileId) return false;
+            
+            try {
+                // Get file metadata to check last modified time
+                const response = await gapi.client.drive.files.get({
+                    fileId: flow.driveFileId,
+                    fields: 'modifiedTime'
+                });
+                
+                const serverModifiedTime = new Date(response.result.modifiedTime).getTime();
+                
+                // If file was modified after we loaded it, there's a conflict
+                if (this.flowLoadedAt && serverModifiedTime > this.flowLoadedAt) {
+                    // Load sessions to find who modified it
+                    await this.loadEditingSessions();
+                    
+                    // Find the other user
+                    const session = this.editingSessions[this.currentFlowId];
+                    const otherUser = session?.userName || 'someone else';
+                    
+                    document.getElementById('saveConflictUser').textContent = otherUser;
+                    document.getElementById('saveConflictTime').textContent = this.formatTimeAgo(serverModifiedTime);
+                    
+                    this.showModal('saveConflictModal');
+                    return true;
+                }
+            } catch (e) {
+                console.error('Error checking save conflict:', e);
+            }
+            
+            return false;
+        }
+        
+        async reloadConflictedFlow() {
+            this.hideModal('saveConflictModal');
+            
+            if (!this.currentFlowId) return;
+            
+            // Reload from Drive
+            await this.loadDriveFlows();
+            this.loadFlow(this.currentFlowId, true);
+            this.flowLoadedAt = Date.now();
+            this.toast('Flow reloaded', 'success');
+        }
+        
+        async overwriteConflictedFlow() {
+            this.hideModal('saveConflictModal');
+            
+            // Force save
+            await this.saveCurrentFlowForce();
+        }
+        
+        async saveCurrentFlowForce() {
+            // Same as saveCurrentFlow but skips conflict check
+            if (!this.currentFlowId) { this.showFlowModal(); return; }
+            this.addToHistory();
+            
+            const isDrive = this.currentFlowIsDrive;
+            const flow = isDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            
+            flow.current = { blocks: Array.from(this.current.blocks.values()), connections: this.current.connections };
+            flow.proposed = { blocks: Array.from(this.proposed.blocks.values()), connections: this.proposed.connections };
+            flow.issueFixLinks = [...this.issueFixLinks];
+            flow.updatedAt = new Date().toISOString();
+            
+            if (isDrive) {
+                await this.saveToDrive(flow);
+            } else {
+                localStorage.setItem('flowbuilder_flows', JSON.stringify(this.flows));
+                this.toast('Flow saved locally', 'success');
+            }
+            
+            this.flowLoadedAt = Date.now();
         }
         
         updateBriefReference() {
