@@ -6879,13 +6879,20 @@ PROCESS TO CONVERT:
                 return false;
             }
             
-            await this.ensureDriveFolder();
-            
-            const content = JSON.stringify(this.briefs, null, 2);
-            const token = gapi.client.getToken().access_token;
-            
+            const tokenObj = gapi.client.getToken();
+            if (!tokenObj || !tokenObj.access_token) {
+                this.toast('Session expired. Please reload and sign in.', 'error');
+                return false;
+            }
+            const token = tokenObj.access_token;
+
             try {
-                // Always search for existing file
+                await this.ensureDriveFolder();
+                
+                if (!this.briefs) this.briefs = {};
+
+                const content = JSON.stringify(this.briefs, null, 2);
+
                 const searchResponse = await gapi.client.drive.files.list({
                     q: `name='briefs.json' and '${this.driveFolderId}' in parents and trashed=false`,
                     fields: 'files(id)'
@@ -6894,7 +6901,6 @@ PROCESS TO CONVERT:
                 const existingFileId = searchResponse.result.files?.[0]?.id;
                 
                 if (existingFileId) {
-                    // Update existing
                     const resp = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFileId}?uploadType=media&supportsAllDrives=true`, {
                         method: 'PATCH',
                         headers: {
@@ -6905,7 +6911,6 @@ PROCESS TO CONVERT:
                     });
                     if (!resp.ok) throw new Error('Update failed: ' + resp.status);
                 } else {
-                    // Create new
                     const metadata = {
                         name: 'briefs.json',
                         mimeType: 'application/json',
@@ -6926,7 +6931,7 @@ PROCESS TO CONVERT:
                 return true;
             } catch (e) {
                 console.error('Failed to save briefs:', e);
-                this.toast('Failed to save briefs to Drive', 'error');
+                this.toast('Failed to save briefs: ' + (e.message || 'Unknown error'), 'error');
                 return false;
             }
         }
