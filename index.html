@@ -2561,6 +2561,25 @@ PROCESS TO CONVERT:
             window.location.reload();
         }
         
+        async ensureValidToken() {
+            // Check if we have a valid token
+            const token = gapi.client.getToken();
+            if (!token || !token.access_token) {
+                throw new Error('Session expired');
+            }
+            
+            // Try a simple API call to verify token is still valid
+            try {
+                await gapi.client.drive.about.get({ fields: 'user' });
+                return true;
+            } catch (e) {
+                if (e.status === 401) {
+                    throw new Error('Session expired');
+                }
+                throw e;
+            }
+        }
+        
         updateGoogleAuthUI() {
             const userPhoto = document.getElementById('googleUserPhoto');
             const userName = document.getElementById('googleUserName');
@@ -2688,6 +2707,18 @@ PROCESS TO CONVERT:
                 throw new Error('Not signed in');
             }
             
+            // Ensure token is valid before attempting save
+            try {
+                await this.ensureValidToken();
+            } catch (e) {
+                if (e.message === 'Session expired') {
+                    this.toast('⚠️ Session expired! Please click your profile picture and "Sign Out", then sign back in.', 'error');
+                } else {
+                    this.toast('Authentication error. Please sign out and sign back in.', 'error');
+                }
+                throw e;
+            }
+            
             await this.ensureDriveFolder();
             
             const fileName = (flow.name || 'Untitled').replace(/[^a-zA-Z0-9\s-_]/g, '') + '.json';
@@ -2707,6 +2738,9 @@ PROCESS TO CONVERT:
             
             try {
                 const token = gapi.client.getToken().access_token;
+                if (!token) {
+                    throw new Error('No access token available');
+                }
                 let fileId = flow.driveFileId;
                 
                 if (fileId) {
@@ -2783,7 +2817,13 @@ PROCESS TO CONVERT:
                 
             } catch (e) {
                 console.error('Save to drive failed:', e);
-                this.toast('Failed to save: ' + e.message, 'error');
+                
+                // Check if it's an auth error
+                if (e.message && (e.message.includes('401') || e.message.includes('UNAUTHENTICATED') || e.message.includes('Invalid Credentials') || e.message.includes('Session expired'))) {
+                    this.toast('⚠️ Session expired! Sign out (click profile → Sign Out) and sign back in.', 'error');
+                } else {
+                    this.toast('❌ Save failed: ' + e.message, 'error');
+                }
                 throw e; // Re-throw so caller knows it failed
             } finally {
                 document.getElementById('savingIndicator').classList.remove('active');
@@ -2824,7 +2864,9 @@ PROCESS TO CONVERT:
             t.className = 'toast ' + type;
             t.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${type === 'success' ? '<path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>' : '<circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>'}</svg><span>${msg}</span>`;
             c.appendChild(t);
-            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, 2500);
+            // Error messages stay longer (6 seconds) so user can read them
+            const duration = type === 'error' ? 6000 : 2500;
+            setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 200); }, duration);
         }
 
         bindEvents() {
