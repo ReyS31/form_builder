@@ -2414,14 +2414,18 @@ PROCESS TO CONVERT:
         
         loginWithGoogle() {
             if (!this.gisInited) { 
-                document.getElementById('loginError').textContent = 'Still loading. Please wait a moment and try again.';
-                document.getElementById('loginError').classList.add('show');
+                const errorEl = document.getElementById('loginError');
+                if (errorEl) {
+                    errorEl.textContent = 'Still loading. Please wait a moment and try again.';
+                    errorEl.classList.add('show');
+                }
                 return; 
             }
-            document.getElementById('loginError').classList.remove('show');
-            document.getElementById('loginContent').classList.add('hidden');
-            document.getElementById('loginLoading').classList.add('show');
-            document.querySelector('#loginLoading span').textContent = 'Signing in...';
+            document.getElementById('loginError')?.classList.remove('show');
+            document.getElementById('loginContent')?.classList.add('hidden');
+            document.getElementById('loginLoading')?.classList.add('show');
+            const loadingSpan = document.querySelector('#loginLoading span');
+            if (loadingSpan) loadingSpan.textContent = 'Signing in...';
             this.tokenClient.requestAccessToken({ prompt: '' });
         }
         
@@ -2447,10 +2451,13 @@ PROCESS TO CONVERT:
                 callback: (response) => {
                     if (response.error) {
                         // Auth failed or denied
-                        document.getElementById('loginContent').classList.remove('hidden');
-                        document.getElementById('loginLoading').classList.remove('show');
-                        document.getElementById('loginError').textContent = 'Access denied. You are not authorized to use this app.';
-                        document.getElementById('loginError').classList.add('show');
+                        document.getElementById('loginContent')?.classList.remove('hidden');
+                        document.getElementById('loginLoading')?.classList.remove('show');
+                        const errorEl = document.getElementById('loginError');
+                        if (errorEl) {
+                            errorEl.textContent = 'Access denied. You are not authorized to use this app.';
+                            errorEl.classList.add('show');
+                        }
                         return;
                     }
                     if (response.access_token) {
@@ -2458,10 +2465,13 @@ PROCESS TO CONVERT:
                     }
                 },
                 error_callback: (error) => {
-                    document.getElementById('loginContent').classList.remove('hidden');
-                    document.getElementById('loginLoading').classList.remove('show');
-                    document.getElementById('loginError').textContent = 'Authentication failed. Please try again.';
-                    document.getElementById('loginError').classList.add('show');
+                    document.getElementById('loginContent')?.classList.remove('hidden');
+                    document.getElementById('loginLoading')?.classList.remove('show');
+                    const errorEl = document.getElementById('loginError');
+                    if (errorEl) {
+                        errorEl.textContent = 'Authentication failed. Please try again.';
+                        errorEl.classList.add('show');
+                    }
                 }
             });
             this.gisInited = true;
@@ -2518,6 +2528,8 @@ PROCESS TO CONVERT:
         }
         
         async onGoogleSignIn(response) {
+            // Set the token in gapi.client FIRST
+            gapi.client.setToken({ access_token: response.access_token });
             localStorage.setItem('fb_google_token', response.access_token);
             
             // Get user info
@@ -2538,10 +2550,13 @@ PROCESS TO CONVERT:
                 this.updateGoogleAuthUI();
             } catch (e) {
                 console.error('Sign in error:', e);
-                document.getElementById('loginContent').classList.remove('hidden');
-                document.getElementById('loginLoading').classList.remove('show');
-                document.getElementById('loginError').textContent = 'Sign in failed. Please try again.';
-                document.getElementById('loginError').classList.add('show');
+                document.getElementById('loginContent')?.classList.remove('hidden');
+                document.getElementById('loginLoading')?.classList.remove('show');
+                const errorEl = document.getElementById('loginError');
+                if (errorEl) {
+                    errorEl.textContent = 'Sign in failed. Please try again.';
+                    errorEl.classList.add('show');
+                }
             }
         }
         
@@ -2584,7 +2599,7 @@ PROCESS TO CONVERT:
             const userPhoto = document.getElementById('googleUserPhoto');
             const userName = document.getElementById('googleUserName');
             
-            if (this.googleUser) {
+            if (this.googleUser && userPhoto && userName) {
                 userPhoto.src = this.googleUser.photoLink || 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%236e7681"><circle cx="12" cy="8" r="4"/><path d="M12 14c-6 0-8 3-8 6v2h16v-2c0-3-2-6-8-6z"/></svg>';
                 userName.textContent = this.googleUser.displayName || this.googleUser.emailAddress;
             }
