@@ -36,6 +36,7 @@
             --red-dim: rgba(239, 68, 68, 0.12);
             --purple: #a855f7;
             --purple-dim: rgba(168, 85, 247, 0.12);
+            --purple-bg: rgba(168, 85, 247, 0.12);
             --cyan: #06b6d4;
             --cyan-dim: rgba(6, 182, 212, 0.12);
             
@@ -166,6 +167,9 @@
         .mode-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
         .mode-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
         .mode-btn.active { background: var(--bg-secondary); color: var(--text-primary); box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .mode-divider { width: 1px; height: 20px; background: var(--border-subtle); margin: 0 4px; }
+        .dev-mode-btn.active { background: var(--purple-bg); color: var(--purple); }
+        .dev-mode-btn:hover { background: var(--purple-bg); color: var(--purple); }
         
         /* Icon buttons */
         .icon-btn {
@@ -1545,6 +1549,11 @@
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     Detail
                 </button>
+                <div class="mode-divider"></div>
+                <button class="mode-btn dev-mode-btn" id="devModeBtn" title="Dev Mode: Show all fields at once">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                    Dev
+                </button>
             </div>
             <div class="header-divider"></div>
             
@@ -2198,6 +2207,26 @@ PROCESS TO CONVERT:
         </div>
     </div></div></div>
     
+    <!-- Session Expired Modal -->
+    <div class="modal-overlay" id="sessionExpiredModal"><div class="modal" style="max-width:420px;"><div class="modal-header"><span class="modal-title">🔒 Session Expired</span></div><div class="modal-body">
+        <div style="text-align:center; padding: 20px 0;">
+            <div style="font-size: 48px; margin-bottom: 16px;">⏰</div>
+            <div style="font-size: 14px; color: var(--text-secondary); margin-bottom: 12px;">
+                Your Google sign-in session has expired.
+            </div>
+            <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 20px;">
+                This happens after about 1 hour of inactivity.<br>
+                Your work is still saved in memory - just sign out and sign back in to continue.
+            </div>
+            <button class="btn btn-primary" id="sessionExpiredSignOutBtn" style="width: 100%; padding: 12px; font-size: 14px;">
+                🔓 Sign Out & Sign Back In
+            </button>
+            <div style="font-size: 10px; color: var(--text-muted); margin-top: 12px;">
+                After signing back in, press Ctrl+S to save your work
+            </div>
+        </div>
+    </div></div></div>
+    
     <!-- Image Viewer -->
     <div class="image-viewer" id="imageViewer"><img id="imageViewerImg" /></div>
     <!-- Blocking Save Overlay -->
@@ -2410,6 +2439,12 @@ PROCESS TO CONVERT:
             document.getElementById('closeSaveConflictModal')?.addEventListener('click', () => this.hideModal('saveConflictModal'));
             document.getElementById('saveConflictReloadBtn')?.addEventListener('click', () => this.reloadConflictedFlow());
             document.getElementById('saveConflictOverwriteBtn')?.addEventListener('click', () => this.overwriteConflictedFlow());
+            
+            // Session expired modal
+            document.getElementById('sessionExpiredSignOutBtn')?.addEventListener('click', () => {
+                this.hideSessionExpiredModal();
+                this.googleSignOut();
+            });
         }
         
         loginWithGoogle() {
@@ -2726,11 +2761,7 @@ PROCESS TO CONVERT:
             try {
                 await this.ensureValidToken();
             } catch (e) {
-                if (e.message === 'Session expired') {
-                    this.toast('⚠️ Session expired! Please click your profile picture and "Sign Out", then sign back in.', 'error');
-                } else {
-                    this.toast('Authentication error. Please sign out and sign back in.', 'error');
-                }
+                this.showSessionExpiredModal();
                 throw e;
             }
             
@@ -2835,7 +2866,7 @@ PROCESS TO CONVERT:
                 
                 // Check if it's an auth error
                 if (e.message && (e.message.includes('401') || e.message.includes('UNAUTHENTICATED') || e.message.includes('Invalid Credentials') || e.message.includes('Session expired'))) {
-                    this.toast('⚠️ Session expired! Sign out (click profile → Sign Out) and sign back in.', 'error');
+                    this.showSessionExpiredModal();
                 } else {
                     this.toast('❌ Save failed: ' + e.message, 'error');
                 }
@@ -2858,6 +2889,14 @@ PROCESS TO CONVERT:
                 console.error('Delete failed:', e);
                 this.toast('Failed to delete', 'error');
             }
+        }
+        
+        showSessionExpiredModal() {
+            document.getElementById('sessionExpiredModal').classList.add('show');
+        }
+        
+        hideSessionExpiredModal() {
+            document.getElementById('sessionExpiredModal').classList.remove('show');
         }
 
         getPane(paneId) { return paneId === 'current' ? this.current : this.proposed; }
@@ -2894,6 +2933,7 @@ PROCESS TO CONVERT:
             document.getElementById('sketchModeBtn')?.addEventListener('click', () => this.setMode('sketch'));
             document.getElementById('configureModeBtn')?.addEventListener('click', () => this.setMode('configure'));
             document.getElementById('detailModeBtn')?.addEventListener('click', () => this.setMode('detail'));
+            document.getElementById('devModeBtn')?.addEventListener('click', () => this.setMode('dev'));
             document.querySelectorAll('.panel-tab').forEach(tab => {
                 tab.addEventListener('click', () => {
                     document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active'));
@@ -3108,6 +3148,7 @@ PROCESS TO CONVERT:
             document.getElementById('sketchModeBtn')?.classList.toggle('active', mode === 'sketch');
             document.getElementById('configureModeBtn')?.classList.toggle('active', mode === 'configure');
             document.getElementById('detailModeBtn')?.classList.toggle('active', mode === 'detail');
+            document.getElementById('devModeBtn')?.classList.toggle('active', mode === 'dev');
             this.renderPanelContent();
             ['current', 'proposed'].forEach(paneId => this.getPane(paneId).blocks.forEach(block => this.updateBlockElement(block, paneId)));
         }
@@ -4289,7 +4330,34 @@ PROCESS TO CONVERT:
             const isCurrentPane = paneId === 'current';
             let html = `<div class="form-group"><label class="form-label">Step Name</label><input type="text" class="form-input" id="blockNameInput" value="${block.name || ''}" /></div><div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="blockDescInput" placeholder="What does this step do?">${block.description || ''}</textarea></div>`;
             
-            if (this.mode === 'sketch') {
+            if (this.mode === 'dev') {
+                // DEV MODE: Show ALL fields from all modes combined
+                
+                // === CONFIGURE: Step Type ===
+                html += `<div class="section-divider"><div class="section-title" style="color:var(--purple);">⚙️ Step Type</div><div class="type-grid" id="typeGrid">${Object.entries(STEP_TYPES).map(([key, type]) => `<div class="type-option ${block.stepType === key ? 'selected' : ''}" data-type="${key}"><div class="type-option-icon" style="background:${type.color}"><svg viewBox="0 0 24 24">${type.icon}</svg></div><div class="type-option-name">${type.name}</div></div>`).join('')}</div></div>`;
+                
+                // === SKETCH: Metadata ===
+                html += `<div class="section-divider"><div class="section-title" style="color:var(--purple);">📋 Metadata</div><div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input type="text" class="form-input" id="ownerInput" value="${block.owner || ''}" placeholder="Team/Person" /></div><div class="form-group"><label class="form-label">Time</label><input type="text" class="form-input" id="timeInput" value="${block.timeEstimate || ''}" placeholder="5 min" /></div></div><div class="form-row"><div class="form-group"><label class="form-label">Systems</label><input type="text" class="form-input" id="systemsInput" value="${block.systems || ''}" placeholder="CRM, API..." /></div><div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="prioritySelect"><option value="">None</option>${PRIORITIES.map(p => `<option value="${p}" ${block.priority === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}</select></div></div></div>`;
+                
+                // === SKETCH: Issue/Change marking (pane dependent) ===
+                if (isCurrentPane) {
+                    html += `<div class="section-divider"><div class="section-title" style="color:var(--red);">⚠️ Issue Marking</div><div class="option-grid"><div class="option-item ${block.issueType === 'error' ? 'selected error' : ''}" data-issue="error"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'error' ? 'var(--red)' : 'currentColor'}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="option-item-label">Issue</div></div><div class="option-item ${block.issueType === 'warning' ? 'selected warning' : ''}" data-issue="warning"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'warning' ? 'var(--orange)' : 'currentColor'}" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="option-item-label">Warning</div></div></div><div class="form-group" style="margin-top:8px;"><label class="form-label">What's wrong?</label><textarea class="form-input" id="issueTextInput" placeholder="Describe the problem...">${block.issueText || ''}</textarea></div>${block.issueType ? '<button class="btn" id="clearIssueBtn" style="width:100%;font-size:10px;">Clear Issue</button>' : ''}</div>`;
+                } else {
+                    const linkedIssue = this.getLinkedIssue(block.id);
+                    html += `<div class="section-divider"><div class="section-title" style="color:var(--green);">✅ Change Type</div><div class="option-grid"><div class="option-item ${block.changeType === 'fix' ? 'selected fix' : ''}" data-change="fix"><div class="option-item-icon">🔧</div><div class="option-item-label">Fix</div></div><div class="option-item ${block.changeType === 'new' ? 'selected new' : ''}" data-change="new"><div class="option-item-icon">✨</div><div class="option-item-label">New</div></div><div class="option-item ${block.changeType === 'modified' ? 'selected' : ''}" data-change="modified"><div class="option-item-icon">📝</div><div class="option-item-label">Modified</div></div><div class="option-item ${block.changeType === 'removed' ? 'selected' : ''}" data-change="removed"><div class="option-item-icon">🗑️</div><div class="option-item-label">Remove</div></div></div></div>`;
+                    html += `<div class="form-group"><label class="form-label">Fix Description</label><textarea class="form-input" id="fixTextInput" placeholder="Explain the fix...">${block.fixText || ''}</textarea></div>`;
+                    html += `<div class="form-group"><label class="form-label">Link to Issue</label><div class="link-selector">${linkedIssue ? `<div class="link-selector-current"><span>🔗 ${linkedIssue.name}</span><button class="link-selector-btn" id="unlinkIssueBtn">Unlink</button></div>` : `<div class="link-selector-label">Connect to an issue</div><div class="link-selector-list" id="issueLinkList">${this.getIssueLinkListHtml()}</div>`}</div></div>`;
+                    html += `<div class="form-group"><label class="form-label">Status</label><select class="form-select" id="statusSelect"><option value="">None</option>${STATUSES.map(s => `<option value="${s}" ${block.status === s ? 'selected' : ''}>${s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>`).join('')}</select></div>`;
+                }
+                
+                // === DETAIL: Technical specs ===
+                html += `<div class="section-divider"><div class="section-title" style="color:var(--purple);">🔧 Technical Details</div></div>`;
+                html += `<div class="form-group"><label class="form-label">Preconditions</label><textarea class="form-input" id="preconditionsInput" placeholder="What must be true before this step?">${block.preconditions || ''}</textarea></div>`;
+                html += `<div class="form-group"><label class="form-label">Validation Rules</label><textarea class="form-input" id="validationInput" placeholder="What checks should happen?">${block.validation || ''}</textarea></div>`;
+                html += `<div class="form-group"><label class="form-label">On Failure</label><input type="text" class="form-input" id="errorPathInput" value="${block.errorPath || ''}" placeholder="What happens when this fails?" /></div>`;
+                html += `<div class="form-group"><label class="form-label">System Link</label><input type="text" class="form-input" id="systemLinkInput" value="${block.systemLink || ''}" placeholder="URL to screen, docs, or code..." /></div>`;
+                
+            } else if (this.mode === 'sketch') {
                 // Sketch mode: metadata + issue/change marking
                 html += `<div class="section-divider"><div class="section-title">Metadata</div><div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input type="text" class="form-input" id="ownerInput" value="${block.owner || ''}" placeholder="Team/Person" /></div><div class="form-group"><label class="form-label">Time</label><input type="text" class="form-input" id="timeInput" value="${block.timeEstimate || ''}" placeholder="5 min" /></div></div><div class="form-row"><div class="form-group"><label class="form-label">Systems</label><input type="text" class="form-input" id="systemsInput" value="${block.systems || ''}" placeholder="CRM, API..." /></div><div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="prioritySelect"><option value="">None</option>${PRIORITIES.map(p => `<option value="${p}" ${block.priority === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}</select></div></div></div>`;
                 if (isCurrentPane) {
@@ -5459,33 +5527,73 @@ PROCESS TO CONVERT:
         
         drawPDFFlowBlocks(pdf, x, y, width, colors, blocks, connections, mode) {
             const pageHeight = pdf.internal.pageSize.getHeight();
-            const blockHeight = 18;
-            const blockGap = 6;
-            const maxBlocksPerPage = Math.floor((pageHeight - y - 20) / (blockHeight + blockGap));
+            const blockHeight = 20;
+            const blockGap = 4;
+            const indentWidth = 12;
             
-            // Sort blocks by y position
-            const sortedBlocks = [...blocks].sort((a, b) => (a.y || 0) - (b.y || 0));
+            // Build connection graph
+            const children = new Map();
+            const parents = new Map();
+            const connectionLabels = new Map(); // from-to -> label
             
-            // Step type labels (no emoji - PDF fonts don't support them)
+            blocks.forEach(b => {
+                children.set(b.id, []);
+                parents.set(b.id, []);
+            });
+            
+            connections.forEach(conn => {
+                if (children.has(conn.from) && parents.has(conn.to)) {
+                    children.get(conn.from).push(conn.to);
+                    parents.get(conn.to).push(conn.from);
+                    if (conn.label) {
+                        connectionLabels.set(`${conn.from}->${conn.to}`, conn.label);
+                    }
+                }
+            });
+            
+            // Find root nodes (no parents)
+            const blockMap = new Map(blocks.map(b => [b.id, b]));
+            let roots = blocks.filter(b => parents.get(b.id).length === 0);
+            if (roots.length === 0 && blocks.length > 0) {
+                // No clear root - use block with smallest Y
+                roots = [blocks.reduce((a, b) => (a.y || 0) < (b.y || 0) ? a : b)];
+            }
+            
+            // Step type labels
             const stepTypes = {
                 action: 'ACT', decision: 'DEC', api: 'API', email: 'EML', 
                 form: 'FRM', data: 'DAT', delay: 'DLY', webhook: 'WHK'
             };
             
             let currentY = y;
-            let blockIndex = 0;
+            let stepNumber = 0;
+            const visited = new Set();
+            const drawnBlocks = []; // Track what we've drawn for the details table
             
-            sortedBlocks.forEach((block, idx) => {
+            // Recursive function to draw a block and its descendants
+            const drawBlock = (blockId, depth, pathLabel) => {
+                if (visited.has(blockId)) return;
+                visited.add(blockId);
+                
+                const block = blockMap.get(blockId);
+                if (!block) return;
+                
+                stepNumber++;
+                drawnBlocks.push({ ...block, stepNumber, depth, pathLabel });
+                
                 // Check if we need a new page
                 if (currentY + blockHeight > pageHeight - 15) {
                     pdf.addPage();
                     currentY = 15;
                 }
                 
+                const indent = depth * indentWidth;
+                const blockWidth = width - indent;
+                const blockX = x + indent;
+                
                 // Determine block color based on type
                 let bgColor = [255, 255, 255];
                 let borderColor = colors.gray;
-                let textColor = colors.dark;
                 
                 if (mode === 'current') {
                     if (block.issueType === 'error') {
@@ -5508,35 +5616,53 @@ PROCESS TO CONVERT:
                     }
                 }
                 
+                // Draw path label (e.g., "YES", "NO") if this is a branch
+                if (pathLabel && depth > 0) {
+                    pdf.setFontSize(7);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text(pathLabel, blockX - 2, currentY + blockHeight/2, { align: 'right' });
+                }
+                
+                // Draw indent lines for tree structure
+                if (depth > 0) {
+                    pdf.setDrawColor(200, 200, 200);
+                    pdf.setLineWidth(0.3);
+                    // Vertical line
+                    pdf.line(blockX - 6, currentY - 2, blockX - 6, currentY + blockHeight/2);
+                    // Horizontal line to block
+                    pdf.line(blockX - 6, currentY + blockHeight/2, blockX - 2, currentY + blockHeight/2);
+                }
+                
                 // Draw block background
                 pdf.setFillColor(...bgColor);
                 pdf.setDrawColor(...borderColor);
                 pdf.setLineWidth(0.4);
-                pdf.roundedRect(x, currentY, width, blockHeight, 2, 2, 'FD');
+                pdf.roundedRect(blockX, currentY, blockWidth, blockHeight, 2, 2, 'FD');
                 
-                // Step number
+                // Step number circle
                 pdf.setFillColor(...borderColor);
-                pdf.circle(x + 6, currentY + blockHeight/2, 4, 'F');
+                pdf.circle(blockX + 6, currentY + blockHeight/2, 4, 'F');
                 pdf.setFontSize(7);
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(255, 255, 255);
-                pdf.text(String(idx + 1), x + 6, currentY + blockHeight/2 + 1.5, { align: 'center' });
+                pdf.text(String(stepNumber), blockX + 6, currentY + blockHeight/2 + 1.5, { align: 'center' });
                 
-                // Step type indicator (small label)
+                // Step type indicator
                 const typeLabel = stepTypes[block.stepType] || '';
                 if (typeLabel) {
                     pdf.setFontSize(5);
                     pdf.setFont('helvetica', 'bold');
                     pdf.setTextColor(...colors.gray);
-                    pdf.text(typeLabel, x + 12, currentY + blockHeight/2 + 1);
+                    pdf.text(typeLabel, blockX + 12, currentY + blockHeight/2 + 1);
                 }
                 
                 // Block name
                 pdf.setFontSize(9);
                 pdf.setFont('helvetica', 'bold');
                 pdf.setTextColor(...colors.dark);
-                const nameMaxWidth = width - 50;
-                const nameX = typeLabel ? x + 24 : x + 14;
+                const nameMaxWidth = blockWidth - 55;
+                const nameX = typeLabel ? blockX + 24 : blockX + 14;
                 let name = block.name || 'Untitled';
                 if (pdf.getTextWidth(name) > nameMaxWidth) {
                     while (pdf.getTextWidth(name + '...') > nameMaxWidth && name.length > 0) {
@@ -5546,7 +5672,7 @@ PROCESS TO CONVERT:
                 }
                 pdf.text(name, nameX, currentY + 7);
                 
-                // Description (truncated)
+                // Description
                 if (block.description) {
                     pdf.setFontSize(7);
                     pdf.setFont('helvetica', 'normal');
@@ -5558,7 +5684,18 @@ PROCESS TO CONVERT:
                         }
                         desc += '...';
                     }
-                    pdf.text(desc, nameX, currentY + 13);
+                    pdf.text(desc, nameX, currentY + 14);
+                }
+                
+                // Branch indicator for decision blocks
+                const childIds = children.get(blockId) || [];
+                if (childIds.length > 1) {
+                    pdf.setFillColor(...colors.orange);
+                    pdf.roundedRect(blockX + blockWidth - 30, currentY + 3, 26, 6, 1, 1, 'F');
+                    pdf.setFontSize(5);
+                    pdf.setFont('helvetica', 'bold');
+                    pdf.setTextColor(255, 255, 255);
+                    pdf.text(`${childIds.length} PATHS`, blockX + blockWidth - 17, currentY + 7, { align: 'center' });
                 }
                 
                 // Issue/Change badge
@@ -5573,34 +5710,62 @@ PROCESS TO CONVERT:
                                 block.changeType === 'new' ? colors.primary : colors.orange;
                 }
                 
-                if (badge) {
+                if (badge && childIds.length <= 1) {
                     const badgeWidth = pdf.getTextWidth(badge) + 4;
                     pdf.setFillColor(...badgeColor);
-                    pdf.roundedRect(x + width - badgeWidth - 4, currentY + 3, badgeWidth, 6, 1, 1, 'F');
+                    pdf.roundedRect(blockX + blockWidth - badgeWidth - 4, currentY + 3, badgeWidth, 6, 1, 1, 'F');
                     pdf.setFontSize(5);
                     pdf.setFont('helvetica', 'bold');
                     pdf.setTextColor(255, 255, 255);
-                    pdf.text(badge, x + width - badgeWidth/2 - 4, currentY + 7, { align: 'center' });
-                }
-                
-                // Connection arrow to next block
-                if (idx < sortedBlocks.length - 1) {
-                    const arrowY = currentY + blockHeight + 1;
-                    pdf.setDrawColor(...colors.gray);
-                    pdf.setLineWidth(0.3);
-                    pdf.line(x + width/2, arrowY, x + width/2, arrowY + blockGap - 2);
-                    // Arrow head
-                    pdf.setFillColor(...colors.gray);
-                    pdf.triangle(
-                        x + width/2, arrowY + blockGap - 1,
-                        x + width/2 - 1.5, arrowY + blockGap - 3,
-                        x + width/2 + 1.5, arrowY + blockGap - 3,
-                        'F'
-                    );
+                    pdf.text(badge, blockX + blockWidth - badgeWidth/2 - 4, currentY + 7, { align: 'center' });
                 }
                 
                 currentY += blockHeight + blockGap;
-                blockIndex++;
+                
+                // Draw children (handle forks)
+                if (childIds.length === 1) {
+                    // Single path - draw arrow
+                    const arrowY = currentY - blockGap + 1;
+                    pdf.setDrawColor(...colors.gray);
+                    pdf.setLineWidth(0.3);
+                    pdf.line(blockX + blockWidth/2, arrowY, blockX + blockWidth/2, arrowY + blockGap - 2);
+                    pdf.setFillColor(...colors.gray);
+                    pdf.triangle(
+                        blockX + blockWidth/2, arrowY + blockGap - 1,
+                        blockX + blockWidth/2 - 1.5, arrowY + blockGap - 3,
+                        blockX + blockWidth/2 + 1.5, arrowY + blockGap - 3,
+                        'F'
+                    );
+                    drawBlock(childIds[0], depth, null);
+                } else if (childIds.length > 1) {
+                    // Multiple paths - draw each with label
+                    childIds.forEach((childId, idx) => {
+                        const label = connectionLabels.get(`${blockId}->${childId}`) || `Path ${idx + 1}`;
+                        drawBlock(childId, depth + 1, label.toUpperCase());
+                    });
+                }
+            };
+            
+            // Draw all roots
+            roots.forEach(root => {
+                drawBlock(root.id, 0, null);
+            });
+            
+            // Draw any unvisited blocks (disconnected)
+            blocks.forEach(block => {
+                if (!visited.has(block.id)) {
+                    if (currentY > pageHeight - 30) {
+                        pdf.addPage();
+                        currentY = 15;
+                    }
+                    // Add separator for disconnected blocks
+                    pdf.setFontSize(8);
+                    pdf.setFont('helvetica', 'italic');
+                    pdf.setTextColor(...colors.gray);
+                    pdf.text('(Disconnected steps)', x, currentY);
+                    currentY += 6;
+                    drawBlock(block.id, 0, null);
+                }
             });
             
             return currentY;
@@ -7235,7 +7400,7 @@ PROCESS TO CONVERT:
             
             const tokenObj = gapi.client.getToken();
             if (!tokenObj || !tokenObj.access_token) {
-                this.toast('Session expired. Please reload and sign in.', 'error');
+                this.showSessionExpiredModal();
                 return false;
             }
             const token = tokenObj.access_token;
