@@ -2430,7 +2430,7 @@ PROCESS TO CONVERT:
             // Init Google Identity Services
             this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.file',
+                scope: 'https://www.googleapis.com/auth/drive',
                 callback: (response) => {
                     if (response.error) {
                         // Auth failed or denied
@@ -2453,7 +2453,7 @@ PROCESS TO CONVERT:
             });
             this.gisInited = true;
             
-            // Clear old tokens - scope is drive.file (only app-created files)
+            // Full drive access required for team collaboration (shared folders)
             const tokenVersion = localStorage.getItem('fb_token_version');
             if (tokenVersion !== '2') {
                 localStorage.removeItem('fb_google_token');
