@@ -968,6 +968,32 @@
         .add-output:hover svg { color: white; }
         .connecting-mode .block:not(.connect-target-block) { opacity: 0.5; }
         .connecting-mode .connect-target-block { opacity: 1; box-shadow: 0 0 0 2px var(--accent); }
+        
+        /* Helper/Note blocks */
+        .block.helper-block { width: 200px; background: var(--bg-tertiary); border: 2px dashed var(--border-default); border-radius: 8px; }
+        .block.helper-block .block-header { background: transparent; border-bottom: none; padding: 6px 8px; }
+        .block.helper-block .block-icon { background: var(--purple-bg); }
+        .block.helper-block .block-icon svg { color: var(--purple); }
+        .block.helper-block .block-title { color: var(--purple); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .block.helper-block .block-body { padding: 0 8px 8px; }
+        .block.helper-block .block-description { color: var(--text-secondary); font-size: 11px; -webkit-line-clamp: 5; }
+        .block.helper-block .port-in, .block.helper-block .port-out, .block.helper-block .block-outputs, .block.helper-block .add-output { display: none; }
+        
+        /* Inline edit overlay */
+        .inline-edit-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-secondary); border-radius: 8px; z-index: 100; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+        .inline-edit-input { width: 100%; padding: 6px 8px; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: inherit; }
+        .inline-edit-input:focus { outline: none; border-color: var(--accent); }
+        .inline-edit-input.title-input { font-weight: 600; }
+        .inline-edit-textarea { resize: none; min-height: 40px; }
+        .inline-edit-types { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 2px; }
+        .inline-edit-type { width: 28px; height: 28px; border-radius: 5px; border: 2px solid transparent; background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .inline-edit-type:hover { border-color: var(--border-default); }
+        .inline-edit-type.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .inline-edit-type svg { width: 14px; height: 14px; }
+        .inline-edit-actions { display: flex; gap: 6px; margin-top: auto; }
+        .inline-edit-btn { flex: 1; padding: 6px; border: none; border-radius: 5px; font-size: 11px; font-weight: 500; cursor: pointer; }
+        .inline-edit-btn.save { background: var(--accent); color: white; }
+        .inline-edit-btn.cancel { background: var(--bg-tertiary); color: var(--text-secondary); }
 
         .panel { width: 320px; background: var(--bg-secondary); border-left: 1px solid var(--border-subtle); display: flex; flex-direction: column; flex-shrink: 0; }
         .panel-tabs { display: flex; border-bottom: 1px solid var(--border-subtle); }
@@ -1649,6 +1675,7 @@
                     <div class="pane-header">
                         <div class="pane-title"><span class="pane-indicator current"></span>Current State</div>
                         <div class="pane-actions">
+                            <button class="pane-btn" id="addCurrentHelperBtn" title="Add helper text annotation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Note</button>
                             <button class="pane-btn primary" id="addCurrentBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
                         </div>
                     </div>
@@ -1671,6 +1698,7 @@
                         <div class="pane-actions">
                             <button class="pane-btn" id="promoteToCurrentBtn" title="Promote: Replace current state with proposed"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
                             <button class="pane-btn" id="copyFromCurrentBtn" title="Copy all blocks from current state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>Copy</button>
+                            <button class="pane-btn" id="addProposedHelperBtn" title="Add helper text annotation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Note</button>
                             <button class="pane-btn primary" id="addProposedBlockBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Step</button>
                         </div>
                     </div>
@@ -1827,6 +1855,8 @@
             
             <h3>🚀 Advanced Features</h3>
             <table class="help-table">
+                <tr><td><strong>Double-Click Edit</strong></td><td>Double-click any block to quickly edit name, description, and type inline.</td></tr>
+                <tr><td><strong>Helper Notes</strong></td><td>Use the "Note" button to add informational text blocks that don't connect to the flow.</td></tr>
                 <tr><td><strong>Search Blocks</strong></td><td>Use the search bar or Ctrl+F to find blocks. Enter to cycle through matches.</td></tr>
                 <tr><td><strong>Multi-Select</strong></td><td>Shift+Click to select multiple blocks. Move or delete them together.</td></tr>
                 <tr><td><strong>Auto-Layout</strong></td><td>Click the grid icon in zoom controls to automatically arrange blocks.</td></tr>
@@ -2275,6 +2305,11 @@ PROCESS TO CONVERT:
             this.isDragging = false;
             this.isPanning = false;
             this.isConnecting = false;
+            // Inline editing
+            this.inlineEditBlock = null;
+            this.inlineEditPane = null;
+            this.inlineEditEl = null;
+            this.inlineEditOriginal = null;
             this.issueFixLinks = [];
             this.versionHistory = [];
             // Undo/Redo
@@ -2944,6 +2979,8 @@ PROCESS TO CONVERT:
             });
             document.getElementById('addCurrentBlockBtn').addEventListener('click', () => this.addBlock('current'));
             document.getElementById('addProposedBlockBtn').addEventListener('click', () => this.addBlock('proposed'));
+            document.getElementById('addCurrentHelperBtn')?.addEventListener('click', () => this.addHelperBlock('current'));
+            document.getElementById('addProposedHelperBtn')?.addEventListener('click', () => this.addHelperBlock('proposed'));
             document.getElementById('copyFromCurrentBtn').addEventListener('click', () => this.copyCurrentToProposed());
             document.getElementById('promoteToCurrentBtn').addEventListener('click', () => this.promoteToCurrentState());
             // View toggle
@@ -3081,6 +3118,10 @@ PROCESS TO CONVERT:
                     this.selectAllBlocks();
                 }
                 if (e.key === 'Escape') { 
+                    if (this.inlineEditBlock) {
+                        this.closeInlineEdit(true);
+                        return;
+                    }
                     this.cancelConnecting(); 
                     this.clearMultiSelect();
                     this.hideModal('flowModal'); 
@@ -4328,6 +4369,26 @@ PROCESS TO CONVERT:
 
         getDetailsTabHtml(block, paneId) {
             const isCurrentPane = paneId === 'current';
+            
+            // Helper blocks have simplified panel
+            if (block.isHelper) {
+                let html = `
+                    <div class="form-group">
+                        <label class="form-label">Note Title</label>
+                        <input type="text" class="form-input" id="blockNameInput" value="${block.name || ''}" placeholder="Note title..." />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Content</label>
+                        <textarea class="form-input" id="blockDescInput" rows="6" placeholder="Add helpful context, tips, or explanations...">${block.description || ''}</textarea>
+                    </div>
+                    <div class="section-divider">
+                        <div class="section-title" style="color:var(--purple);">💡 Note Block</div>
+                        <p style="font-size:10px;color:var(--text-muted);margin:4px 0 0 0;">Helper notes are for documentation purposes and don't connect to the flow.</p>
+                    </div>
+                `;
+                return html;
+            }
+            
             let html = `<div class="form-group"><label class="form-label">Step Name</label><input type="text" class="form-input" id="blockNameInput" value="${block.name || ''}" /></div><div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="blockDescInput" placeholder="What does this step do?">${block.description || ''}</textarea></div>`;
             
             if (this.mode === 'dev') {
@@ -4488,6 +4549,30 @@ PROCESS TO CONVERT:
             this.updateMinimap();
             setTimeout(() => { const input = document.getElementById('blockNameInput'); if (input) { input.focus(); input.select(); } }, 100);
         }
+        
+        addHelperBlock(paneId) {
+            if (!this.currentFlowId) { this.showFlowModal(); return; }
+            this.saveState('add-helper');
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            const rect = els.canvasArea.getBoundingClientRect();
+            let x = (rect.width / 2 - pane.panX) / pane.zoom - 100;
+            let y = (rect.height / 2 - pane.panY) / pane.zoom - 50;
+            // Position near selected block if any
+            if (this.selectedBlock && this.activePane === paneId) {
+                x = this.selectedBlock.x + 280;
+                y = this.selectedBlock.y;
+            }
+            x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24;
+            const id = 'block_' + (++this.blockIdCounter);
+            const block = { id, name: 'Note', description: 'Add helpful context here...', x, y, isHelper: true, outputs: 0 };
+            pane.blocks.set(id, block);
+            this.renderBlock(block, paneId);
+            this.selectBlock(block, paneId);
+            this.updateInstructions();
+            this.updateMinimap();
+            setTimeout(() => { const input = document.getElementById('blockDescInput'); if (input) { input.focus(); input.select(); } }, 100);
+        }
 
         renderBlock(block, paneId) {
             const els = this.getPaneElements(paneId);
@@ -4504,6 +4589,7 @@ PROCESS TO CONVERT:
 
         getBlockClasses(block, paneId) {
             let classes = ['block'];
+            if (block.isHelper) classes.push('helper-block');
             if (this.selectedBlock?.id === block.id && this.activePane === paneId) classes.push('selected');
             if (paneId === 'current') { if (block.issueType === 'error') classes.push('issue-error'); else if (block.issueType === 'warning') classes.push('issue-warning'); }
             else { if (block.changeType === 'fix' || block.fixText) classes.push('change-fix'); else if (block.changeType === 'new') classes.push('change-new'); else if (block.changeType === 'removed') classes.push('change-removed'); }
@@ -4513,6 +4599,11 @@ PROCESS TO CONVERT:
         }
 
         getBlockHtml(block, paneId) {
+            // Helper block - simplified display
+            if (block.isHelper) {
+                return `<div class="block-header"><div class="block-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></div><div class="block-title">${block.name || 'Note'}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'Add note...'}</div></div>`;
+            }
+            
             const isCurrentPane = paneId === 'current';
             const typeInfo = block.stepType ? STEP_TYPES[block.stepType] : null;
             let badges = '';
@@ -4548,6 +4639,12 @@ PROCESS TO CONVERT:
                     return;
                 }
                 this.selectBlock(block, paneId); 
+            });
+            // Double-click to open inline edit
+            el.addEventListener('dblclick', e => {
+                e.stopPropagation();
+                if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return;
+                this.openInlineEdit(block, paneId, el);
             });
             // Click on output port to START connection
             el.querySelectorAll('.port-out').forEach(port => {
@@ -4644,6 +4741,133 @@ PROCESS TO CONVERT:
             this.connectingPane = null;
             this.removeTempConnection('current');
             this.removeTempConnection('proposed');
+        }
+        
+        openInlineEdit(block, paneId, el) {
+            // Close any existing inline edit
+            this.closeInlineEdit();
+            
+            this.inlineEditBlock = block;
+            this.inlineEditPane = paneId;
+            this.inlineEditEl = el;
+            
+            // Store original values for cancel
+            this.inlineEditOriginal = {
+                name: block.name,
+                description: block.description,
+                stepType: block.stepType
+            };
+            
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.className = 'inline-edit-overlay';
+            overlay.id = 'inlineEditOverlay';
+            
+            // Build HTML based on block type
+            let html = `
+                <input type="text" class="inline-edit-input title-input" id="inlineEditName" value="${(block.name || '').replace(/"/g, '&quot;')}" placeholder="Step name..." />
+                <textarea class="inline-edit-input inline-edit-textarea" id="inlineEditDesc" placeholder="Description...">${block.description || ''}</textarea>
+            `;
+            
+            // Only show type selector for non-helper blocks
+            if (!block.isHelper) {
+                html += `<div class="inline-edit-types" id="inlineEditTypes">`;
+                for (const [key, type] of Object.entries(STEP_TYPES)) {
+                    html += `<div class="inline-edit-type ${block.stepType === key ? 'selected' : ''}" data-type="${key}" title="${type.name}" style="background:${type.color}"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">${type.icon}</svg></div>`;
+                }
+                html += `</div>`;
+            }
+            
+            html += `
+                <div class="inline-edit-actions">
+                    <button class="inline-edit-btn cancel" id="inlineEditCancel">Cancel</button>
+                    <button class="inline-edit-btn save" id="inlineEditSave">Save</button>
+                </div>
+            `;
+            
+            overlay.innerHTML = html;
+            el.appendChild(overlay);
+            
+            // Bind events
+            const nameInput = overlay.querySelector('#inlineEditName');
+            const descInput = overlay.querySelector('#inlineEditDesc');
+            const saveBtn = overlay.querySelector('#inlineEditSave');
+            const cancelBtn = overlay.querySelector('#inlineEditCancel');
+            
+            nameInput.focus();
+            nameInput.select();
+            
+            // Type selection
+            overlay.querySelectorAll('.inline-edit-type').forEach(typeEl => {
+                typeEl.addEventListener('click', e => {
+                    e.stopPropagation();
+                    overlay.querySelectorAll('.inline-edit-type').forEach(t => t.classList.remove('selected'));
+                    typeEl.classList.add('selected');
+                });
+            });
+            
+            // Save on Enter in name field
+            nameInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); this.saveInlineEdit(); }
+                if (e.key === 'Escape') { e.preventDefault(); this.closeInlineEdit(true); }
+            });
+            
+            // Tab from name to description
+            nameInput.addEventListener('keydown', e => {
+                if (e.key === 'Tab' && !e.shiftKey) { e.preventDefault(); descInput.focus(); }
+            });
+            
+            // Escape to cancel
+            descInput.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { e.preventDefault(); this.closeInlineEdit(true); }
+            });
+            
+            saveBtn.addEventListener('click', e => { e.stopPropagation(); this.saveInlineEdit(); });
+            cancelBtn.addEventListener('click', e => { e.stopPropagation(); this.closeInlineEdit(true); });
+            
+            // Prevent mousedown from triggering drag
+            overlay.addEventListener('mousedown', e => e.stopPropagation());
+            overlay.addEventListener('click', e => e.stopPropagation());
+        }
+        
+        saveInlineEdit() {
+            if (!this.inlineEditBlock) return;
+            
+            const overlay = document.getElementById('inlineEditOverlay');
+            if (!overlay) return;
+            
+            this.saveState('inline-edit');
+            
+            const nameInput = overlay.querySelector('#inlineEditName');
+            const descInput = overlay.querySelector('#inlineEditDesc');
+            const selectedType = overlay.querySelector('.inline-edit-type.selected');
+            
+            this.inlineEditBlock.name = nameInput.value || 'Untitled';
+            this.inlineEditBlock.description = descInput.value;
+            if (selectedType && !this.inlineEditBlock.isHelper) {
+                this.inlineEditBlock.stepType = selectedType.dataset.type;
+            }
+            
+            this.closeInlineEdit(false);
+            this.updateBlockElement(this.inlineEditBlock, this.inlineEditPane);
+            this.updateBlockList();
+            this.renderPanel();
+        }
+        
+        closeInlineEdit(restore = false) {
+            const overlay = document.getElementById('inlineEditOverlay');
+            if (overlay) {
+                if (restore && this.inlineEditOriginal) {
+                    this.inlineEditBlock.name = this.inlineEditOriginal.name;
+                    this.inlineEditBlock.description = this.inlineEditOriginal.description;
+                    this.inlineEditBlock.stepType = this.inlineEditOriginal.stepType;
+                }
+                overlay.remove();
+            }
+            this.inlineEditBlock = null;
+            this.inlineEditPane = null;
+            this.inlineEditEl = null;
+            this.inlineEditOriginal = null;
         }
 
         updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
@@ -5147,9 +5371,10 @@ PROCESS TO CONVERT:
             const list = document.getElementById('blockList');
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             let html = '';
-            const currentBlocks = Array.from(this.current.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.y - b.y);
+            // Filter out helper blocks from the list (they're not actual process steps)
+            const currentBlocks = Array.from(this.current.blocks.values()).filter(b => !b.isHelper && (!searchTerm || b.name.toLowerCase().includes(searchTerm))).sort((a, b) => a.y - b.y);
             if (currentBlocks.length) { html += '<div class="block-list-pane-label">Current</div>'; html += currentBlocks.map(b => this.getBlockListItemHtml(b, 'current')).join(''); }
-            const proposedBlocks = Array.from(this.proposed.blocks.values()).filter(b => !searchTerm || b.name.toLowerCase().includes(searchTerm)).sort((a, b) => a.y - b.y);
+            const proposedBlocks = Array.from(this.proposed.blocks.values()).filter(b => !b.isHelper && (!searchTerm || b.name.toLowerCase().includes(searchTerm))).sort((a, b) => a.y - b.y);
             if (proposedBlocks.length) { html += '<div class="block-list-pane-label">Proposed</div>'; html += proposedBlocks.map(b => this.getBlockListItemHtml(b, 'proposed')).join(''); }
             if (!html) html = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:10px;">No steps found</div>';
             list.innerHTML = html;
