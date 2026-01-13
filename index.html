@@ -2640,6 +2640,9 @@ PROCESS TO CONVERT:
                 
                 this.driveFlows = {};
                 for (const file of (resp.result.files || [])) {
+                    // Skip system files
+                    if (file.name.startsWith('_')) continue;
+                    
                     // Load file content
                     const contentResp = await gapi.client.drive.files.get({
                         fileId: file.id,
@@ -2651,6 +2654,11 @@ PROCESS TO CONVERT:
                         flowData.driveFileId = file.id;
                         flowData.isDrive = true;
                         this.driveFlows[flowData.id || file.id] = flowData;
+                        
+                        // Debug logging
+                        console.log('Loaded from Drive:', file.name);
+                        console.log('  Current blocks:', (flowData.current?.blocks || []).length);
+                        console.log('  Current connections:', (flowData.current?.connections || []).length);
                     } catch (e) {
                         console.error('Failed to parse flow:', file.name, e);
                     }
@@ -2669,6 +2677,12 @@ PROCESS TO CONVERT:
             const fileName = (flow.name || 'Untitled').replace(/[^a-zA-Z0-9\s-_]/g, '') + '.json';
             const fileContent = JSON.stringify(flow, null, 2);
             const blob = new Blob([fileContent], { type: 'application/json' });
+            
+            // Debug: log what we're saving
+            console.log('saveToDrive:', flow.name);
+            console.log('  File size:', fileContent.length, 'bytes');
+            console.log('  Blocks to save:', (flow.current?.blocks || []).length);
+            console.log('  Connections to save:', (flow.current?.connections || []).length);
             
             document.getElementById('savingIndicator').classList.add('active');
             
@@ -3168,6 +3182,14 @@ PROCESS TO CONVERT:
         loadFlow(flowId, isDrive = false) {
             const flow = isDrive ? this.driveFlows[flowId] : this.flows[flowId];
             if (!flow) return;
+            
+            // Debug logging
+            console.log('Loading flow:', flow.name);
+            console.log('  Current blocks:', (flow.current?.blocks || []).length);
+            console.log('  Current connections:', (flow.current?.connections || []).length);
+            console.log('  Proposed blocks:', (flow.proposed?.blocks || []).length);
+            console.log('  Proposed connections:', (flow.proposed?.connections || []).length);
+            
             this.currentFlowId = flowId;
             this.currentFlowIsDrive = isDrive;
             if (!isDrive) localStorage.setItem('fb_pro_lastFlow', flowId);
@@ -3255,10 +3277,23 @@ PROCESS TO CONVERT:
             const isDrive = this.currentFlowIsDrive;
             const flow = isDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
             
-            flow.current = { blocks: Array.from(this.current.blocks.values()), connections: this.current.connections };
-            flow.proposed = { blocks: Array.from(this.proposed.blocks.values()), connections: this.proposed.connections };
-            flow.issueFixLinks = this.issueFixLinks;
+            // Deep copy blocks and connections to avoid reference issues
+            const currentBlocks = Array.from(this.current.blocks.values()).map(b => JSON.parse(JSON.stringify(b)));
+            const currentConnections = JSON.parse(JSON.stringify(this.current.connections));
+            const proposedBlocks = Array.from(this.proposed.blocks.values()).map(b => JSON.parse(JSON.stringify(b)));
+            const proposedConnections = JSON.parse(JSON.stringify(this.proposed.connections));
+            
+            flow.current = { blocks: currentBlocks, connections: currentConnections };
+            flow.proposed = { blocks: proposedBlocks, connections: proposedConnections };
+            flow.issueFixLinks = JSON.parse(JSON.stringify(this.issueFixLinks));
             flow.updatedAt = new Date().toISOString();
+            
+            // Debug logging
+            console.log('Saving flow:', flow.name);
+            console.log('  Current blocks:', currentBlocks.length);
+            console.log('  Current connections:', currentConnections.length);
+            console.log('  Proposed blocks:', proposedBlocks.length);
+            console.log('  Proposed connections:', proposedConnections.length);
             
             if (isDrive) {
                 await this.saveToDrive(flow);
@@ -7396,9 +7431,15 @@ PROCESS TO CONVERT:
             const isDrive = this.currentFlowIsDrive;
             const flow = isDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
             
-            flow.current = { blocks: Array.from(this.current.blocks.values()), connections: this.current.connections };
-            flow.proposed = { blocks: Array.from(this.proposed.blocks.values()), connections: this.proposed.connections };
-            flow.issueFixLinks = [...this.issueFixLinks];
+            // Deep copy blocks and connections
+            const currentBlocks = Array.from(this.current.blocks.values()).map(b => JSON.parse(JSON.stringify(b)));
+            const currentConnections = JSON.parse(JSON.stringify(this.current.connections));
+            const proposedBlocks = Array.from(this.proposed.blocks.values()).map(b => JSON.parse(JSON.stringify(b)));
+            const proposedConnections = JSON.parse(JSON.stringify(this.proposed.connections));
+            
+            flow.current = { blocks: currentBlocks, connections: currentConnections };
+            flow.proposed = { blocks: proposedBlocks, connections: proposedConnections };
+            flow.issueFixLinks = JSON.parse(JSON.stringify(this.issueFixLinks));
             flow.updatedAt = new Date().toISOString();
             
             if (isDrive) {
