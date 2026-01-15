@@ -5034,25 +5034,25 @@ PROCESS TO CONVERT:
                     const dy = y2 - y1;
                     const dx = x2 - x1;
                     
-                    if (dy > 50) {
-                        // Going DOWN - normal case, curve down smoothly
-                        const controlDist = Math.min(Math.abs(dy) * 0.4, 80);
+                    if (dy > 30) {
+                        // Going DOWN - normal case, use smooth S-curve
+                        // Control points create a nice vertical flow
+                        const controlDist = Math.max(30, Math.min(Math.abs(dy) * 0.35, 60));
                         pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
-                    } else if (dy < -50) {
-                        // Going UP - need to route around
-                        const sideOffset = dx > 0 ? 60 : -60;
-                        const midY = Math.max(y1, y2) + 50;
-                        pathD = `M${x1},${y1} L${x1},${y1 + 30} L${x1 + sideOffset},${y1 + 30} L${x1 + sideOffset},${y2 - 30} L${x2},${y2 - 30} L${x2},${y2}`;
+                    } else if (dy < -30) {
+                        // Going UP - route around with orthogonal path
+                        const sideOffset = dx > 0 ? 50 : -50;
+                        pathD = `M${x1},${y1} L${x1},${y1 + 25} L${x1 + sideOffset},${y1 + 25} L${x1 + sideOffset},${y2 - 25} L${x2},${y2 - 25} L${x2},${y2}`;
                     } else {
-                        // Roughly SAME LEVEL - horizontal route
-                        const midX = (x1 + x2) / 2;
-                        const offsetY = 50;
-                        if (Math.abs(dx) < 50) {
-                            // Very close, curve to side
-                            pathD = `M${x1},${y1} C${x1 + 80},${y1} ${x2 + 80},${y2} ${x2},${y2}`;
+                        // SAME LEVEL - horizontal S-curve or route
+                        if (Math.abs(dx) < 30) {
+                            // Very close horizontally, curve to side
+                            const sign = dx >= 0 ? 1 : -1;
+                            pathD = `M${x1},${y1} C${x1 + sign * 60},${y1} ${x2 + sign * 60},${y2} ${x2},${y2}`;
                         } else {
-                            // Route down then across then up
-                            pathD = `M${x1},${y1} L${x1},${y1 + offsetY} L${x2},${y1 + offsetY} L${x2},${y2}`;
+                            // Route down, across, up with S-curve feel
+                            const midY = Math.max(y1, y2) + 40;
+                            pathD = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
                         }
                     }
                 } else {
@@ -5250,29 +5250,29 @@ PROCESS TO CONVERT:
         
         // Calculate smart route that avoids blocks using orthogonal routing
         calculateSmartRoute(x1, y1, x2, y2, fromId, toId, blockRects) {
-            const padding = 40; // Space around blocks - increased for clarity
-            const cornerRadius = 12;
+            const padding = 35;
             
             // Get blocks that might be in the way (exclude source and target)
             const obstacles = blockRects.filter(r => r.id !== fromId && r.id !== toId);
             
-            // If no obstacles or going straight down with no blocks in path, return empty
             if (obstacles.length === 0) return [];
             
-            // Expand the corridor slightly for the check
-            const corridorExpand = 30;
-            const minX = Math.min(x1, x2) - corridorExpand;
-            const maxX = Math.max(x1, x2) + corridorExpand;
+            // Check if any block is directly in the path
+            // Use a narrower corridor for detection - only blocks truly in the way
+            const corridorWidth = 15; // Narrow corridor
+            const minX = Math.min(x1, x2) - corridorWidth;
+            const maxX = Math.max(x1, x2) + corridorWidth;
             const minY = Math.min(y1, y2);
             const maxY = Math.max(y1, y2);
             
             const blockingObstacles = obstacles.filter(block => {
-                // Check if block overlaps with the vertical corridor between points
+                // Check if block is in the vertical corridor between points
                 const blockInXRange = block.right > minX && block.x < maxX;
-                const blockInYRange = block.bottom > minY && block.y < maxY;
+                const blockInYRange = block.bottom > minY + 10 && block.y < maxY - 10;
                 return blockInXRange && blockInYRange;
             });
             
+            // If no real obstacles, use simple curve
             if (blockingObstacles.length === 0) return [];
             
             // Sort by Y position
@@ -7264,153 +7264,251 @@ PROCESS TO CONVERT:
             
             if (blocks.length === 0) return;
             
-            // Layout constants
-            const blockWidth = 260;
-            const blockHeight = 140;
-            const horizontalGap = 100;
-            const verticalGap = 120;
-            const startX = 100;
-            const startY = 80;
+            // ========================================
+            // BULLETPROOF AUTO-LAYOUT ALGORITHM
+            // ========================================
             
-            // Build connection graph
-            const children = new Map();
-            const parents = new Map();
+            // Layout constants
+            const BLOCK_WIDTH = 260;
+            const BLOCK_HEIGHT = 140;
+            const H_GAP = 80;           // Horizontal gap between blocks
+            const V_GAP = 100;          // Vertical gap between levels
+            const START_X = 80;
+            const START_Y = 60;
+            
+            // ----------------------------------------
+            // STEP 1: Build directed graph
+            // ----------------------------------------
+            const graph = {
+                children: new Map(),    // id -> [child ids]
+                parents: new Map(),     // id -> [parent ids]
+                blocks: new Map()       // id -> block reference
+            };
             
             blocks.forEach(b => {
-                children.set(b.id, []);
-                parents.set(b.id, []);
+                graph.children.set(b.id, []);
+                graph.parents.set(b.id, []);
+                graph.blocks.set(b.id, b);
             });
             
+            // Build edges from connections
             pane.connections.forEach(conn => {
-                const fromBlock = pane.blocks.get(conn.from);
-                const toBlock = pane.blocks.get(conn.to);
-                if (fromBlock && toBlock && !fromBlock.isHelper && !toBlock.isHelper) {
-                    if (!children.get(conn.from)?.includes(conn.to)) {
-                        children.get(conn.from)?.push(conn.to);
-                    }
-                    if (!parents.get(conn.to)?.includes(conn.from)) {
-                        parents.get(conn.to)?.push(conn.from);
-                    }
+                const from = conn.from;
+                const to = conn.to;
+                // Only process if both blocks exist and aren't helpers
+                if (graph.blocks.has(from) && graph.blocks.has(to)) {
+                    const childList = graph.children.get(from);
+                    const parentList = graph.parents.get(to);
+                    if (!childList.includes(to)) childList.push(to);
+                    if (!parentList.includes(from)) parentList.push(from);
                 }
             });
             
-            // Find root nodes (no parents)
-            let roots = blocks.filter(b => (parents.get(b.id) || []).length === 0);
-            if (roots.length === 0) roots = [blocks[0]];
+            // ----------------------------------------
+            // STEP 2: Assign levels using longest path
+            // ----------------------------------------
+            // Each node's level = max(parent levels) + 1
+            // This ensures proper layering for DAGs
             
-            // Assign levels using BFS - each block goes to the level after ALL its parents
-            const level = new Map();
-            blocks.forEach(b => level.set(b.id, -1));
+            const blockLevel = new Map();
             
-            // Start with roots at level 0
-            roots.forEach(r => level.set(r.id, 0));
+            // Find roots (blocks with no parents)
+            const roots = blocks.filter(b => graph.parents.get(b.id).length === 0);
             
-            // Iteratively assign levels until stable
-            let changed = true;
-            let iterations = 0;
-            while (changed && iterations < 100) {
-                changed = false;
-                iterations++;
+            // If no roots found (cycle), pick one arbitrarily
+            if (roots.length === 0 && blocks.length > 0) {
+                roots.push(blocks[0]);
+            }
+            
+            // Initialize all levels to -1 (unassigned)
+            blocks.forEach(b => blockLevel.set(b.id, -1));
+            
+            // BFS from roots, but ensure each node is placed at its MAXIMUM depth
+            // (the longest path from any root to this node)
+            function assignLevels() {
+                // Initialize roots at level 0
+                roots.forEach(r => blockLevel.set(r.id, 0));
                 
-                blocks.forEach(block => {
-                    const blockParents = parents.get(block.id) || [];
-                    if (blockParents.length === 0) return; // roots already set
+                // Process queue: we may visit nodes multiple times
+                // as we discover longer paths to them
+                const queue = [...roots.map(r => r.id)];
+                const processed = new Set();
+                let iterations = 0;
+                const maxIterations = blocks.length * blocks.length + 100;
+                
+                while (queue.length > 0 && iterations < maxIterations) {
+                    iterations++;
+                    const nodeId = queue.shift();
+                    const nodeLevel = blockLevel.get(nodeId);
                     
-                    // Find max parent level
-                    let maxParentLevel = -1;
-                    let allParentsAssigned = true;
-                    
-                    for (const pid of blockParents) {
-                        const pLevel = level.get(pid);
-                        if (pLevel === -1) {
-                            allParentsAssigned = false;
-                            break;
+                    // Process all children
+                    const children = graph.children.get(nodeId) || [];
+                    for (const childId of children) {
+                        const currentChildLevel = blockLevel.get(childId);
+                        const newLevel = nodeLevel + 1;
+                        
+                        // Update child level if we found a longer path
+                        if (newLevel > currentChildLevel) {
+                            blockLevel.set(childId, newLevel);
+                            // Re-queue to propagate to its children
+                            queue.push(childId);
                         }
-                        maxParentLevel = Math.max(maxParentLevel, pLevel);
                     }
-                    
-                    if (allParentsAssigned && maxParentLevel >= 0) {
-                        const newLevel = maxParentLevel + 1;
-                        if (level.get(block.id) !== newLevel) {
-                            level.set(block.id, newLevel);
-                            changed = true;
-                        }
+                }
+                
+                // Handle any disconnected blocks (assign to level 0)
+                blocks.forEach(b => {
+                    if (blockLevel.get(b.id) === -1) {
+                        blockLevel.set(b.id, 0);
                     }
                 });
             }
             
-            // Handle any still-unassigned blocks (cycles or disconnected)
+            assignLevels();
+            
+            // Find max level
             let maxLevel = 0;
             blocks.forEach(b => {
-                if (level.get(b.id) === -1) level.set(b.id, 0);
-                maxLevel = Math.max(maxLevel, level.get(b.id));
+                maxLevel = Math.max(maxLevel, blockLevel.get(b.id));
             });
             
-            // Group blocks by level
-            const levels = new Map();
+            // ----------------------------------------
+            // STEP 3: Group blocks by level
+            // ----------------------------------------
+            const levelGroups = new Map();
             for (let i = 0; i <= maxLevel; i++) {
-                levels.set(i, []);
+                levelGroups.set(i, []);
             }
             blocks.forEach(b => {
-                levels.get(level.get(b.id)).push(b);
+                levelGroups.get(blockLevel.get(b.id)).push(b);
             });
             
-            // Sort blocks within each level to minimize crossings
-            for (let lvl = 0; lvl <= maxLevel; lvl++) {
-                const levelBlocks = levels.get(lvl);
+            // ----------------------------------------
+            // STEP 4: Order blocks within each level
+            // ----------------------------------------
+            // Goal: minimize edge crossings by ordering children
+            // based on their parents' positions
+            
+            // First, order level 0 (roots) by their subtree size
+            function countDescendants(nodeId, visited = new Set()) {
+                if (visited.has(nodeId)) return 0;
+                visited.add(nodeId);
+                let count = 1;
+                const children = graph.children.get(nodeId) || [];
+                for (const childId of children) {
+                    count += countDescendants(childId, visited);
+                }
+                return count;
+            }
+            
+            // Sort roots by descendant count (largest subtrees first for better spread)
+            const level0 = levelGroups.get(0);
+            level0.sort((a, b) => countDescendants(b.id) - countDescendants(a.id));
+            
+            // Assign initial positions to level 0
+            const blockPosition = new Map(); // id -> position index in its level
+            level0.forEach((b, idx) => blockPosition.set(b.id, idx));
+            
+            // For subsequent levels, sort by average parent position
+            for (let lvl = 1; lvl <= maxLevel; lvl++) {
+                const levelBlocks = levelGroups.get(lvl);
                 
-                if (lvl === 0) {
-                    // Sort roots by number of descendants
-                    levelBlocks.sort((a, b) => (children.get(b.id)?.length || 0) - (children.get(a.id)?.length || 0));
-                } else {
-                    // Sort by average position of parents in previous level
-                    const prevBlocks = levels.get(lvl - 1);
-                    const prevPosMap = new Map();
-                    prevBlocks.forEach((b, i) => prevPosMap.set(b.id, i));
+                // Calculate "barycenter" for each block (average position of parents)
+                levelBlocks.forEach(block => {
+                    const parentIds = graph.parents.get(block.id) || [];
+                    let sum = 0;
+                    let count = 0;
                     
-                    levelBlocks.forEach(block => {
-                        const blockParents = parents.get(block.id) || [];
-                        if (blockParents.length > 0) {
-                            let sum = 0, count = 0;
-                            blockParents.forEach(pid => {
-                                const pos = prevPosMap.get(pid);
-                                if (pos !== undefined) { sum += pos; count++; }
-                            });
-                            block._order = count > 0 ? sum / count : 9999;
-                        } else {
-                            block._order = 9999;
+                    parentIds.forEach(pid => {
+                        const pos = blockPosition.get(pid);
+                        if (pos !== undefined) {
+                            sum += pos;
+                            count++;
                         }
                     });
                     
-                    levelBlocks.sort((a, b) => (a._order || 0) - (b._order || 0));
-                }
+                    // Store barycenter for sorting
+                    block._barycenter = count > 0 ? sum / count : 9999;
+                });
+                
+                // Sort by barycenter
+                levelBlocks.sort((a, b) => a._barycenter - b._barycenter);
+                
+                // Assign positions in this level
+                levelBlocks.forEach((b, idx) => blockPosition.set(b.id, idx));
+                
+                // Clean up temp property
+                levelBlocks.forEach(b => delete b._barycenter);
             }
             
-            // Position blocks in a clean grid
+            // ----------------------------------------
+            // STEP 5: Calculate X positions
+            // ----------------------------------------
+            // Center each level, and try to align children under parents
+            
+            // First pass: assign basic grid positions
+            const blockX = new Map();
+            const blockY = new Map();
+            
+            // Find the widest level
+            let maxWidth = 0;
             for (let lvl = 0; lvl <= maxLevel; lvl++) {
-                const levelBlocks = levels.get(lvl);
-                const y = startY + lvl * (blockHeight + verticalGap);
+                const w = levelGroups.get(lvl).length;
+                maxWidth = Math.max(maxWidth, w);
+            }
+            
+            // Position each level
+            for (let lvl = 0; lvl <= maxLevel; lvl++) {
+                const levelBlocks = levelGroups.get(lvl);
+                const levelWidth = levelBlocks.length;
+                
+                // Center this level relative to the widest level
+                const totalLevelWidth = levelWidth * BLOCK_WIDTH + (levelWidth - 1) * H_GAP;
+                const maxTotalWidth = maxWidth * BLOCK_WIDTH + (maxWidth - 1) * H_GAP;
+                const offsetX = START_X + (maxTotalWidth - totalLevelWidth) / 2;
+                
+                const y = START_Y + lvl * (BLOCK_HEIGHT + V_GAP);
                 
                 levelBlocks.forEach((block, idx) => {
-                    block.x = this.snapToGrid(startX + idx * (blockWidth + horizontalGap));
-                    block.y = this.snapToGrid(y);
+                    const x = offsetX + idx * (BLOCK_WIDTH + H_GAP);
+                    blockX.set(block.id, x);
+                    blockY.set(block.id, y);
                 });
             }
             
-            // Position helpers to the side
+            // ----------------------------------------
+            // STEP 6: Apply positions to blocks
+            // ----------------------------------------
+            blocks.forEach(block => {
+                block.x = this.snapToGrid(blockX.get(block.id));
+                block.y = this.snapToGrid(blockY.get(block.id));
+            });
+            
+            // ----------------------------------------
+            // STEP 7: Position helpers off to the side
+            // ----------------------------------------
             if (helpers.length > 0) {
-                let maxX = startX;
-                blocks.forEach(b => maxX = Math.max(maxX, b.x + blockWidth));
+                let maxX = START_X;
+                blocks.forEach(b => {
+                    maxX = Math.max(maxX, b.x + BLOCK_WIDTH);
+                });
+                
                 helpers.forEach((h, i) => {
-                    h.x = this.snapToGrid(maxX + 100);
-                    h.y = this.snapToGrid(startY + i * 120);
+                    h.x = this.snapToGrid(maxX + 120);
+                    h.y = this.snapToGrid(START_Y + i * (BLOCK_HEIGHT + 20));
                 });
             }
             
-            // Clear waypoints - let the smart routing handle it
-            pane.connections.forEach(c => c.waypoints = []);
+            // ----------------------------------------
+            // STEP 8: Clear all waypoints for clean curves
+            // ----------------------------------------
+            pane.connections.forEach(conn => {
+                conn.waypoints = [];
+            });
             
-            // Update all blocks and connections
+            // ----------------------------------------
+            // STEP 9: Update display
+            // ----------------------------------------
             [...blocks, ...helpers].forEach(b => this.updateBlockElement(b, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
