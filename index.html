@@ -4304,7 +4304,7 @@ PROCESS TO CONVERT:
             document.getElementById('viewProposedBtn').classList.toggle('active', mode === 'proposed');
             
             // Re-draw connections and fit zoom after view change
-            // Connections need to be redrawn because getBoundingClientRect doesn't work on hidden panes
+            // Connections must be redrawn because getBoundingClientRect doesn't work on hidden panes
             setTimeout(() => {
                 if (mode === 'current' || mode === 'split') {
                     this.updateConnections('current');
@@ -4314,7 +4314,7 @@ PROCESS TO CONVERT:
                     this.updateConnections('proposed');
                     this.zoomToFit('proposed');
                 }
-            }, 100);
+            }, 50);
         }
         
         promoteToCurrentState() {
@@ -4646,6 +4646,13 @@ PROCESS TO CONVERT:
             el.innerHTML = this.getBlockHtml(block, paneId);
             this.bindBlockEvents(el, block, paneId);
             els.blocksContainer.appendChild(el);
+        }
+        
+        renderBlocks(paneId) {
+            const pane = this.getPane(paneId);
+            const els = this.getPaneElements(paneId);
+            els.blocksContainer.innerHTML = '';
+            pane.blocks.forEach(block => this.renderBlock(block, paneId));
         }
 
         getBlockClasses(block, paneId) {
@@ -7266,17 +7273,6 @@ PROCESS TO CONVERT:
             
             this.saveState('auto-layout');
             
-            // Temporarily show pane if hidden (needed for accurate DOM measurements)
-            const split = document.getElementById('canvasSplit');
-            const wasViewingCurrent = split.classList.contains('view-current');
-            const wasViewingProposed = split.classList.contains('view-proposed');
-            const needsTemporaryShow = (paneId === 'proposed' && wasViewingCurrent) || 
-                                       (paneId === 'current' && wasViewingProposed);
-            
-            if (needsTemporaryShow) {
-                split.classList.remove('view-current', 'view-proposed');
-            }
-            
             const blocks = Array.from(pane.blocks.values()).filter(b => !b.isHelper);
             const helpers = Array.from(pane.blocks.values()).filter(b => b.isHelper);
             
@@ -7527,15 +7523,26 @@ PROCESS TO CONVERT:
             // ----------------------------------------
             // STEP 9: Update display
             // ----------------------------------------
+            // Temporarily show pane if hidden (needed for accurate DOM measurements in updateConnections)
+            const split = document.getElementById('canvasSplit');
+            const wasViewingCurrent = split.classList.contains('view-current');
+            const wasViewingProposed = split.classList.contains('view-proposed');
+            const needsTemporaryShow = (paneId === 'proposed' && wasViewingCurrent) || 
+                                       (paneId === 'current' && wasViewingProposed);
+            
+            if (needsTemporaryShow) {
+                split.classList.remove('view-current', 'view-proposed');
+            }
+            
             [...blocks, ...helpers].forEach(b => this.updateBlockElement(b, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
             
-            // Restore original view if we temporarily showed the pane
+            // Restore original view mode
             if (needsTemporaryShow) {
                 if (wasViewingCurrent) split.classList.add('view-current');
-                if (wasViewingProposed) split.classList.add('view-proposed');
+                else if (wasViewingProposed) split.classList.add('view-proposed');
             }
             
             this.toast('Auto-layout applied', 'success');
