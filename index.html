@@ -4951,35 +4951,69 @@ PROCESS TO CONVERT:
             
             // Get all block rectangles for collision detection
             const blockRects = [];
+            const blockElMap = new Map();
             pane.blocks.forEach((block, id) => {
                 const el = document.getElementById(id);
                 if (el) {
+                    blockElMap.set(id, el);
                     blockRects.push({
                         id: id,
                         x: block.x,
                         y: block.y,
-                        width: el.offsetWidth || 200,
-                        height: el.offsetHeight || 80,
-                        right: block.x + (el.offsetWidth || 200),
-                        bottom: block.y + (el.offsetHeight || 80)
+                        width: el.offsetWidth || 260,
+                        height: el.offsetHeight || 140,
+                        right: block.x + (el.offsetWidth || 260),
+                        bottom: block.y + (el.offsetHeight || 140)
                     });
                 }
             });
             
+            // Count incoming connections per block and sort by source X position
+            const incomingByBlock = new Map();
             pane.connections.forEach(conn => {
-                const fromEl = document.getElementById(conn.from);
-                const toEl = document.getElementById(conn.to);
+                if (!incomingByBlock.has(conn.to)) {
+                    incomingByBlock.set(conn.to, []);
+                }
+                const fromBlock = pane.blocks.get(conn.from);
+                incomingByBlock.get(conn.to).push({
+                    conn: conn,
+                    fromX: fromBlock ? fromBlock.x : 0
+                });
+            });
+            
+            // Sort incoming connections by source X position (left to right)
+            incomingByBlock.forEach((conns, blockId) => {
+                conns.sort((a, b) => a.fromX - b.fromX);
+                conns.forEach((c, idx) => {
+                    c.inputIndex = idx;
+                    c.inputTotal = conns.length;
+                });
+            });
+            
+            pane.connections.forEach(conn => {
+                const fromEl = blockElMap.get(conn.from);
+                const toEl = blockElMap.get(conn.to);
                 if (!fromEl || !toEl || fromEl.dataset.pane !== paneId) return;
+                
                 const fromPort = fromEl.querySelector(`.port-out[data-index="${conn.portIndex}"]`) || fromEl.querySelector('.port-out');
-                const toPort = toEl.querySelector('.port-in');
-                if (!fromPort || !toPort) return;
+                if (!fromPort) return;
+                
                 const fromRect = fromPort.getBoundingClientRect();
-                const toRect = toPort.getBoundingClientRect();
                 const canvasRect = els.canvas.getBoundingClientRect();
                 const x1 = (fromRect.left + 7 - canvasRect.left) / pane.zoom;
                 const y1 = (fromRect.top + 7 - canvasRect.top) / pane.zoom;
-                const x2 = (toRect.left + 7 - canvasRect.left) / pane.zoom;
-                const y2 = (toRect.top + 7 - canvasRect.top) / pane.zoom;
+                
+                // Calculate input position - spread across the top of the block
+                const toBlock = pane.blocks.get(conn.to);
+                const incomingInfo = incomingByBlock.get(conn.to)?.find(c => c.conn === conn);
+                const inputIndex = incomingInfo?.inputIndex || 0;
+                const inputTotal = incomingInfo?.inputTotal || 1;
+                
+                const blockWidth = toEl.offsetWidth || 260;
+                const inputSpacing = Math.min(40, blockWidth / (inputTotal + 1));
+                const inputStartX = toBlock.x + (blockWidth - (inputTotal - 1) * inputSpacing) / 2;
+                const x2 = inputStartX + inputIndex * inputSpacing;
+                const y2 = toBlock.y - 2; // Just above the block
                 
                 // Create group for connection elements
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -4996,8 +5030,31 @@ PROCESS TO CONVERT:
                 // Build path with waypoints
                 let pathD;
                 if (pathWaypoints.length === 0) {
-                    // Simple bezier curve (no obstacles)
-                    pathD = `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.5} ${x2},${y2 - Math.abs(y2-y1)*0.5} ${x2},${y2}`;
+                    // Simple bezier curve - handle different directions
+                    const dy = y2 - y1;
+                    const dx = x2 - x1;
+                    
+                    if (dy > 50) {
+                        // Going DOWN - normal case, curve down smoothly
+                        const controlDist = Math.min(Math.abs(dy) * 0.4, 80);
+                        pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
+                    } else if (dy < -50) {
+                        // Going UP - need to route around
+                        const sideOffset = dx > 0 ? 60 : -60;
+                        const midY = Math.max(y1, y2) + 50;
+                        pathD = `M${x1},${y1} L${x1},${y1 + 30} L${x1 + sideOffset},${y1 + 30} L${x1 + sideOffset},${y2 - 30} L${x2},${y2 - 30} L${x2},${y2}`;
+                    } else {
+                        // Roughly SAME LEVEL - horizontal route
+                        const midX = (x1 + x2) / 2;
+                        const offsetY = 50;
+                        if (Math.abs(dx) < 50) {
+                            // Very close, curve to side
+                            pathD = `M${x1},${y1} C${x1 + 80},${y1} ${x2 + 80},${y2} ${x2},${y2}`;
+                        } else {
+                            // Route down then across then up
+                            pathD = `M${x1},${y1} L${x1},${y1 + offsetY} L${x2},${y1 + offsetY} L${x2},${y2}`;
+                        }
+                    }
                 } else {
                     // Path through waypoints with smooth curves
                     const points = [{x: x1, y: y1}, ...pathWaypoints, {x: x2, y: y2}];
@@ -7210,8 +7267,8 @@ PROCESS TO CONVERT:
             // Layout constants
             const blockWidth = 260;
             const blockHeight = 140;
-            const horizontalGap = 80;
-            const verticalGap = 100;
+            const horizontalGap = 100;
+            const verticalGap = 120;
             const startX = 100;
             const startY = 80;
             
@@ -7228,56 +7285,64 @@ PROCESS TO CONVERT:
                 const fromBlock = pane.blocks.get(conn.from);
                 const toBlock = pane.blocks.get(conn.to);
                 if (fromBlock && toBlock && !fromBlock.isHelper && !toBlock.isHelper) {
-                    if (!children.get(conn.from).includes(conn.to)) {
-                        children.get(conn.from).push(conn.to);
+                    if (!children.get(conn.from)?.includes(conn.to)) {
+                        children.get(conn.from)?.push(conn.to);
                     }
-                    if (!parents.get(conn.to).includes(conn.from)) {
-                        parents.get(conn.to).push(conn.from);
+                    if (!parents.get(conn.to)?.includes(conn.from)) {
+                        parents.get(conn.to)?.push(conn.from);
                     }
                 }
             });
             
             // Find root nodes (no parents)
-            let roots = blocks.filter(b => parents.get(b.id).length === 0);
+            let roots = blocks.filter(b => (parents.get(b.id) || []).length === 0);
             if (roots.length === 0) roots = [blocks[0]];
             
-            // Assign levels using BFS with longest path
+            // Assign levels using BFS - each block goes to the level after ALL its parents
             const level = new Map();
-            const visited = new Set();
-            
-            // Initialize all blocks as unvisited
             blocks.forEach(b => level.set(b.id, -1));
             
-            // BFS from roots
-            const queue = [];
-            roots.forEach(r => {
-                level.set(r.id, 0);
-                queue.push(r.id);
-            });
+            // Start with roots at level 0
+            roots.forEach(r => level.set(r.id, 0));
             
-            while (queue.length > 0) {
-                const blockId = queue.shift();
-                const currentLevel = level.get(blockId);
+            // Iteratively assign levels until stable
+            let changed = true;
+            let iterations = 0;
+            while (changed && iterations < 100) {
+                changed = false;
+                iterations++;
                 
-                const blockChildren = children.get(blockId) || [];
-                for (const childId of blockChildren) {
-                    const childLevel = level.get(childId);
-                    const newLevel = currentLevel + 1;
+                blocks.forEach(block => {
+                    const blockParents = parents.get(block.id) || [];
+                    if (blockParents.length === 0) return; // roots already set
                     
-                    // Always use longest path
-                    if (childLevel < newLevel) {
-                        level.set(childId, newLevel);
-                        queue.push(childId);
+                    // Find max parent level
+                    let maxParentLevel = -1;
+                    let allParentsAssigned = true;
+                    
+                    for (const pid of blockParents) {
+                        const pLevel = level.get(pid);
+                        if (pLevel === -1) {
+                            allParentsAssigned = false;
+                            break;
+                        }
+                        maxParentLevel = Math.max(maxParentLevel, pLevel);
                     }
-                }
+                    
+                    if (allParentsAssigned && maxParentLevel >= 0) {
+                        const newLevel = maxParentLevel + 1;
+                        if (level.get(block.id) !== newLevel) {
+                            level.set(block.id, newLevel);
+                            changed = true;
+                        }
+                    }
+                });
             }
             
-            // Handle disconnected blocks
+            // Handle any still-unassigned blocks (cycles or disconnected)
             let maxLevel = 0;
             blocks.forEach(b => {
-                if (level.get(b.id) === -1) {
-                    level.set(b.id, 0);
-                }
+                if (level.get(b.id) === -1) level.set(b.id, 0);
                 maxLevel = Math.max(maxLevel, level.get(b.id));
             });
             
@@ -7287,50 +7352,44 @@ PROCESS TO CONVERT:
                 levels.set(i, []);
             }
             blocks.forEach(b => {
-                const l = level.get(b.id);
-                levels.get(l).push(b);
+                levels.get(level.get(b.id)).push(b);
             });
             
-            // Sort blocks within each level by parent position (barycenter)
-            for (let levelNum = 0; levelNum <= maxLevel; levelNum++) {
-                const levelBlocks = levels.get(levelNum);
+            // Sort blocks within each level to minimize crossings
+            for (let lvl = 0; lvl <= maxLevel; lvl++) {
+                const levelBlocks = levels.get(lvl);
                 
-                if (levelNum === 0) {
-                    // Root level: sort by number of children (most first)
-                    levelBlocks.sort((a, b) => {
-                        return (children.get(b.id)?.length || 0) - (children.get(a.id)?.length || 0);
-                    });
+                if (lvl === 0) {
+                    // Sort roots by number of descendants
+                    levelBlocks.sort((a, b) => (children.get(b.id)?.length || 0) - (children.get(a.id)?.length || 0));
                 } else {
-                    // Other levels: sort by average parent X position
-                    const prevBlocks = levels.get(levelNum - 1);
-                    const prevXMap = new Map();
-                    prevBlocks.forEach((b, idx) => prevXMap.set(b.id, idx));
+                    // Sort by average position of parents in previous level
+                    const prevBlocks = levels.get(lvl - 1);
+                    const prevPosMap = new Map();
+                    prevBlocks.forEach((b, i) => prevPosMap.set(b.id, i));
                     
                     levelBlocks.forEach(block => {
                         const blockParents = parents.get(block.id) || [];
                         if (blockParents.length > 0) {
-                            let sum = 0;
-                            let count = 0;
+                            let sum = 0, count = 0;
                             blockParents.forEach(pid => {
-                                if (prevXMap.has(pid)) {
-                                    sum += prevXMap.get(pid);
-                                    count++;
-                                }
+                                const pos = prevPosMap.get(pid);
+                                if (pos !== undefined) { sum += pos; count++; }
                             });
-                            block._sortOrder = count > 0 ? sum / count : 999;
+                            block._order = count > 0 ? sum / count : 9999;
                         } else {
-                            block._sortOrder = 999;
+                            block._order = 9999;
                         }
                     });
                     
-                    levelBlocks.sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
+                    levelBlocks.sort((a, b) => (a._order || 0) - (b._order || 0));
                 }
             }
             
-            // Position blocks - simple grid layout
-            for (let levelNum = 0; levelNum <= maxLevel; levelNum++) {
-                const levelBlocks = levels.get(levelNum);
-                const y = startY + levelNum * (blockHeight + verticalGap);
+            // Position blocks in a clean grid
+            for (let lvl = 0; lvl <= maxLevel; lvl++) {
+                const levelBlocks = levels.get(lvl);
+                const y = startY + lvl * (blockHeight + verticalGap);
                 
                 levelBlocks.forEach((block, idx) => {
                     block.x = this.snapToGrid(startX + idx * (blockWidth + horizontalGap));
@@ -7338,59 +7397,21 @@ PROCESS TO CONVERT:
                 });
             }
             
-            // Optional: Center parents above their children (single pass)
-            for (let levelNum = maxLevel - 1; levelNum >= 0; levelNum--) {
-                const levelBlocks = levels.get(levelNum);
-                
-                levelBlocks.forEach(block => {
-                    const blockChildren = children.get(block.id) || [];
-                    if (blockChildren.length > 0) {
-                        let minX = Infinity, maxX = -Infinity;
-                        blockChildren.forEach(childId => {
-                            const child = pane.blocks.get(childId);
-                            if (child) {
-                                minX = Math.min(minX, child.x);
-                                maxX = Math.max(maxX, child.x + blockWidth);
-                            }
-                        });
-                        
-                        if (minX !== Infinity) {
-                            const centerX = (minX + maxX) / 2 - blockWidth / 2;
-                            block._desiredX = centerX;
-                        }
-                    }
-                });
-                
-                // Apply desired positions while maintaining order and avoiding overlaps
-                levelBlocks.sort((a, b) => (a._desiredX || a.x) - (b._desiredX || b.x));
-                
-                let currentX = startX;
-                levelBlocks.forEach(block => {
-                    const desiredX = block._desiredX !== undefined ? block._desiredX : block.x;
-                    block.x = this.snapToGrid(Math.max(currentX, desiredX));
-                    currentX = block.x + blockWidth + horizontalGap;
-                });
-            }
-            
-            // Position helpers to the right
+            // Position helpers to the side
             if (helpers.length > 0) {
-                let maxX = 0;
+                let maxX = startX;
                 blocks.forEach(b => maxX = Math.max(maxX, b.x + blockWidth));
-                
-                helpers.forEach((helper, idx) => {
-                    helper.x = this.snapToGrid(maxX + horizontalGap + 50);
-                    helper.y = this.snapToGrid(startY + idx * 120);
+                helpers.forEach((h, i) => {
+                    h.x = this.snapToGrid(maxX + 100);
+                    h.y = this.snapToGrid(startY + i * 120);
                 });
             }
             
-            // Clear all waypoints for clean bezier curves
-            pane.connections.forEach(conn => {
-                conn.waypoints = [];
-            });
+            // Clear waypoints - let the smart routing handle it
+            pane.connections.forEach(c => c.waypoints = []);
             
-            // Update rendering
-            const allBlocks = [...blocks, ...helpers];
-            allBlocks.forEach(block => this.updateBlockElement(block, paneId));
+            // Update all blocks and connections
+            [...blocks, ...helpers].forEach(b => this.updateBlockElement(b, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
