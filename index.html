@@ -4696,50 +4696,64 @@ PROCESS TO CONVERT:
 
         bindBlockEvents(el, block, paneId) {
             const pane = this.getPane(paneId);
+            const blockId = block.id; // Store ID for Map lookups
             el.addEventListener('mousedown', e => { 
                 if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return; 
-                e.stopPropagation(); 
+                e.stopPropagation();
+                // Get actual block from Map to handle stale closure references (e.g., after import/undo)
+                const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                if (!actualBlock) return;
                 this.isDragging = true; 
-                this.dragBlock = block;
-                this.dragStartPos = { x: block.x, y: block.y }; // Track original position
+                this.dragBlock = actualBlock;
+                this.dragStartPos = { x: actualBlock.x, y: actualBlock.y }; // Track original position
                 this.dragPane = paneId; 
                 const rect = el.getBoundingClientRect(); 
                 this.dragOffset = { x: (e.clientX - rect.left) / pane.zoom, y: (e.clientY - rect.top) / pane.zoom }; 
-                this.selectBlock(block, paneId); 
+                this.selectBlock(actualBlock, paneId); 
             });
             el.addEventListener('click', e => { 
                 e.stopPropagation(); 
+                // Get actual block from Map to handle stale closure references
+                const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                if (!actualBlock) return;
                 // If connecting and clicked on a valid target block
-                if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) {
-                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId);
+                if (this.isConnecting && this.connectingFrom.id !== blockId && this.connectingPane === paneId) {
+                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, blockId, paneId);
                     this.cancelConnecting();
                     return;
                 }
-                this.selectBlock(block, paneId); 
+                this.selectBlock(actualBlock, paneId); 
             });
             // Double-click to open inline edit
             el.addEventListener('dblclick', e => {
                 e.stopPropagation();
                 if (e.target.closest('.port-in') || e.target.closest('.port-out') || e.target.closest('.add-output')) return;
-                this.openInlineEdit(block, paneId, el);
+                // Get actual block from Map (openInlineEdit also does this, but pass the ID-based reference)
+                const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                if (!actualBlock) return;
+                this.openInlineEdit(actualBlock, paneId, el);
             });
             // Click on output port to START connection
             el.querySelectorAll('.port-out').forEach(port => {
                 port.addEventListener('click', e => { 
-                    e.stopPropagation(); 
+                    e.stopPropagation();
+                    const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                    if (!actualBlock) return;
                     // If already connecting from this port, cancel
-                    if (this.isConnecting && this.connectingFrom.id === block.id && this.connectingPortIndex === (parseInt(port.dataset.index) || 0)) {
+                    if (this.isConnecting && this.connectingFrom.id === blockId && this.connectingPortIndex === (parseInt(port.dataset.index) || 0)) {
                         this.cancelConnecting();
                         return;
                     }
-                    this.startConnecting(block, paneId, parseInt(port.dataset.index) || 0);
+                    this.startConnecting(actualBlock, paneId, parseInt(port.dataset.index) || 0);
                 });
                 // Right-click to delete output port
                 port.addEventListener('contextmenu', e => {
                     e.preventDefault();
                     e.stopPropagation();
+                    const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                    if (!actualBlock) return;
                     const portIndex = parseInt(port.dataset.index) || 0;
-                    const numOutputs = block.outputs || 1;
+                    const numOutputs = actualBlock.outputs || 1;
                     
                     if (numOutputs <= 1) {
                         this.toast('Cannot delete the last output port', 'error');
@@ -4750,18 +4764,18 @@ PROCESS TO CONVERT:
                     
                     // Delete connections from this port
                     const pane = this.getPane(paneId);
-                    pane.connections = pane.connections.filter(c => !(c.from === block.id && c.portIndex === portIndex));
+                    pane.connections = pane.connections.filter(c => !(c.from === blockId && c.portIndex === portIndex));
                     
                     // Adjust port indices for connections from higher-indexed ports
                     pane.connections.forEach(c => {
-                        if (c.from === block.id && c.portIndex > portIndex) {
+                        if (c.from === blockId && c.portIndex > portIndex) {
                             c.portIndex--;
                         }
                     });
                     
                     // Reduce output count
-                    block.outputs = numOutputs - 1;
-                    this.updateBlockElement(block, paneId);
+                    actualBlock.outputs = numOutputs - 1;
+                    this.updateBlockElement(actualBlock, paneId);
                     this.updateConnections(paneId);
                     this.toast('Output port deleted', 'success');
                 });
@@ -4769,12 +4783,20 @@ PROCESS TO CONVERT:
             // Click on input port to COMPLETE connection
             el.querySelector('.port-in')?.addEventListener('click', e => { 
                 e.stopPropagation(); 
-                if (this.isConnecting && this.connectingFrom.id !== block.id && this.connectingPane === paneId) {
-                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, block.id, paneId);
+                if (this.isConnecting && this.connectingFrom.id !== blockId && this.connectingPane === paneId) {
+                    this.createConnection(this.connectingFrom.id, this.connectingPortIndex, blockId, paneId);
                     this.cancelConnecting();
                 }
             });
-            el.querySelector('.add-output')?.addEventListener('click', e => { e.stopPropagation(); this.saveState('add-port'); block.outputs = (block.outputs || 1) + 1; this.updateBlockElement(block, paneId); this.updateConnections(paneId); });
+            el.querySelector('.add-output')?.addEventListener('click', e => { 
+                e.stopPropagation(); 
+                const actualBlock = this.getPane(paneId).blocks.get(blockId);
+                if (!actualBlock) return;
+                this.saveState('add-port'); 
+                actualBlock.outputs = (actualBlock.outputs || 1) + 1; 
+                this.updateBlockElement(actualBlock, paneId); 
+                this.updateConnections(paneId); 
+            });
         }
         
         startConnecting(block, paneId, portIndex) {
@@ -4823,6 +4845,13 @@ PROCESS TO CONVERT:
         openInlineEdit(block, paneId, el) {
             // Close any existing inline edit
             this.closeInlineEdit();
+            
+            // block should already be the correct reference from the Map (caller looks it up)
+            // Double-check it exists
+            if (!block || !this.getPane(paneId).blocks.has(block.id)) {
+                console.error('Block not found for inline edit:', block?.id, paneId);
+                return;
+            }
             
             this.inlineEditBlock = block;
             this.inlineEditPane = paneId;
