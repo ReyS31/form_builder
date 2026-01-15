@@ -7207,26 +7207,21 @@ PROCESS TO CONVERT:
             
             if (blocks.length === 0) return;
             
-            // Layout constants - generous spacing for clean routing
+            // Layout constants
             const blockWidth = 260;
             const blockHeight = 140;
-            const horizontalGap = 120;  // Space between blocks horizontally
-            const verticalGap = 100;    // Space between levels (for routing)
-            const routingLane = 50;     // Extra space for routing lines between levels
-            const startX = 80;
+            const horizontalGap = 80;
+            const verticalGap = 100;
+            const startX = 100;
             const startY = 80;
             
-            // Build adjacency lists
+            // Build connection graph
             const children = new Map();
             const parents = new Map();
-            const inDegree = new Map();
-            const outDegree = new Map();
             
             blocks.forEach(b => {
                 children.set(b.id, []);
                 parents.set(b.id, []);
-                inDegree.set(b.id, 0);
-                outDegree.set(b.id, 0);
             });
             
             pane.connections.forEach(conn => {
@@ -7235,33 +7230,42 @@ PROCESS TO CONVERT:
                 if (fromBlock && toBlock && !fromBlock.isHelper && !toBlock.isHelper) {
                     if (!children.get(conn.from).includes(conn.to)) {
                         children.get(conn.from).push(conn.to);
+                    }
+                    if (!parents.get(conn.to).includes(conn.from)) {
                         parents.get(conn.to).push(conn.from);
-                        inDegree.set(conn.to, inDegree.get(conn.to) + 1);
-                        outDegree.set(conn.from, outDegree.get(conn.from) + 1);
                     }
                 }
             });
             
-            // Find root nodes (no incoming connections) and assign levels using BFS
-            let roots = blocks.filter(b => inDegree.get(b.id) === 0);
-            if (roots.length === 0) roots = [blocks[0]]; // Handle cycles
+            // Find root nodes (no parents)
+            let roots = blocks.filter(b => parents.get(b.id).length === 0);
+            if (roots.length === 0) roots = [blocks[0]];
             
-            // Assign levels using longest path algorithm (ensures proper hierarchy)
+            // Assign levels using BFS with longest path
             const level = new Map();
-            const queue = [...roots];
-            roots.forEach(r => level.set(r.id, 0));
+            const visited = new Set();
             
-            // Multiple passes to handle all blocks
-            let maxIterations = blocks.length * 2;
-            while (queue.length > 0 && maxIterations-- > 0) {
+            // Initialize all blocks as unvisited
+            blocks.forEach(b => level.set(b.id, -1));
+            
+            // BFS from roots
+            const queue = [];
+            roots.forEach(r => {
+                level.set(r.id, 0);
+                queue.push(r.id);
+            });
+            
+            while (queue.length > 0) {
                 const blockId = queue.shift();
                 const currentLevel = level.get(blockId);
                 
-                for (const childId of children.get(blockId) || []) {
-                    const existingLevel = level.get(childId);
+                const blockChildren = children.get(blockId) || [];
+                for (const childId of blockChildren) {
+                    const childLevel = level.get(childId);
                     const newLevel = currentLevel + 1;
                     
-                    if (existingLevel === undefined || newLevel > existingLevel) {
+                    // Always use longest path
+                    if (childLevel < newLevel) {
                         level.set(childId, newLevel);
                         queue.push(childId);
                     }
@@ -7269,280 +7273,128 @@ PROCESS TO CONVERT:
             }
             
             // Handle disconnected blocks
+            let maxLevel = 0;
             blocks.forEach(b => {
-                if (!level.has(b.id)) level.set(b.id, 0);
+                if (level.get(b.id) === -1) {
+                    level.set(b.id, 0);
+                }
+                maxLevel = Math.max(maxLevel, level.get(b.id));
             });
             
             // Group blocks by level
             const levels = new Map();
+            for (let i = 0; i <= maxLevel; i++) {
+                levels.set(i, []);
+            }
             blocks.forEach(b => {
                 const l = level.get(b.id);
-                if (!levels.has(l)) levels.set(l, []);
                 levels.get(l).push(b);
             });
             
-            const sortedLevelNums = Array.from(levels.keys()).sort((a, b) => a - b);
-            
-            // Sort blocks within each level to minimize edge crossings
-            // Use barycenter method: position block based on average position of its parents
-            sortedLevelNums.forEach((levelNum, levelIdx) => {
+            // Sort blocks within each level by parent position (barycenter)
+            for (let levelNum = 0; levelNum <= maxLevel; levelNum++) {
                 const levelBlocks = levels.get(levelNum);
                 
-                if (levelIdx === 0) {
-                    // First level: sort by out-degree (most connections first) then alphabetically
+                if (levelNum === 0) {
+                    // Root level: sort by number of children (most first)
                     levelBlocks.sort((a, b) => {
-                        const aOut = outDegree.get(a.id) || 0;
-                        const bOut = outDegree.get(b.id) || 0;
-                        if (bOut !== aOut) return bOut - aOut;
-                        return (a.name || '').localeCompare(b.name || '');
+                        return (children.get(b.id)?.length || 0) - (children.get(a.id)?.length || 0);
                     });
                 } else {
-                    // Subsequent levels: use barycenter of parent positions
-                    const prevLevel = levels.get(sortedLevelNums[levelIdx - 1]) || [];
-                    const prevPositions = new Map();
-                    prevLevel.forEach((b, i) => prevPositions.set(b.id, i));
+                    // Other levels: sort by average parent X position
+                    const prevBlocks = levels.get(levelNum - 1);
+                    const prevXMap = new Map();
+                    prevBlocks.forEach((b, idx) => prevXMap.set(b.id, idx));
                     
                     levelBlocks.forEach(block => {
                         const blockParents = parents.get(block.id) || [];
                         if (blockParents.length > 0) {
-                            const sum = blockParents.reduce((acc, pid) => acc + (prevPositions.get(pid) ?? 0), 0);
-                            block._barycenter = sum / blockParents.length;
-                        } else {
-                            block._barycenter = 999;
-                        }
-                    });
-                    
-                    levelBlocks.sort((a, b) => (a._barycenter || 0) - (b._barycenter || 0));
-                }
-            });
-            
-            // Calculate positions - each level is a row
-            const totalLevels = sortedLevelNums.length;
-            const levelY = new Map();
-            
-            sortedLevelNums.forEach((levelNum, idx) => {
-                // Add extra routing space between levels
-                const y = startY + idx * (blockHeight + verticalGap + routingLane);
-                levelY.set(levelNum, y);
-            });
-            
-            // Find max blocks in any level for centering
-            let maxBlocksInLevel = 0;
-            sortedLevelNums.forEach(levelNum => {
-                maxBlocksInLevel = Math.max(maxBlocksInLevel, levels.get(levelNum).length);
-            });
-            
-            const maxLevelWidth = maxBlocksInLevel * (blockWidth + horizontalGap) - horizontalGap;
-            
-            // Position blocks in each level - centered
-            sortedLevelNums.forEach(levelNum => {
-                const levelBlocks = levels.get(levelNum);
-                const levelWidth = levelBlocks.length * (blockWidth + horizontalGap) - horizontalGap;
-                const offsetX = startX + (maxLevelWidth - levelWidth) / 2;
-                
-                levelBlocks.forEach((block, idx) => {
-                    block.x = this.snapToGrid(offsetX + idx * (blockWidth + horizontalGap));
-                    block.y = this.snapToGrid(levelY.get(levelNum));
-                });
-            });
-            
-            // Second pass: adjust positions to center parents above their children
-            for (let pass = 0; pass < 3; pass++) {
-                sortedLevelNums.forEach(levelNum => {
-                    const levelBlocks = levels.get(levelNum);
-                    
-                    levelBlocks.forEach(block => {
-                        const blockChildren = children.get(block.id) || [];
-                        if (blockChildren.length > 0) {
-                            // Calculate the center of children
-                            let minChildX = Infinity, maxChildX = -Infinity;
-                            blockChildren.forEach(childId => {
-                                const child = pane.blocks.get(childId);
-                                if (child) {
-                                    minChildX = Math.min(minChildX, child.x);
-                                    maxChildX = Math.max(maxChildX, child.x + blockWidth);
+                            let sum = 0;
+                            let count = 0;
+                            blockParents.forEach(pid => {
+                                if (prevXMap.has(pid)) {
+                                    sum += prevXMap.get(pid);
+                                    count++;
                                 }
                             });
-                            
-                            if (minChildX !== Infinity) {
-                                const targetX = (minChildX + maxChildX) / 2 - blockWidth / 2;
-                                block._targetX = targetX;
-                            }
+                            block._sortOrder = count > 0 ? sum / count : 999;
+                        } else {
+                            block._sortOrder = 999;
                         }
                     });
-                });
+                    
+                    levelBlocks.sort((a, b) => (a._sortOrder || 0) - (b._sortOrder || 0));
+                }
+            }
+            
+            // Position blocks - simple grid layout
+            for (let levelNum = 0; levelNum <= maxLevel; levelNum++) {
+                const levelBlocks = levels.get(levelNum);
+                const y = startY + levelNum * (blockHeight + verticalGap);
                 
-                // Apply target positions while avoiding overlaps
-                sortedLevelNums.forEach(levelNum => {
-                    const levelBlocks = levels.get(levelNum);
-                    
-                    // Sort by target position
-                    const targets = levelBlocks.map(b => ({
-                        block: b,
-                        target: b._targetX !== undefined ? b._targetX : b.x
-                    }));
-                    targets.sort((a, b) => a.target - b.target);
-                    
-                    // Assign positions ensuring no overlaps
-                    let currentX = startX;
-                    targets.forEach((t, idx) => {
-                        const block = t.block;
-                        const targetX = Math.max(currentX, t.target);
-                        block.x = this.snapToGrid(targetX);
-                        currentX = block.x + blockWidth + horizontalGap;
-                    });
+                levelBlocks.forEach((block, idx) => {
+                    block.x = this.snapToGrid(startX + idx * (blockWidth + horizontalGap));
+                    block.y = this.snapToGrid(y);
                 });
             }
             
-            // Final overlap resolution
-            sortedLevelNums.forEach(levelNum => {
-                const levelBlocks = levels.get(levelNum).sort((a, b) => a.x - b.x);
-                for (let i = 1; i < levelBlocks.length; i++) {
-                    const prev = levelBlocks[i - 1];
-                    const curr = levelBlocks[i];
-                    const minX = prev.x + blockWidth + horizontalGap;
-                    if (curr.x < minX) {
-                        curr.x = this.snapToGrid(minX);
+            // Optional: Center parents above their children (single pass)
+            for (let levelNum = maxLevel - 1; levelNum >= 0; levelNum--) {
+                const levelBlocks = levels.get(levelNum);
+                
+                levelBlocks.forEach(block => {
+                    const blockChildren = children.get(block.id) || [];
+                    if (blockChildren.length > 0) {
+                        let minX = Infinity, maxX = -Infinity;
+                        blockChildren.forEach(childId => {
+                            const child = pane.blocks.get(childId);
+                            if (child) {
+                                minX = Math.min(minX, child.x);
+                                maxX = Math.max(maxX, child.x + blockWidth);
+                            }
+                        });
+                        
+                        if (minX !== Infinity) {
+                            const centerX = (minX + maxX) / 2 - blockWidth / 2;
+                            block._desiredX = centerX;
+                        }
                     }
-                }
-            });
+                });
+                
+                // Apply desired positions while maintaining order and avoiding overlaps
+                levelBlocks.sort((a, b) => (a._desiredX || a.x) - (b._desiredX || b.x));
+                
+                let currentX = startX;
+                levelBlocks.forEach(block => {
+                    const desiredX = block._desiredX !== undefined ? block._desiredX : block.x;
+                    block.x = this.snapToGrid(Math.max(currentX, desiredX));
+                    currentX = block.x + blockWidth + horizontalGap;
+                });
+            }
             
-            // Position helper blocks to the right of the main flow
+            // Position helpers to the right
             if (helpers.length > 0) {
                 let maxX = 0;
                 blocks.forEach(b => maxX = Math.max(maxX, b.x + blockWidth));
                 
                 helpers.forEach((helper, idx) => {
-                    helper.x = this.snapToGrid(maxX + horizontalGap);
-                    helper.y = this.snapToGrid(startY + idx * 150);
+                    helper.x = this.snapToGrid(maxX + horizontalGap + 50);
+                    helper.y = this.snapToGrid(startY + idx * 120);
                 });
             }
             
-            // Calculate orthogonal waypoints for all connections
-            this.calculateOrthogonalRoutes(pane, levelY, blockWidth, blockHeight, horizontalGap, verticalGap);
+            // Clear all waypoints for clean bezier curves
+            pane.connections.forEach(conn => {
+                conn.waypoints = [];
+            });
             
             // Update rendering
-            blocks.forEach(block => this.updateBlockElement(block, paneId));
-            helpers.forEach(helper => this.updateBlockElement(helper, paneId));
+            const allBlocks = [...blocks, ...helpers];
+            allBlocks.forEach(block => this.updateBlockElement(block, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
             this.toast('Auto-layout applied', 'success');
-        }
-        
-        // Calculate orthogonal routes for connections that avoid blocks
-        calculateOrthogonalRoutes(pane, levelY, blockWidth, blockHeight, horizontalGap, verticalGap) {
-            const blocks = Array.from(pane.blocks.values()).filter(b => !b.isHelper);
-            
-            // Build block rectangles for collision detection
-            const blockRects = blocks.map(b => ({
-                id: b.id,
-                x: b.x - 10,  // Add padding
-                y: b.y - 10,
-                width: blockWidth + 20,
-                height: blockHeight + 20,
-                right: b.x + blockWidth + 10,
-                bottom: b.y + blockHeight + 10,
-                centerX: b.x + blockWidth / 2,
-                centerY: b.y + blockHeight / 2
-            }));
-            
-            pane.connections.forEach(conn => {
-                const fromBlock = pane.blocks.get(conn.from);
-                const toBlock = pane.blocks.get(conn.to);
-                
-                if (!fromBlock || !toBlock || fromBlock.isHelper || toBlock.isHelper) {
-                    conn.waypoints = [];
-                    return;
-                }
-                
-                const fromCenterX = fromBlock.x + blockWidth / 2;
-                const fromBottomY = fromBlock.y + blockHeight;
-                const toCenterX = toBlock.x + blockWidth / 2;
-                const toTopY = toBlock.y;
-                
-                // Calculate if there are blocks in the direct path
-                const pathMinX = Math.min(fromCenterX, toCenterX) - 20;
-                const pathMaxX = Math.max(fromCenterX, toCenterX) + 20;
-                const pathMinY = fromBottomY;
-                const pathMaxY = toTopY;
-                
-                const blockingBlocks = blockRects.filter(rect => {
-                    if (rect.id === conn.from || rect.id === conn.to) return false;
-                    
-                    // Check if block is in the vertical path between source and target
-                    const inXRange = rect.right > pathMinX && rect.x < pathMaxX;
-                    const inYRange = rect.bottom > pathMinY && rect.y < pathMaxY;
-                    
-                    return inXRange && inYRange;
-                });
-                
-                // If going downward and path is clear, use simple routing
-                if (toBlock.y > fromBlock.y && blockingBlocks.length === 0) {
-                    conn.waypoints = [];
-                    return;
-                }
-                
-                // Calculate routing points for orthogonal path around obstacles
-                const waypoints = [];
-                
-                // Going sideways or upward - need routing
-                if (toBlock.y <= fromBlock.y || blockingBlocks.length > 0) {
-                    // Route around: exit down, go horizontal, enter from top
-                    const midY = (fromBottomY + toTopY) / 2;
-                    
-                    // Find a clear horizontal lane
-                    let routeY = midY;
-                    if (toBlock.y <= fromBlock.y) {
-                        // Going upward - route to the side and up
-                        const maxY = Math.max(fromBottomY, toBlock.y + blockHeight);
-                        routeY = maxY + 40;
-                    }
-                    
-                    // Determine if we need to go left or right
-                    let routeX;
-                    if (Math.abs(fromCenterX - toCenterX) < 30) {
-                        // Nearly vertical - route to the side
-                        const leftEdge = Math.min(fromBlock.x, toBlock.x);
-                        const rightEdge = Math.max(fromBlock.x + blockWidth, toBlock.x + blockWidth);
-                        
-                        // Check which side is clearer
-                        const leftClear = !blockRects.some(r => r.id !== conn.from && r.id !== conn.to && 
-                            r.right > leftEdge - 60 && r.x < leftEdge && r.bottom > pathMinY && r.y < pathMaxY);
-                        
-                        routeX = leftClear ? leftEdge - 50 : rightEdge + 50;
-                    } else {
-                        // Use the path between blocks
-                        routeX = (fromCenterX + toCenterX) / 2;
-                    }
-                    
-                    if (toBlock.y <= fromBlock.y) {
-                        // Going up - need more complex routing
-                        waypoints.push({ x: fromCenterX, y: fromBottomY + 30 });
-                        waypoints.push({ x: routeX, y: fromBottomY + 30 });
-                        waypoints.push({ x: routeX, y: toTopY - 30 });
-                        waypoints.push({ x: toCenterX, y: toTopY - 30 });
-                    } else if (blockingBlocks.length > 0) {
-                        // Obstacles - route around
-                        let minBlockX = Infinity, maxBlockX = -Infinity;
-                        blockingBlocks.forEach(b => {
-                            minBlockX = Math.min(minBlockX, b.x);
-                            maxBlockX = Math.max(maxBlockX, b.right);
-                        });
-                        
-                        // Decide to go left or right
-                        const goLeft = fromCenterX < (minBlockX + maxBlockX) / 2;
-                        routeX = goLeft ? minBlockX - 40 : maxBlockX + 40;
-                        
-                        waypoints.push({ x: fromCenterX, y: fromBottomY + 25 });
-                        waypoints.push({ x: routeX, y: fromBottomY + 25 });
-                        waypoints.push({ x: routeX, y: toTopY - 25 });
-                        waypoints.push({ x: toCenterX, y: toTopY - 25 });
-                    }
-                }
-                
-                conn.waypoints = waypoints;
-            });
         }
         
         // Keep old methods for compatibility but simplify
