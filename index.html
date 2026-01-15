@@ -4781,12 +4781,19 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             setTimeout(() => { const input = document.getElementById('blockDescInput'); if (input) { input.focus(); input.select(); } }, 100);
         }
 
+        // Helper function to get pane-prefixed DOM ID for a block
+        // This prevents ID collisions when same block IDs exist in both current and proposed panes
+        getDomId(blockId, paneId) {
+            return `${paneId}_${blockId}`;
+        }
+        
         renderBlock(block, paneId) {
             const els = this.getPaneElements(paneId);
             const el = document.createElement('div');
             el.className = this.getBlockClasses(block, paneId);
-            el.id = block.id;
+            el.id = this.getDomId(block.id, paneId);
             el.dataset.pane = paneId;
+            el.dataset.blockId = block.id;
             el.style.left = block.x + 'px';
             el.style.top = block.y + 'px';
             el.innerHTML = this.getBlockHtml(block, paneId);
@@ -4959,14 +4966,14 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             els.canvasArea.classList.add('connecting-mode');
             
             // Highlight source port
-            const sourceEl = document.getElementById(block.id);
+            const sourceEl = document.getElementById(this.getDomId(block.id, paneId));
             const sourcePort = sourceEl?.querySelector(`.port-out[data-index="${portIndex}"]`) || sourceEl?.querySelector('.port-out');
             sourcePort?.classList.add('connect-source');
             
             // Highlight valid targets
             this.getPane(paneId).blocks.forEach((b, id) => {
                 if (id !== block.id) {
-                    const targetEl = document.getElementById(id);
+                    const targetEl = document.getElementById(this.getDomId(id, paneId));
                     targetEl?.classList.add('connect-target-block');
                     targetEl?.querySelector('.port-in')?.classList.add('connect-target');
                 }
@@ -5125,9 +5132,9 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             this.inlineEditOriginal = null;
         }
 
-        updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.style.left = block.x + 'px'; el.style.top = block.y + 'px'; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
-        selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(block.id)?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
-        deleteSelectedBlock() { if (!this.selectedBlock) return; this.saveState('delete-block'); const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
+        updateBlockElement(block, paneId) { const el = document.getElementById(this.getDomId(block.id, paneId)); if (!el || el.dataset.pane !== paneId) return; el.style.left = block.x + 'px'; el.style.top = block.y + 'px'; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
+        selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(this.getDomId(block.id, paneId))?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
+        deleteSelectedBlock() { if (!this.selectedBlock) return; this.saveState('delete-block'); const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(this.getDomId(blockId, this.activePane))?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
 
         createConnection(fromId, portIndex, toId, paneId) { this.saveState('create-connection'); const pane = this.getPane(paneId); pane.connections = pane.connections.filter(c => !(c.from === fromId && c.portIndex === portIndex)); pane.connections.push({ id: 'conn_' + Date.now(), from: fromId, portIndex, to: toId, label: '' }); this.updateConnections(paneId); this.updateValidation(); }
 
@@ -5145,7 +5152,7 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             const blockRects = [];
             const blockElMap = new Map();
             pane.blocks.forEach((block, id) => {
-                const el = document.getElementById(id);
+                const el = document.getElementById(this.getDomId(id, paneId));
                 if (el) {
                     blockElMap.set(id, el);
                     blockRects.push({
@@ -5182,6 +5189,30 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                 });
             });
             
+            // Track outgoing connections per block+port to spread lines horizontally
+            const outgoingByPort = new Map();
+            pane.connections.forEach(conn => {
+                const key = `${conn.from}:${conn.portIndex || 0}`;
+                if (!outgoingByPort.has(key)) {
+                    outgoingByPort.set(key, []);
+                }
+                const toBlock = pane.blocks.get(conn.to);
+                outgoingByPort.get(key).push({
+                    conn: conn,
+                    toX: toBlock ? toBlock.x : 0,
+                    toY: toBlock ? toBlock.y : 0
+                });
+            });
+            
+            // Sort outgoing connections by target X position and assign output indices
+            outgoingByPort.forEach((conns, portKey) => {
+                conns.sort((a, b) => a.toX - b.toX);
+                conns.forEach((c, idx) => {
+                    c.outputIndex = idx;
+                    c.outputTotal = conns.length;
+                });
+            });
+            
             pane.connections.forEach(conn => {
                 const fromEl = blockElMap.get(conn.from);
                 const toEl = blockElMap.get(conn.to);
@@ -5211,6 +5242,19 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                 group.classList.add('connection-group');
                 
+                // Get outgoing info for spreading lines
+                const portKey = `${conn.from}:${conn.portIndex || 0}`;
+                const outgoingInfo = outgoingByPort.get(portKey)?.find(c => c.conn === conn);
+                const outputIndex = outgoingInfo?.outputIndex || 0;
+                const outputTotal = outgoingInfo?.outputTotal || 1;
+                
+                // Calculate horizontal offset to spread outgoing lines
+                // Center the spread around x1
+                const spreadWidth = Math.min(60, outputTotal * 20); // Max 60px total spread
+                const outputOffset = outputTotal > 1 
+                    ? (outputIndex - (outputTotal - 1) / 2) * (spreadWidth / (outputTotal - 1 || 1))
+                    : 0;
+                
                 // Get manual waypoints
                 const manualWaypoints = conn.waypoints || [];
                 
@@ -5227,24 +5271,26 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                     const dx = x2 - x1;
                     
                     if (dy > 30) {
-                        // Going DOWN - normal case, use smooth S-curve
-                        // Control points create a nice vertical flow
+                        // Going DOWN - use spread offset on control points
                         const controlDist = Math.max(30, Math.min(Math.abs(dy) * 0.35, 60));
-                        pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
+                        // Apply offset to the first control point to spread lines
+                        const x1Offset = x1 + outputOffset;
+                        pathD = `M${x1},${y1} C${x1Offset},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
                     } else if (dy < -30) {
-                        // Going UP - route around with orthogonal path
-                        const sideOffset = dx > 0 ? 50 : -50;
+                        // Going UP - route around with orthogonal path, apply offset
+                        const sideOffset = (dx > 0 ? 50 : -50) + outputOffset;
                         pathD = `M${x1},${y1} L${x1},${y1 + 25} L${x1 + sideOffset},${y1 + 25} L${x1 + sideOffset},${y2 - 25} L${x2},${y2 - 25} L${x2},${y2}`;
                     } else {
                         // SAME LEVEL - horizontal S-curve or route
                         if (Math.abs(dx) < 30) {
-                            // Very close horizontally, curve to side
+                            // Very close horizontally, curve to side with offset
                             const sign = dx >= 0 ? 1 : -1;
-                            pathD = `M${x1},${y1} C${x1 + sign * 60},${y1} ${x2 + sign * 60},${y2} ${x2},${y2}`;
+                            const midY = Math.max(y1, y2) + 30 + Math.abs(outputOffset);
+                            pathD = `M${x1},${y1} C${x1 + sign * 60 + outputOffset},${midY} ${x2 + sign * 60},${midY} ${x2},${y2}`;
                         } else {
                             // Route down, across, up with S-curve feel
-                            const midY = Math.max(y1, y2) + 40;
-                            pathD = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+                            const midY = Math.max(y1, y2) + 40 + Math.abs(outputOffset) * 0.5;
+                            pathD = `M${x1},${y1} C${x1 + outputOffset},${midY} ${x2},${midY} ${x2},${y2}`;
                         }
                     }
                 } else {
@@ -5622,11 +5668,11 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             return path;
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.getDomId(this.connectingFrom.id, paneId)); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
-        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.dragBlock.id); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
+        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.getDomId(this.dragBlock.id, paneId)); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
         onCanvasMouseUp(e, paneId) { 
             const els = this.getPaneElements(paneId); 
             // Save state if block was actually moved
@@ -7296,15 +7342,16 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
         
         // ===== MULTI-SELECT =====
         clearMultiSelect() {
+            const paneId = this.multiSelectPane;
             this.multiSelectedBlocks.forEach(id => {
-                const el = document.getElementById(id);
+                const el = document.getElementById(this.getDomId(id, paneId));
                 if (el) el.classList.remove('multi-selected');
             });
             this.multiSelectedBlocks.clear();
         }
         
         toggleMultiSelect(blockId, paneId) {
-            const el = document.getElementById(blockId);
+            const el = document.getElementById(this.getDomId(blockId, paneId));
             if (!el) return;
             
             if (this.multiSelectedBlocks.has(blockId)) {
@@ -7324,7 +7371,7 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             this.clearMultiSelect();
             pane.blocks.forEach(block => {
                 this.multiSelectedBlocks.add(block.id);
-                const el = document.getElementById(block.id);
+                const el = document.getElementById(this.getDomId(block.id, paneId));
                 if (el) el.classList.add('multi-selected');
             });
             this.multiSelectPane = paneId;
@@ -7341,7 +7388,7 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             const els = this.getPaneElements(paneId);
             
             this.multiSelectedBlocks.forEach(blockId => {
-                const el = document.getElementById(blockId);
+                const el = document.getElementById(this.getDomId(blockId, paneId));
                 if (el) el.remove();
                 pane.blocks.delete(blockId);
                 pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId);
