@@ -4933,7 +4933,7 @@ PROCESS TO CONVERT:
             this.inlineEditOriginal = null;
         }
 
-        updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
+        updateBlockElement(block, paneId) { const el = document.getElementById(block.id); if (!el || el.dataset.pane !== paneId) return; el.style.left = block.x + 'px'; el.style.top = block.y + 'px'; el.className = this.getBlockClasses(block, paneId); el.innerHTML = this.getBlockHtml(block, paneId); this.bindBlockEvents(el, block, paneId); this.updateConnections(paneId); this.updateMinimap(); }
         selectBlock(block, paneId) { document.querySelectorAll('.block.selected').forEach(el => el.classList.remove('selected')); this.selectedBlock = block; this.activePane = paneId; if (block) { document.getElementById(block.id)?.classList.add('selected'); this.activeTab = 'details'; document.querySelectorAll('.panel-tab').forEach(t => t.classList.remove('active')); document.querySelector('.panel-tab[data-tab="details"]').classList.add('active'); } this.renderPanel(); }
         deleteSelectedBlock() { if (!this.selectedBlock) return; this.saveState('delete-block'); const pane = this.getPane(this.activePane); const blockId = this.selectedBlock.id; document.getElementById(blockId)?.remove(); pane.blocks.delete(blockId); pane.connections = pane.connections.filter(c => c.from !== blockId && c.to !== blockId); this.issueFixLinks = this.issueFixLinks.filter(l => l.issueId !== blockId && l.fixId !== blockId); this.selectedBlock = null; this.renderPanel(); this.updateConnections(this.activePane); this.updateInstructions(); this.updateBlockList(); this.updateMinimap(); this.updateValidation(); }
 
@@ -5000,8 +5000,8 @@ PROCESS TO CONVERT:
                 
                 const fromRect = fromPort.getBoundingClientRect();
                 const canvasRect = els.canvas.getBoundingClientRect();
-                const x1 = (fromRect.left + 7 - canvasRect.left) / pane.zoom;
-                const y1 = (fromRect.top + 7 - canvasRect.top) / pane.zoom;
+                const x1 = (fromRect.left + fromRect.width / 2 - canvasRect.left) / pane.zoom;
+                const y1 = (fromRect.top + fromRect.height / 2 - canvasRect.top) / pane.zoom;
                 
                 // Calculate input position - spread across the top of the block
                 const toBlock = pane.blocks.get(conn.to);
@@ -5430,7 +5430,7 @@ PROCESS TO CONVERT:
             return path;
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + rect.width / 2 - canvasRect.left) / pane.zoom; const y1 = (rect.top + rect.height / 2 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
