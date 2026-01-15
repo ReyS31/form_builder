@@ -4995,13 +4995,24 @@ PROCESS TO CONVERT:
                 const toEl = blockElMap.get(conn.to);
                 if (!fromEl || !toEl || fromEl.dataset.pane !== paneId) return;
                 
-                const fromPort = fromEl.querySelector(`.port-out[data-index="${conn.portIndex}"]`) || fromEl.querySelector('.port-out');
-                if (!fromPort) return;
+                // Get FROM block data
+                const fromBlock = pane.blocks.get(conn.from);
+                if (!fromBlock) return;
                 
-                const fromRect = fromPort.getBoundingClientRect();
-                const canvasRect = els.canvas.getBoundingClientRect();
-                const x1 = (fromRect.left + fromRect.width / 2 - canvasRect.left) / pane.zoom;
-                const y1 = (fromRect.top + fromRect.height / 2 - canvasRect.top) / pane.zoom;
+                // Calculate FROM port position from block data (not getBoundingClientRect)
+                // This works correctly even when pane is hidden
+                const fromBlockWidth = fromEl.offsetWidth || 260;
+                const fromBlockHeight = fromEl.offsetHeight || 140;
+                const numOutputs = fromBlock.outputs || 1;
+                const portIndex = conn.portIndex || 0;
+                
+                // Output ports are centered at bottom with 16px gap, each port is 14px wide
+                const portWidth = 14;
+                const portGap = 16;
+                const totalPortsWidth = numOutputs * portWidth + (numOutputs - 1) * portGap;
+                const portsStartX = fromBlock.x + (fromBlockWidth - totalPortsWidth) / 2;
+                const x1 = portsStartX + portIndex * (portWidth + portGap) + portWidth / 2;
+                const y1 = fromBlock.y + fromBlockHeight + 7; // Port is 7px below block bottom
                 
                 // Calculate input position - spread across the top of the block
                 const toBlock = pane.blocks.get(conn.to);
@@ -5485,7 +5496,7 @@ PROCESS TO CONVERT:
         }
         setZoom(newZoom, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); pane.zoom = Math.max(0.2, Math.min(2, newZoom)); this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
         applyTransform(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); els.canvas.style.transform = `translate(${pane.panX}px, ${pane.panY}px) scale(${pane.zoom})`; }
-        zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
+        zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; if (rect.width === 0 || rect.height === 0) { pane.zoom = 1; pane.panX = padding - minX; pane.panY = padding - minY; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; this.updateMinimap(); return; } pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
 
         updateBlockList() {
             const list = document.getElementById('blockList');
