@@ -979,6 +979,38 @@
         .block.helper-block .block-description { color: var(--text-secondary); font-size: 11px; -webkit-line-clamp: 5; }
         .block.helper-block .port-in, .block.helper-block .port-out, .block.helper-block .block-outputs, .block.helper-block .add-output { display: none; }
         
+        /* Actor type stripes */
+        .block.actor-user { border-left: 4px solid #0ea5e9; }
+        .block.actor-user .block-header { background: linear-gradient(90deg, rgba(14, 165, 233, 0.08) 0%, transparent 100%); }
+        .block.actor-system { border-left: 4px solid #a855f7; }
+        .block.actor-system .block-header { background: linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, transparent 100%); }
+        
+        .actor-indicator { display: flex; align-items: center; gap: 3px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: auto; padding: 2px 5px; border-radius: 3px; }
+        .actor-indicator.user { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
+        .actor-indicator.system { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+        .actor-indicator svg { width: 9px; height: 9px; }
+        
+        /* Actor legend */
+        .actor-legend { display: flex; gap: 12px; padding: 4px 8px; font-size: 9px; color: var(--text-muted); background: var(--bg-tertiary); border-radius: 4px; }
+        .actor-legend-item { display: flex; align-items: center; gap: 4px; }
+        .actor-legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+        .actor-legend-dot.user { background: #0ea5e9; }
+        .actor-legend-dot.system { background: #a855f7; }
+        
+        /* Actor selector in panel */
+        .actor-selector { display: flex; gap: 6px; }
+        .actor-option { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: var(--bg-tertiary); border: 2px solid transparent; border-radius: var(--radius-sm); cursor: pointer; transition: all var(--transition); }
+        .actor-option:hover { background: var(--bg-hover); }
+        .actor-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .actor-option.user.selected { border-color: #0ea5e9; background: rgba(14, 165, 233, 0.12); }
+        .actor-option.system.selected { border-color: #a855f7; background: rgba(168, 85, 247, 0.12); }
+        .actor-option-icon { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .actor-option.user .actor-option-icon { background: rgba(14, 165, 233, 0.2); color: #0ea5e9; }
+        .actor-option.system .actor-option-icon { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .actor-option-icon svg { width: 12px; height: 12px; }
+        .actor-option-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); }
+        .actor-option.selected .actor-option-label { color: var(--text-primary); }
+        
         /* Inline edit overlay */
         .inline-edit-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--bg-secondary); border-radius: 8px; z-index: 100; padding: 8px; display: flex; flex-direction: column; gap: 6px; }
         .inline-edit-input { width: 100%; padding: 6px 8px; background: var(--bg-primary); border: 1px solid var(--border-default); border-radius: 5px; color: var(--text-primary); font-size: 12px; font-family: inherit; }
@@ -1056,6 +1088,7 @@
 
         .zoom-controls { position: absolute; bottom: 12px; left: 12px; display: flex; align-items: center; gap: 2px; background: var(--bg-secondary); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 3px; z-index: 50; opacity: 0.7; transition: opacity var(--transition); }
         .zoom-controls:hover { opacity: 1; }
+        .actor-legend { position: absolute; bottom: 12px; right: 12px; z-index: 50; opacity: 0.8; }
         .zoom-btn { width: 24px; height: 24px; border: none; background: transparent; color: var(--text-secondary); border-radius: 3px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .zoom-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
         .zoom-btn svg { width: 12px; height: 12px; }
@@ -1683,13 +1716,17 @@
                         <div class="canvas-container"><div class="canvas" id="currentCanvas"><svg class="canvas-svg" id="currentConnectionsSvg"></svg><div id="currentBlocksContainer"></div></div></div>
                         <div class="canvas-instructions" id="currentInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Add steps to document<br/>the current process</p></div>
                         <div class="zoom-controls">
-                            <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <span class="zoom-level" id="currentZoomLevel">100%</span>
-                            <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
-                            <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
-                            <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
-                        </div>
+                                <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                                <span class="zoom-level" id="currentZoomLevel">100%</span>
+                                <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                                <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                                <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
+                                <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+                            </div>
+                            <div class="actor-legend">
+                                <div class="actor-legend-item"><div class="actor-legend-dot user"></div>User</div>
+                                <div class="actor-legend-item"><div class="actor-legend-dot system"></div>System</div>
+                            </div>
                     </div>
                 </div>
                 <div class="canvas-pane" id="proposedPane">
@@ -1706,13 +1743,17 @@
                         <div class="canvas-container"><div class="canvas" id="proposedCanvas"><svg class="canvas-svg" id="proposedConnectionsSvg"></svg><div id="proposedBlocksContainer"></div></div></div>
                         <div class="canvas-instructions" id="proposedInstructions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg><p>Copy from current or build<br/>the improved process</p></div>
                         <div class="zoom-controls">
-                            <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <span class="zoom-level" id="proposedZoomLevel">100%</span>
-                            <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
-                            <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
-                            <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
-                            <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
-                        </div>
+                                <button class="zoom-btn" data-action="out" title="Zoom Out"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                                <span class="zoom-level" id="proposedZoomLevel">100%</span>
+                                <button class="zoom-btn" data-action="in" title="Zoom In"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>
+                                <button class="zoom-btn" data-action="fit" title="Fit to View"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3"/></svg></button>
+                                <button class="zoom-btn" data-action="snap-grid" title="Snap all to Grid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><circle cx="9" cy="9" r="2"/><circle cx="15" cy="15" r="2"/><circle cx="9" cy="15" r="2"/><circle cx="15" cy="9" r="2"/></svg></button>
+                                <button class="zoom-btn" data-action="auto-layout" title="Auto-layout"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></button>
+                            </div>
+                            <div class="actor-legend">
+                                <div class="actor-legend-item"><div class="actor-legend-dot user"></div>User</div>
+                                <div class="actor-legend-item"><div class="actor-legend-dot system"></div>System</div>
+                            </div>
                     </div>
                 </div>
                 </div>
@@ -2277,6 +2318,12 @@ PROCESS TO CONVERT:
         delay: { name: 'Delay', color: '#06b6d4', icon: '<circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" fill="none"/>' },
         webhook: { name: 'Webhook', color: '#eab308', icon: '<path d="M10 13a5 5 0 007.54.54l3-3" stroke="currentColor" stroke-width="2" fill="none"/>' }
     };
+    
+    const ACTOR_TYPES = {
+        user: { name: 'User', color: '#0ea5e9', icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
+        system: { name: 'System', color: '#a855f7', icon: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/>' }
+    };
+    
     const TEMPLATES = [
         { id: 'blank', name: 'Blank', desc: 'Start from scratch', icon: '📄' },
         { id: 'journey', name: 'User Journey', desc: 'Customer flow', icon: '🚶' },
@@ -4394,6 +4441,9 @@ PROCESS TO CONVERT:
             if (this.mode === 'dev') {
                 // DEV MODE: Show ALL fields from all modes combined
                 
+                // === ACTOR TYPE ===
+                html += `<div class="section-divider"><div class="section-title" style="color:var(--cyan);">👤 Actor (Who does this?)</div><div class="actor-selector" id="actorSelector"><div class="actor-option user ${block.actor === 'user' ? 'selected' : ''}" data-actor="user"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.user.icon}</svg></div><div class="actor-option-label">User</div></div><div class="actor-option system ${block.actor === 'system' ? 'selected' : ''}" data-actor="system"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.system.icon}</svg></div><div class="actor-option-label">System</div></div></div></div>`;
+                
                 // === CONFIGURE: Step Type ===
                 html += `<div class="section-divider"><div class="section-title" style="color:var(--purple);">⚙️ Step Type</div><div class="type-grid" id="typeGrid">${Object.entries(STEP_TYPES).map(([key, type]) => `<div class="type-option ${block.stepType === key ? 'selected' : ''}" data-type="${key}"><div class="type-option-icon" style="background:${type.color}"><svg viewBox="0 0 24 24">${type.icon}</svg></div><div class="type-option-name">${type.name}</div></div>`).join('')}</div></div>`;
                 
@@ -4419,7 +4469,8 @@ PROCESS TO CONVERT:
                 html += `<div class="form-group"><label class="form-label">System Link</label><input type="text" class="form-input" id="systemLinkInput" value="${block.systemLink || ''}" placeholder="URL to screen, docs, or code..." /></div>`;
                 
             } else if (this.mode === 'sketch') {
-                // Sketch mode: metadata + issue/change marking
+                // Sketch mode: actor + metadata + issue/change marking
+                html += `<div class="section-divider"><div class="section-title">Actor (Who does this?)</div><div class="actor-selector" id="actorSelector"><div class="actor-option user ${block.actor === 'user' ? 'selected' : ''}" data-actor="user"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.user.icon}</svg></div><div class="actor-option-label">User</div></div><div class="actor-option system ${block.actor === 'system' ? 'selected' : ''}" data-actor="system"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.system.icon}</svg></div><div class="actor-option-label">System</div></div></div></div>`;
                 html += `<div class="section-divider"><div class="section-title">Metadata</div><div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input type="text" class="form-input" id="ownerInput" value="${block.owner || ''}" placeholder="Team/Person" /></div><div class="form-group"><label class="form-label">Time</label><input type="text" class="form-input" id="timeInput" value="${block.timeEstimate || ''}" placeholder="5 min" /></div></div><div class="form-row"><div class="form-group"><label class="form-label">Systems</label><input type="text" class="form-input" id="systemsInput" value="${block.systems || ''}" placeholder="CRM, API..." /></div><div class="form-group"><label class="form-label">Priority</label><select class="form-select" id="prioritySelect"><option value="">None</option>${PRIORITIES.map(p => `<option value="${p}" ${block.priority === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}</select></div></div></div>`;
                 if (isCurrentPane) {
                     html += `<div class="section-divider"><div class="section-title"><span class="dot" style="background:var(--red);"></span>Issue Marking</div><div class="option-grid"><div class="option-item ${block.issueType === 'error' ? 'selected error' : ''}" data-issue="error"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'error' ? 'var(--red)' : 'currentColor'}" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div><div class="option-item-label">Issue</div></div><div class="option-item ${block.issueType === 'warning' ? 'selected warning' : ''}" data-issue="warning"><div class="option-item-icon"><svg viewBox="0 0 24 24" fill="none" stroke="${block.issueType === 'warning' ? 'var(--orange)' : 'currentColor'}" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="option-item-label">Warning</div></div></div><div class="form-group" style="margin-top:8px;"><label class="form-label">What's wrong?</label><textarea class="form-input" id="issueTextInput" placeholder="Describe the problem...">${block.issueText || ''}</textarea></div>${block.issueType ? '<button class="btn" id="clearIssueBtn" style="width:100%;font-size:10px;">Clear Issue</button>' : ''}</div>`;
@@ -4428,7 +4479,8 @@ PROCESS TO CONVERT:
                     html += `<div class="section-divider"><div class="section-title"><span class="dot" style="background:var(--green);"></span>Change Type</div><div class="option-grid"><div class="option-item ${block.changeType === 'fix' ? 'selected fix' : ''}" data-change="fix"><div class="option-item-icon">🔧</div><div class="option-item-label">Fix</div></div><div class="option-item ${block.changeType === 'new' ? 'selected new' : ''}" data-change="new"><div class="option-item-icon">✨</div><div class="option-item-label">New</div></div><div class="option-item ${block.changeType === 'modified' ? 'selected' : ''}" data-change="modified"><div class="option-item-icon">📝</div><div class="option-item-label">Modified</div></div><div class="option-item ${block.changeType === 'removed' ? 'selected' : ''}" data-change="removed"><div class="option-item-icon">🗑️</div><div class="option-item-label">Remove</div></div></div></div><div class="section-divider"><div class="section-title">Fix Description</div><textarea class="form-input" id="fixTextInput" placeholder="Explain the fix...">${block.fixText || ''}</textarea></div><div class="section-divider"><div class="section-title">Link to Issue</div><div class="link-selector">${linkedIssue ? `<div class="link-selector-current"><span>🔗 ${linkedIssue.name}</span><button class="link-selector-btn" id="unlinkIssueBtn">Unlink</button></div>` : `<div class="link-selector-label">Connect to an issue</div><div class="link-selector-list" id="issueLinkList">${this.getIssueLinkListHtml()}</div>`}</div></div><div class="section-divider"><div class="section-title">Status</div><select class="form-select" id="statusSelect"><option value="">None</option>${STATUSES.map(s => `<option value="${s}" ${block.status === s ? 'selected' : ''}>${s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}</option>`).join('')}</select></div>`;
                 }
             } else if (this.mode === 'configure') {
-                // Configure mode: step type selection
+                // Configure mode: actor + step type selection
+                html += `<div class="section-divider"><div class="section-title">Actor</div><div class="actor-selector" id="actorSelector"><div class="actor-option user ${block.actor === 'user' ? 'selected' : ''}" data-actor="user"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.user.icon}</svg></div><div class="actor-option-label">User</div></div><div class="actor-option system ${block.actor === 'system' ? 'selected' : ''}" data-actor="system"><div class="actor-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${ACTOR_TYPES.system.icon}</svg></div><div class="actor-option-label">System</div></div></div></div>`;
                 html += `<div class="section-divider"><div class="section-title">Step Type</div><div class="type-grid" id="typeGrid">${Object.entries(STEP_TYPES).map(([key, type]) => `<div class="type-option ${block.stepType === key ? 'selected' : ''}" data-type="${key}"><div class="type-option-icon" style="background:${type.color}"><svg viewBox="0 0 24 24">${type.icon}</svg></div><div class="type-option-name">${type.name}</div></div>`).join('')}</div></div>`;
             } else if (this.mode === 'detail') {
                 // Detail mode: technical specs
@@ -4488,6 +4540,8 @@ PROCESS TO CONVERT:
             content.querySelectorAll('.link-selector-item').forEach(item => item.addEventListener('click', () => { const issueId = item.dataset.issueId; this.issueFixLinks = this.issueFixLinks.filter(l => l.fixId !== block.id); this.issueFixLinks.push({ issueId, fixId: block.id }); this.updateBlockElement(block, paneId); this.renderPanelContent(); this.updateValidation(); }));
             content.querySelector('#unlinkIssueBtn')?.addEventListener('click', () => { this.issueFixLinks = this.issueFixLinks.filter(l => l.fixId !== block.id); this.updateBlockElement(block, paneId); this.renderPanelContent(); this.updateValidation(); });
             content.querySelectorAll('.type-option').forEach(opt => opt.addEventListener('click', () => { block.stepType = opt.dataset.type; block.config = block.config || {}; this.updateBlockElement(block, paneId); this.renderPanelContent(); }));
+            // Actor selector binding
+            content.querySelectorAll('.actor-option').forEach(opt => opt.addEventListener('click', () => { block.actor = block.actor === opt.dataset.actor ? null : opt.dataset.actor; this.updateBlockElement(block, paneId); this.renderPanelContent(); }));
             // Detail mode bindings
             content.querySelector('#preconditionsInput')?.addEventListener('input', e => { block.preconditions = e.target.value; });
             content.querySelector('#validationInput')?.addEventListener('input', e => { block.validation = e.target.value; });
@@ -4540,7 +4594,7 @@ PROCESS TO CONVERT:
             if (pane.blocks.size > 0) { const lastBlock = Array.from(pane.blocks.values()).pop(); x = lastBlock.x; y = lastBlock.y + 140; }
             x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24;
             const id = 'block_' + (++this.blockIdCounter);
-            const block = { id, name: 'New Step', description: '', x, y, outputs: 1, issueType: null, issueText: '', changeType: paneId === 'proposed' ? 'new' : null, fixText: '', status: paneId === 'proposed' ? 'todo' : null, owner: '', systems: '', timeEstimate: '', priority: '', stepType: null, config: {}, comments: [], preconditions: '', validation: '', errorPath: '', systemLink: '' };
+            const block = { id, name: 'New Step', description: '', x, y, outputs: 1, issueType: null, issueText: '', changeType: paneId === 'proposed' ? 'new' : null, fixText: '', status: paneId === 'proposed' ? 'todo' : null, owner: '', systems: '', timeEstimate: '', priority: '', stepType: null, actor: null, config: {}, comments: [], preconditions: '', validation: '', errorPath: '', systemLink: '' };
             pane.blocks.set(id, block);
             this.renderBlock(block, paneId);
             this.selectBlock(block, paneId);
@@ -4590,6 +4644,7 @@ PROCESS TO CONVERT:
         getBlockClasses(block, paneId) {
             let classes = ['block'];
             if (block.isHelper) classes.push('helper-block');
+            if (block.actor) classes.push('actor-' + block.actor);
             if (this.selectedBlock?.id === block.id && this.activePane === paneId) classes.push('selected');
             if (paneId === 'current') { if (block.issueType === 'error') classes.push('issue-error'); else if (block.issueType === 'warning') classes.push('issue-warning'); }
             else { if (block.changeType === 'fix' || block.fixText) classes.push('change-fix'); else if (block.changeType === 'new') classes.push('change-new'); else if (block.changeType === 'removed') classes.push('change-removed'); }
@@ -4612,9 +4667,17 @@ PROCESS TO CONVERT:
             else { if (block.changeType === 'fix' || block.fixText) badges += '<span class="block-badge fix">Fix</span>'; else if (block.changeType === 'new') badges += '<span class="block-badge new">New</span>'; else if (block.changeType === 'removed') badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>'; if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; }
             const hasLink = isCurrentPane ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
             if (hasLink) badges += '<span class="block-badge linked">🔗</span>';
+            
+            // Actor indicator
+            let actorHtml = '';
+            if (block.actor) {
+                const actorInfo = ACTOR_TYPES[block.actor];
+                actorHtml = `<div class="actor-indicator ${block.actor}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${actorInfo.icon}</svg>${actorInfo.name}</div>`;
+            }
+            
             let metaHtml = '';
             if (block.owner || block.timeEstimate) { metaHtml = '<div class="block-meta">'; if (block.owner) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${block.owner}</span>`; if (block.timeEstimate) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${block.timeEstimate}</span>`; metaHtml += '</div>'; }
-            return `<div class="block-header"><div class="block-icon ${typeInfo ? 'typed' : ''}" style="${typeInfo ? `background:${typeInfo.color}` : ''}"><svg viewBox="0 0 24 24">${typeInfo ? typeInfo.icon : '<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>'}</svg></div><div class="block-title">${block.name || 'Untitled'}</div><div class="block-badges">${badges}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'No description'}</div>${annotation}${metaHtml}</div><div class="port-in" data-port="in"></div><div class="block-outputs">${Array(block.outputs || 1).fill(0).map((_, i) => `<div class="port-out" data-port="out" data-index="${i}"></div>`).join('')}</div><div class="add-output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+            return `<div class="block-header"><div class="block-icon ${typeInfo ? 'typed' : ''}" style="${typeInfo ? `background:${typeInfo.color}` : ''}"><svg viewBox="0 0 24 24">${typeInfo ? typeInfo.icon : '<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>'}</svg></div><div class="block-title">${block.name || 'Untitled'}</div>${actorHtml}<div class="block-badges">${badges}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'No description'}</div>${annotation}${metaHtml}</div><div class="port-in" data-port="in"></div><div class="block-outputs">${Array(block.outputs || 1).fill(0).map((_, i) => `<div class="port-out" data-port="out" data-index="${i}"></div>`).join('')}</div><div class="add-output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
         }
 
         bindBlockEvents(el, block, paneId) {
@@ -7139,64 +7202,78 @@ PROCESS TO CONVERT:
             
             this.saveState('auto-layout');
             
-            const blocks = Array.from(pane.blocks.values());
-            const blockWidth = 288;
-            const blockHeight = 168;
-            const horizontalGap = 96;  // More space between siblings
-            const verticalGap = 120;   // More space between levels
-            const startX = 120;
-            const startY = 96;
+            const blocks = Array.from(pane.blocks.values()).filter(b => !b.isHelper);
+            const helpers = Array.from(pane.blocks.values()).filter(b => b.isHelper);
             
-            // Build connection graph
+            if (blocks.length === 0) return;
+            
+            // Layout constants - generous spacing for clean routing
+            const blockWidth = 260;
+            const blockHeight = 140;
+            const horizontalGap = 120;  // Space between blocks horizontally
+            const verticalGap = 100;    // Space between levels (for routing)
+            const routingLane = 50;     // Extra space for routing lines between levels
+            const startX = 80;
+            const startY = 80;
+            
+            // Build adjacency lists
             const children = new Map();
             const parents = new Map();
+            const inDegree = new Map();
+            const outDegree = new Map();
             
             blocks.forEach(b => {
                 children.set(b.id, []);
                 parents.set(b.id, []);
+                inDegree.set(b.id, 0);
+                outDegree.set(b.id, 0);
             });
             
             pane.connections.forEach(conn => {
-                if (pane.blocks.has(conn.from) && pane.blocks.has(conn.to)) {
+                const fromBlock = pane.blocks.get(conn.from);
+                const toBlock = pane.blocks.get(conn.to);
+                if (fromBlock && toBlock && !fromBlock.isHelper && !toBlock.isHelper) {
                     if (!children.get(conn.from).includes(conn.to)) {
                         children.get(conn.from).push(conn.to);
-                    }
-                    if (!parents.get(conn.to).includes(conn.from)) {
                         parents.get(conn.to).push(conn.from);
+                        inDegree.set(conn.to, inDegree.get(conn.to) + 1);
+                        outDegree.set(conn.from, outDegree.get(conn.from) + 1);
                     }
                 }
             });
             
-            // Find root nodes (no incoming)
-            let roots = blocks.filter(b => parents.get(b.id).length === 0);
-            if (roots.length === 0) roots = [blocks[0]];
+            // Find root nodes (no incoming connections) and assign levels using BFS
+            let roots = blocks.filter(b => inDegree.get(b.id) === 0);
+            if (roots.length === 0) roots = [blocks[0]]; // Handle cycles
             
-            // Assign levels using longest path (ensures children are always below parents)
+            // Assign levels using longest path algorithm (ensures proper hierarchy)
             const level = new Map();
-            const visited = new Set();
+            const queue = [...roots];
+            roots.forEach(r => level.set(r.id, 0));
             
-            const assignLevel = (blockId, currentLevel) => {
-                const existingLevel = level.get(blockId);
-                if (existingLevel === undefined || currentLevel > existingLevel) {
-                    level.set(blockId, currentLevel);
-                }
-                
-                if (visited.has(blockId)) return;
-                visited.add(blockId);
+            // Multiple passes to handle all blocks
+            let maxIterations = blocks.length * 2;
+            while (queue.length > 0 && maxIterations-- > 0) {
+                const blockId = queue.shift();
+                const currentLevel = level.get(blockId);
                 
                 for (const childId of children.get(blockId) || []) {
-                    assignLevel(childId, level.get(blockId) + 1);
+                    const existingLevel = level.get(childId);
+                    const newLevel = currentLevel + 1;
+                    
+                    if (existingLevel === undefined || newLevel > existingLevel) {
+                        level.set(childId, newLevel);
+                        queue.push(childId);
+                    }
                 }
-            };
-            
-            roots.forEach(r => assignLevel(r.id, 0));
+            }
             
             // Handle disconnected blocks
             blocks.forEach(b => {
                 if (!level.has(b.id)) level.set(b.id, 0);
             });
             
-            // Group by level
+            // Group blocks by level
             const levels = new Map();
             blocks.forEach(b => {
                 const l = level.get(b.id);
@@ -7206,96 +7283,118 @@ PROCESS TO CONVERT:
             
             const sortedLevelNums = Array.from(levels.keys()).sort((a, b) => a - b);
             
-            // Calculate subtree widths for proper spacing
-            const subtreeWidth = new Map();
-            
-            const calcSubtreeWidth = (blockId) => {
-                if (subtreeWidth.has(blockId)) return subtreeWidth.get(blockId);
+            // Sort blocks within each level to minimize edge crossings
+            // Use barycenter method: position block based on average position of its parents
+            sortedLevelNums.forEach((levelNum, levelIdx) => {
+                const levelBlocks = levels.get(levelNum);
                 
-                const blockChildren = children.get(blockId) || [];
-                if (blockChildren.length === 0) {
-                    subtreeWidth.set(blockId, blockWidth);
-                    return blockWidth;
-                }
-                
-                let totalChildWidth = 0;
-                blockChildren.forEach((childId, idx) => {
-                    totalChildWidth += calcSubtreeWidth(childId);
-                    if (idx > 0) totalChildWidth += horizontalGap;
-                });
-                
-                const width = Math.max(blockWidth, totalChildWidth);
-                subtreeWidth.set(blockId, width);
-                return width;
-            };
-            
-            roots.forEach(r => calcSubtreeWidth(r.id));
-            blocks.forEach(b => {
-                if (!subtreeWidth.has(b.id)) calcSubtreeWidth(b.id);
-            });
-            
-            // Position blocks using subtree widths
-            const blockX = new Map();
-            const positioned = new Set();
-            
-            const positionBlock = (blockId, leftX) => {
-                if (positioned.has(blockId)) return;
-                positioned.add(blockId);
-                
-                const block = pane.blocks.get(blockId);
-                if (!block) return;
-                
-                const myWidth = subtreeWidth.get(blockId) || blockWidth;
-                const blockChildren = children.get(blockId) || [];
-                
-                if (blockChildren.length === 0) {
-                    // Leaf node - center in allocated space
-                    block.x = this.snapToGrid(leftX + (myWidth - blockWidth) / 2);
+                if (levelIdx === 0) {
+                    // First level: sort by out-degree (most connections first) then alphabetically
+                    levelBlocks.sort((a, b) => {
+                        const aOut = outDegree.get(a.id) || 0;
+                        const bOut = outDegree.get(b.id) || 0;
+                        if (bOut !== aOut) return bOut - aOut;
+                        return (a.name || '').localeCompare(b.name || '');
+                    });
                 } else {
-                    // Position children first
-                    let childLeftX = leftX;
-                    blockChildren.forEach((childId, idx) => {
-                        const childWidth = subtreeWidth.get(childId) || blockWidth;
-                        positionBlock(childId, childLeftX);
-                        childLeftX += childWidth + horizontalGap;
+                    // Subsequent levels: use barycenter of parent positions
+                    const prevLevel = levels.get(sortedLevelNums[levelIdx - 1]) || [];
+                    const prevPositions = new Map();
+                    prevLevel.forEach((b, i) => prevPositions.set(b.id, i));
+                    
+                    levelBlocks.forEach(block => {
+                        const blockParents = parents.get(block.id) || [];
+                        if (blockParents.length > 0) {
+                            const sum = blockParents.reduce((acc, pid) => acc + (prevPositions.get(pid) ?? 0), 0);
+                            block._barycenter = sum / blockParents.length;
+                        } else {
+                            block._barycenter = 999;
+                        }
                     });
                     
-                    // Center parent above children
-                    const firstChild = pane.blocks.get(blockChildren[0]);
-                    const lastChild = pane.blocks.get(blockChildren[blockChildren.length - 1]);
-                    if (firstChild && lastChild) {
-                        const centerX = (firstChild.x + lastChild.x + blockWidth) / 2 - blockWidth / 2;
-                        block.x = this.snapToGrid(centerX);
-                    } else {
-                        block.x = this.snapToGrid(leftX + (myWidth - blockWidth) / 2);
-                    }
+                    levelBlocks.sort((a, b) => (a._barycenter || 0) - (b._barycenter || 0));
                 }
-                
-                block.y = this.snapToGrid(startY + level.get(blockId) * (blockHeight + verticalGap));
-                blockX.set(blockId, block.x);
-            };
-            
-            // Position from roots
-            let currentX = startX;
-            roots.forEach(root => {
-                positionBlock(root.id, currentX);
-                currentX += (subtreeWidth.get(root.id) || blockWidth) + horizontalGap;
             });
             
-            // Position any unpositioned blocks (disconnected)
+            // Calculate positions - each level is a row
+            const totalLevels = sortedLevelNums.length;
+            const levelY = new Map();
+            
+            sortedLevelNums.forEach((levelNum, idx) => {
+                // Add extra routing space between levels
+                const y = startY + idx * (blockHeight + verticalGap + routingLane);
+                levelY.set(levelNum, y);
+            });
+            
+            // Find max blocks in any level for centering
+            let maxBlocksInLevel = 0;
+            sortedLevelNums.forEach(levelNum => {
+                maxBlocksInLevel = Math.max(maxBlocksInLevel, levels.get(levelNum).length);
+            });
+            
+            const maxLevelWidth = maxBlocksInLevel * (blockWidth + horizontalGap) - horizontalGap;
+            
+            // Position blocks in each level - centered
             sortedLevelNums.forEach(levelNum => {
                 const levelBlocks = levels.get(levelNum);
-                levelBlocks.forEach(block => {
-                    if (!positioned.has(block.id)) {
-                        block.x = this.snapToGrid(currentX);
-                        block.y = this.snapToGrid(startY + levelNum * (blockHeight + verticalGap));
-                        currentX += blockWidth + horizontalGap;
-                        positioned.add(block.id);
-                    }
+                const levelWidth = levelBlocks.length * (blockWidth + horizontalGap) - horizontalGap;
+                const offsetX = startX + (maxLevelWidth - levelWidth) / 2;
+                
+                levelBlocks.forEach((block, idx) => {
+                    block.x = this.snapToGrid(offsetX + idx * (blockWidth + horizontalGap));
+                    block.y = this.snapToGrid(levelY.get(levelNum));
                 });
             });
             
-            // Resolve any remaining overlaps at same level
+            // Second pass: adjust positions to center parents above their children
+            for (let pass = 0; pass < 3; pass++) {
+                sortedLevelNums.forEach(levelNum => {
+                    const levelBlocks = levels.get(levelNum);
+                    
+                    levelBlocks.forEach(block => {
+                        const blockChildren = children.get(block.id) || [];
+                        if (blockChildren.length > 0) {
+                            // Calculate the center of children
+                            let minChildX = Infinity, maxChildX = -Infinity;
+                            blockChildren.forEach(childId => {
+                                const child = pane.blocks.get(childId);
+                                if (child) {
+                                    minChildX = Math.min(minChildX, child.x);
+                                    maxChildX = Math.max(maxChildX, child.x + blockWidth);
+                                }
+                            });
+                            
+                            if (minChildX !== Infinity) {
+                                const targetX = (minChildX + maxChildX) / 2 - blockWidth / 2;
+                                block._targetX = targetX;
+                            }
+                        }
+                    });
+                });
+                
+                // Apply target positions while avoiding overlaps
+                sortedLevelNums.forEach(levelNum => {
+                    const levelBlocks = levels.get(levelNum);
+                    
+                    // Sort by target position
+                    const targets = levelBlocks.map(b => ({
+                        block: b,
+                        target: b._targetX !== undefined ? b._targetX : b.x
+                    }));
+                    targets.sort((a, b) => a.target - b.target);
+                    
+                    // Assign positions ensuring no overlaps
+                    let currentX = startX;
+                    targets.forEach((t, idx) => {
+                        const block = t.block;
+                        const targetX = Math.max(currentX, t.target);
+                        block.x = this.snapToGrid(targetX);
+                        currentX = block.x + blockWidth + horizontalGap;
+                    });
+                });
+            }
+            
+            // Final overlap resolution
             sortedLevelNums.forEach(levelNum => {
                 const levelBlocks = levels.get(levelNum).sort((a, b) => a.x - b.x);
                 for (let i = 1; i < levelBlocks.length; i++) {
@@ -7308,17 +7407,142 @@ PROCESS TO CONVERT:
                 }
             });
             
-            // Clear waypoints for clean curves
-            pane.connections.forEach(conn => {
-                conn.waypoints = [];
-            });
+            // Position helper blocks to the right of the main flow
+            if (helpers.length > 0) {
+                let maxX = 0;
+                blocks.forEach(b => maxX = Math.max(maxX, b.x + blockWidth));
+                
+                helpers.forEach((helper, idx) => {
+                    helper.x = this.snapToGrid(maxX + horizontalGap);
+                    helper.y = this.snapToGrid(startY + idx * 150);
+                });
+            }
             
-            // Update all
+            // Calculate orthogonal waypoints for all connections
+            this.calculateOrthogonalRoutes(pane, levelY, blockWidth, blockHeight, horizontalGap, verticalGap);
+            
+            // Update rendering
             blocks.forEach(block => this.updateBlockElement(block, paneId));
+            helpers.forEach(helper => this.updateBlockElement(helper, paneId));
             this.updateConnections(paneId);
             this.updateMinimap();
             this.zoomToFit(paneId);
-            this.toast('Layout applied', 'success');
+            this.toast('Auto-layout applied', 'success');
+        }
+        
+        // Calculate orthogonal routes for connections that avoid blocks
+        calculateOrthogonalRoutes(pane, levelY, blockWidth, blockHeight, horizontalGap, verticalGap) {
+            const blocks = Array.from(pane.blocks.values()).filter(b => !b.isHelper);
+            
+            // Build block rectangles for collision detection
+            const blockRects = blocks.map(b => ({
+                id: b.id,
+                x: b.x - 10,  // Add padding
+                y: b.y - 10,
+                width: blockWidth + 20,
+                height: blockHeight + 20,
+                right: b.x + blockWidth + 10,
+                bottom: b.y + blockHeight + 10,
+                centerX: b.x + blockWidth / 2,
+                centerY: b.y + blockHeight / 2
+            }));
+            
+            pane.connections.forEach(conn => {
+                const fromBlock = pane.blocks.get(conn.from);
+                const toBlock = pane.blocks.get(conn.to);
+                
+                if (!fromBlock || !toBlock || fromBlock.isHelper || toBlock.isHelper) {
+                    conn.waypoints = [];
+                    return;
+                }
+                
+                const fromCenterX = fromBlock.x + blockWidth / 2;
+                const fromBottomY = fromBlock.y + blockHeight;
+                const toCenterX = toBlock.x + blockWidth / 2;
+                const toTopY = toBlock.y;
+                
+                // Calculate if there are blocks in the direct path
+                const pathMinX = Math.min(fromCenterX, toCenterX) - 20;
+                const pathMaxX = Math.max(fromCenterX, toCenterX) + 20;
+                const pathMinY = fromBottomY;
+                const pathMaxY = toTopY;
+                
+                const blockingBlocks = blockRects.filter(rect => {
+                    if (rect.id === conn.from || rect.id === conn.to) return false;
+                    
+                    // Check if block is in the vertical path between source and target
+                    const inXRange = rect.right > pathMinX && rect.x < pathMaxX;
+                    const inYRange = rect.bottom > pathMinY && rect.y < pathMaxY;
+                    
+                    return inXRange && inYRange;
+                });
+                
+                // If going downward and path is clear, use simple routing
+                if (toBlock.y > fromBlock.y && blockingBlocks.length === 0) {
+                    conn.waypoints = [];
+                    return;
+                }
+                
+                // Calculate routing points for orthogonal path around obstacles
+                const waypoints = [];
+                
+                // Going sideways or upward - need routing
+                if (toBlock.y <= fromBlock.y || blockingBlocks.length > 0) {
+                    // Route around: exit down, go horizontal, enter from top
+                    const midY = (fromBottomY + toTopY) / 2;
+                    
+                    // Find a clear horizontal lane
+                    let routeY = midY;
+                    if (toBlock.y <= fromBlock.y) {
+                        // Going upward - route to the side and up
+                        const maxY = Math.max(fromBottomY, toBlock.y + blockHeight);
+                        routeY = maxY + 40;
+                    }
+                    
+                    // Determine if we need to go left or right
+                    let routeX;
+                    if (Math.abs(fromCenterX - toCenterX) < 30) {
+                        // Nearly vertical - route to the side
+                        const leftEdge = Math.min(fromBlock.x, toBlock.x);
+                        const rightEdge = Math.max(fromBlock.x + blockWidth, toBlock.x + blockWidth);
+                        
+                        // Check which side is clearer
+                        const leftClear = !blockRects.some(r => r.id !== conn.from && r.id !== conn.to && 
+                            r.right > leftEdge - 60 && r.x < leftEdge && r.bottom > pathMinY && r.y < pathMaxY);
+                        
+                        routeX = leftClear ? leftEdge - 50 : rightEdge + 50;
+                    } else {
+                        // Use the path between blocks
+                        routeX = (fromCenterX + toCenterX) / 2;
+                    }
+                    
+                    if (toBlock.y <= fromBlock.y) {
+                        // Going up - need more complex routing
+                        waypoints.push({ x: fromCenterX, y: fromBottomY + 30 });
+                        waypoints.push({ x: routeX, y: fromBottomY + 30 });
+                        waypoints.push({ x: routeX, y: toTopY - 30 });
+                        waypoints.push({ x: toCenterX, y: toTopY - 30 });
+                    } else if (blockingBlocks.length > 0) {
+                        // Obstacles - route around
+                        let minBlockX = Infinity, maxBlockX = -Infinity;
+                        blockingBlocks.forEach(b => {
+                            minBlockX = Math.min(minBlockX, b.x);
+                            maxBlockX = Math.max(maxBlockX, b.right);
+                        });
+                        
+                        // Decide to go left or right
+                        const goLeft = fromCenterX < (minBlockX + maxBlockX) / 2;
+                        routeX = goLeft ? minBlockX - 40 : maxBlockX + 40;
+                        
+                        waypoints.push({ x: fromCenterX, y: fromBottomY + 25 });
+                        waypoints.push({ x: routeX, y: fromBottomY + 25 });
+                        waypoints.push({ x: routeX, y: toTopY - 25 });
+                        waypoints.push({ x: toCenterX, y: toTopY - 25 });
+                    }
+                }
+                
+                conn.waypoints = waypoints;
+            });
         }
         
         // Keep old methods for compatibility but simplify
