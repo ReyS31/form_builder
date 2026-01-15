@@ -4303,8 +4303,8 @@ PROCESS TO CONVERT:
             document.getElementById('viewSplitBtn').classList.toggle('active', mode === 'split');
             document.getElementById('viewProposedBtn').classList.toggle('active', mode === 'proposed');
             
-            // Re-render connections and fit zoom after view change
-            // This ensures connections are drawn with actual block dimensions
+            // Re-draw connections and fit zoom after view change
+            // Connections need to be redrawn because getBoundingClientRect doesn't work on hidden panes
             setTimeout(() => {
                 if (mode === 'current' || mode === 'split') {
                     this.updateConnections('current');
@@ -4956,31 +4956,21 @@ PROCESS TO CONVERT:
             defs.innerHTML = `<marker id="arrowhead-${paneId}" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" class="connection-arrow"/></marker>`;
             els.connectionsSvg.appendChild(defs);
             
-            // Check if pane is visible by checking canvas dimensions
-            const canvasRect = els.canvas.getBoundingClientRect();
-            const isVisible = canvasRect.width > 0 && canvasRect.height > 0;
-            
             // Get all block rectangles for collision detection
             const blockRects = [];
             const blockElMap = new Map();
-            const BLOCK_WIDTH = 260;  // Fixed width from CSS
-            const BLOCK_HEIGHT = 120; // Reasonable default height
-            
             pane.blocks.forEach((block, id) => {
                 const el = document.getElementById(id);
                 if (el) {
                     blockElMap.set(id, el);
-                    // Use actual dimensions if visible, defaults if hidden
-                    const width = (isVisible && el.offsetWidth > 0) ? el.offsetWidth : BLOCK_WIDTH;
-                    const height = (isVisible && el.offsetHeight > 0) ? el.offsetHeight : BLOCK_HEIGHT;
                     blockRects.push({
                         id: id,
                         x: block.x,
                         y: block.y,
-                        width: width,
-                        height: height,
-                        right: block.x + width,
-                        bottom: block.y + height
+                        width: el.offsetWidth || 260,
+                        height: el.offsetHeight || 140,
+                        right: block.x + (el.offsetWidth || 260),
+                        bottom: block.y + (el.offsetHeight || 140)
                     });
                 }
             });
@@ -5012,37 +5002,25 @@ PROCESS TO CONVERT:
                 const toEl = blockElMap.get(conn.to);
                 if (!fromEl || !toEl || fromEl.dataset.pane !== paneId) return;
                 
-                const fromBlock = pane.blocks.get(conn.from);
+                const fromPort = fromEl.querySelector(`.port-out[data-index="${conn.portIndex}"]`) || fromEl.querySelector('.port-out');
+                if (!fromPort) return;
+                
+                const fromRect = fromPort.getBoundingClientRect();
+                const canvasRect = els.canvas.getBoundingClientRect();
+                const x1 = (fromRect.left + 7 - canvasRect.left) / pane.zoom;
+                const y1 = (fromRect.top + 7 - canvasRect.top) / pane.zoom;
+                
+                // Calculate input position - spread across the top of the block
                 const toBlock = pane.blocks.get(conn.to);
-                if (!fromBlock || !toBlock) return;
-                
-                let x1, y1, x2, y2;
-                
-                // Get block dimensions
-                const fromBlockRect = blockRects.find(r => r.id === conn.from);
-                const toBlockRect = blockRects.find(r => r.id === conn.to);
-                const fromBlockWidth = fromBlockRect?.width || BLOCK_WIDTH;
-                const fromBlockHeight = fromBlockRect?.height || BLOCK_HEIGHT;
-                const toBlockWidth = toBlockRect?.width || BLOCK_WIDTH;
-                
-                // Calculate FROM port position (output port at bottom of block)
-                const numOutputs = fromBlock.outputs || 1;
-                const portIndex = conn.portIndex || 0;
-                const portWidth = 14;
-                const portGap = 16;
-                const totalPortsWidth = numOutputs * portWidth + (numOutputs - 1) * portGap;
-                const portsStartX = fromBlock.x + (fromBlockWidth - totalPortsWidth) / 2;
-                x1 = portsStartX + portIndex * (portWidth + portGap) + portWidth / 2;
-                y1 = fromBlock.y + fromBlockHeight; // Port center is at block bottom edge
-                
-                // Calculate TO port position (input port at top of block)
                 const incomingInfo = incomingByBlock.get(conn.to)?.find(c => c.conn === conn);
                 const inputIndex = incomingInfo?.inputIndex || 0;
                 const inputTotal = incomingInfo?.inputTotal || 1;
-                const inputSpacing = Math.min(40, toBlockWidth / (inputTotal + 1));
-                const inputStartX = toBlock.x + (toBlockWidth - (inputTotal - 1) * inputSpacing) / 2;
-                x2 = inputStartX + inputIndex * inputSpacing;
-                y2 = toBlock.y - 2; // Just above the block
+                
+                const blockWidth = toEl.offsetWidth || 260;
+                const inputSpacing = Math.min(40, blockWidth / (inputTotal + 1));
+                const inputStartX = toBlock.x + (blockWidth - (inputTotal - 1) * inputSpacing) / 2;
+                const x2 = inputStartX + inputIndex * inputSpacing;
+                const y2 = toBlock.y - 2; // Just above the block
                 
                 // Create group for connection elements
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -5459,7 +5437,7 @@ PROCESS TO CONVERT:
             return path;
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + rect.width / 2 - canvasRect.left) / pane.zoom; const y1 = (rect.top + rect.height / 2 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.connectingFrom.id); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
@@ -5514,7 +5492,7 @@ PROCESS TO CONVERT:
         }
         setZoom(newZoom, paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); pane.zoom = Math.max(0.2, Math.min(2, newZoom)); this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
         applyTransform(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); els.canvas.style.transform = `translate(${pane.panX}px, ${pane.panY}px) scale(${pane.zoom})`; }
-        zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; if (rect.width === 0 || rect.height === 0) { pane.zoom = 1; pane.panX = padding - minX; pane.panY = padding - minY; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; this.updateMinimap(); return; } pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
+        zoomToFit(paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const blocks = Array.from(pane.blocks.values()); if (!blocks.length) { pane.zoom = 1; pane.panX = 0; pane.panY = 0; this.applyTransform(paneId); els.zoomLevel.textContent = '100%'; return; } const padding = 50; const minX = Math.min(...blocks.map(b => b.x)); const minY = Math.min(...blocks.map(b => b.y)); const maxX = Math.max(...blocks.map(b => b.x + 260)); const maxY = Math.max(...blocks.map(b => b.y + 120)); const rect = els.canvasArea.getBoundingClientRect(); const contentW = maxX - minX + padding * 2; const contentH = maxY - minY + padding * 2; pane.zoom = Math.max(0.2, Math.min(1, Math.min(rect.width / contentW, rect.height / contentH))); pane.panX = (rect.width - contentW * pane.zoom) / 2 - (minX - padding) * pane.zoom; pane.panY = (rect.height - contentH * pane.zoom) / 2 - (minY - padding) * pane.zoom; this.applyTransform(paneId); els.zoomLevel.textContent = Math.round(pane.zoom * 100) + '%'; this.updateMinimap(); }
 
         updateBlockList() {
             const list = document.getElementById('blockList');
@@ -7288,16 +7266,15 @@ PROCESS TO CONVERT:
             
             this.saveState('auto-layout');
             
-            // Temporarily make pane visible if hidden (for accurate measurements)
+            // Temporarily show pane if hidden (needed for accurate DOM measurements)
             const split = document.getElementById('canvasSplit');
-            const wasHidden = (paneId === 'proposed' && split.classList.contains('view-current')) ||
-                             (paneId === 'current' && split.classList.contains('view-proposed'));
+            const wasViewingCurrent = split.classList.contains('view-current');
+            const wasViewingProposed = split.classList.contains('view-proposed');
+            const needsTemporaryShow = (paneId === 'proposed' && wasViewingCurrent) || 
+                                       (paneId === 'current' && wasViewingProposed);
             
-            if (wasHidden) {
-                // Temporarily show both panes
+            if (needsTemporaryShow) {
                 split.classList.remove('view-current', 'view-proposed');
-                // Force reflow to ensure elements are measured correctly
-                void split.offsetHeight;
             }
             
             const blocks = Array.from(pane.blocks.values()).filter(b => !b.isHelper);
@@ -7555,13 +7532,10 @@ PROCESS TO CONVERT:
             this.updateMinimap();
             this.zoomToFit(paneId);
             
-            // Restore original view mode if it was changed
-            if (wasHidden) {
-                if (paneId === 'proposed') {
-                    split.classList.add('view-current');
-                } else {
-                    split.classList.add('view-proposed');
-                }
+            // Restore original view if we temporarily showed the pane
+            if (needsTemporaryShow) {
+                if (wasViewingCurrent) split.classList.add('view-current');
+                if (wasViewingProposed) split.classList.add('view-proposed');
             }
             
             this.toast('Auto-layout applied', 'success');
