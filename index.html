@@ -1916,20 +1916,23 @@
             <pre class="help-code">{
   "name": "Process Name",
   "description": "Optional description",
+  "environment": "other",
   "current": {
     "blocks": [
       {
         "id": "block_1",
         "name": "Step Name",
         "description": "What this step does",
-        "x": 100, "y": 100,
+        "x": 96, "y": 96,
         "outputs": 1,
         "stepType": "action",
+        "actor": "user",
         "issueType": "error",
         "issueText": "Problem description",
         "owner": "Team/Person",
         "timeEstimate": "5 min",
-        "systems": "CRM, API"
+        "systems": "CRM, API",
+        "priority": "high"
       }
     ],
     "connections": [
@@ -1945,17 +1948,22 @@
   "proposed": {
     "blocks": [...],
     "connections": [...]
-  }
+  },
+  "issueFixLinks": [
+    {"issueId": "block_1", "fixId": "block_1"}
+  ]
 }</pre>
             
             <h3>Block Properties</h3>
             <table class="help-table">
-                <tr><td><strong>id</strong></td><td>Unique identifier (e.g., "block_1")</td></tr>
-                <tr><td><strong>name</strong></td><td>Step title</td></tr>
+                <tr><td><strong>id</strong></td><td>Unique identifier (e.g., "block_1") - <em>required</em></td></tr>
+                <tr><td><strong>name</strong></td><td>Step title - <em>required</em></td></tr>
                 <tr><td><strong>description</strong></td><td>What happens in this step</td></tr>
-                <tr><td><strong>x, y</strong></td><td>Position on canvas (pixels)</td></tr>
-                <tr><td><strong>outputs</strong></td><td>Number of output ports (default: 1)</td></tr>
+                <tr><td><strong>x, y</strong></td><td>Position on canvas (auto-snaps to 24px grid)</td></tr>
+                <tr><td><strong>outputs</strong></td><td>Number of output ports (default: 1, use 2+ for decisions)</td></tr>
+                <tr><td><strong>isHelper</strong></td><td>true for note blocks (no connections)</td></tr>
                 <tr><td><strong>stepType</strong></td><td>action, decision, api, email, form, data, delay, webhook</td></tr>
+                <tr><td><strong>actor</strong></td><td>"user", "system", "admin" (who performs this step)</td></tr>
                 <tr><td><strong>issueType</strong></td><td>"error" or "warning" (current pane only)</td></tr>
                 <tr><td><strong>issueText</strong></td><td>Description of the problem</td></tr>
                 <tr><td><strong>changeType</strong></td><td>"fix", "new", "modified", "removed" (proposed pane only)</td></tr>
@@ -1965,21 +1973,38 @@
                 <tr><td><strong>timeEstimate</strong></td><td>Duration (e.g., "5 min", "2 hours")</td></tr>
                 <tr><td><strong>systems</strong></td><td>Related systems (e.g., "CRM, Database")</td></tr>
                 <tr><td><strong>priority</strong></td><td>"low", "medium", "high", "critical"</td></tr>
+                <tr><td><strong>preconditions</strong></td><td>What must be true before this step (detail mode)</td></tr>
+                <tr><td><strong>validation</strong></td><td>Validation rules for this step (detail mode)</td></tr>
+                <tr><td><strong>errorPath</strong></td><td>What happens on error (detail mode)</td></tr>
+                <tr><td><strong>systemLink</strong></td><td>URL link to related system (detail mode)</td></tr>
+                <tr><td><strong>comments</strong></td><td>Array of {text, author, date} comment objects</td></tr>
+                <tr><td><strong>attachments</strong></td><td>Array of {id, name, data} image attachments</td></tr>
             </table>
             
             <h3>Connection Properties</h3>
             <table class="help-table">
                 <tr><td><strong>id</strong></td><td>Unique identifier</td></tr>
-                <tr><td><strong>from</strong></td><td>Source block ID</td></tr>
-                <tr><td><strong>to</strong></td><td>Target block ID</td></tr>
-                <tr><td><strong>portIndex</strong></td><td>Which output port (0 = first)</td></tr>
+                <tr><td><strong>from</strong></td><td>Source block ID - <em>required</em></td></tr>
+                <tr><td><strong>to</strong></td><td>Target block ID - <em>required</em></td></tr>
+                <tr><td><strong>portIndex</strong></td><td>Which output port (0 = first, default: 0)</td></tr>
                 <tr><td><strong>label</strong></td><td>Connection label (e.g., "Yes", "No")</td></tr>
                 <tr><td><strong>waypoints</strong></td><td>Array of {x, y} bend points (optional)</td></tr>
+            </table>
+            
+            <h3>Flow Properties</h3>
+            <table class="help-table">
+                <tr><td><strong>name</strong></td><td>Flow name - <em>required</em></td></tr>
+                <tr><td><strong>description</strong></td><td>Flow description</td></tr>
+                <tr><td><strong>environment</strong></td><td>"exhibitor", "organizer", "ea", "valverde", "other"</td></tr>
+                <tr><td><strong>issueFixLinks</strong></td><td>Array linking issues to fixes: [{issueId, fixId}]</td></tr>
             </table>
             
             <h3>Multiple Flows</h3>
             <p>You can import an array of flows: <code>[{flow1}, {flow2}, ...]</code></p>
             <p>FlowBuilder will let you pick which flow(s) to import.</p>
+            
+            <h3>Minimal Import</h3>
+            <p>Only <code>id</code> and <code>name</code> are required for blocks. All other properties have sensible defaults and will be auto-populated on import.</p>
         </div>
         
         <div class="help-panel" id="helpAi">
@@ -1994,52 +2019,91 @@ INSTRUCTIONS:
 1. Create a JSON object with this structure:
 {
   "name": "Process Name",
+  "description": "Optional description of the flow",
+  "environment": "other",
   "current": { "blocks": [], "connections": [] },
-  "proposed": { "blocks": [], "connections": [] }
+  "proposed": { "blocks": [], "connections": [] },
+  "issueFixLinks": []
 }
 
-2. For each step in the process, create a block:
+2. For each step in the CURRENT process (as-is), create a block in current.blocks:
 {
-  "id": "block_N",           // Unique ID, increment N
+  "id": "block_N",           // Unique ID like "block_1", "block_2", etc.
   "name": "Step Name",       // Short title (max 30 chars)
   "description": "Details",  // What happens in this step
-  "x": 100,                  // X position (use 100 for single column)
-  "y": N * 160,              // Y position (160px spacing between steps)
-  "outputs": 1,              // Number of outgoing connections
+  "x": 96,                   // X position (use 96 for main column, 360 for branches)
+  "y": N * 168,              // Y position (168px spacing between steps, start at 96)
+  "outputs": 1,              // Number of outgoing connections (2+ for decisions)
   "stepType": "action",      // One of: action, decision, api, email, form, data, delay, webhook
-  "issueType": null,         // "error" or "warning" if there's a problem (current pane only)
-  "issueText": "",           // Describe the problem
+  "actor": null,             // Who performs: "user", "system", "admin", or null
+  "issueType": null,         // "error" or "warning" if there's a problem
+  "issueText": "",           // Description of the problem
   "owner": "",               // Person/team responsible
   "timeEstimate": "",        // Duration like "5 min" or "2 hours"
-  "systems": ""              // Related systems like "CRM, Database"
+  "systems": "",             // Related systems like "CRM, Database"
+  "priority": ""             // "low", "medium", "high", "critical"
 }
 
-3. For each flow between steps, create a connection:
+3. For PROPOSED improvements, create blocks in proposed.blocks with these additional fields:
+{
+  ...all fields above...,
+  "changeType": "fix",       // One of: "fix", "new", "modified", "removed"
+  "fixText": "",             // Description of what's being fixed/improved
+  "status": "todo"           // One of: "todo", "in-progress", "done", "blocked"
+}
+
+4. For each connection between steps, create a connection object:
 {
   "id": "conn_N",
   "from": "block_X",         // Source block ID
   "to": "block_Y",           // Target block ID  
-  "portIndex": 0,            // Use 0 for first output, 1 for second, etc.
+  "portIndex": 0,            // Output port: 0 for first, 1 for second, etc.
   "label": ""                // Optional label like "Yes", "No", "On Error"
 }
 
-4. Decision steps (stepType: "decision") typically have 2+ outputs for different paths.
-   Set "outputs": 2 (or more) and use portIndex 0, 1, 2... for each branch.
+5. To link issues in current to fixes in proposed, add to issueFixLinks:
+{
+  "issueId": "block_2",      // Block ID in current with the issue
+  "fixId": "block_2"         // Block ID in proposed that fixes it
+}
 
-5. Place blocks that branch out side by side:
-   - Main flow: x=100
-   - First branch: x=100, Second branch: x=350
-   - Use y position to maintain vertical flow
+6. For helper/note blocks (non-connecting informational text):
+{
+  "id": "block_N",
+  "name": "Note",
+  "description": "Helpful context about this section...",
+  "x": 400, "y": 96,
+  "isHelper": true,
+  "outputs": 0
+}
 
-6. Mark problems in the current process with:
-   - issueType: "error" for serious problems
-   - issueType: "warning" for concerns
-   - issueText: explanation of what's wrong
+LAYOUT RULES:
+- Main flow column: x=96
+- Branch/alternate path: x=360, x=624 for additional branches
+- Vertical spacing: 168px between steps (y = 96, 264, 432, 600, ...)
+- Decision blocks should have outputs: 2 (or more) for each branch
+- Use portIndex 0 for "Yes/Success" path, portIndex 1 for "No/Failure" path
 
-7. For proposed improvements, use changeType and fixText instead of issueType.
+STEP TYPES:
+- action: Manual task or activity
+- decision: Yes/No or branching logic (set outputs: 2+)
+- api: API call or integration
+- email: Sending email
+- form: User input/form submission
+- data: Database operation
+- delay: Waiting period
+- webhook: External notification
+
+ACTORS:
+- user: End user/customer performs this step
+- system: Automated/system action
+- admin: Administrator/staff action
+- null: Actor not specified
 
 OUTPUT FORMAT:
-Return ONLY valid JSON, no explanations. Ensure all block IDs referenced in connections exist.
+Return ONLY valid JSON. No markdown, no explanations, no code blocks.
+Ensure all block IDs referenced in connections exist.
+Use double quotes for all strings.
 
 PROCESS TO CONVERT:
 [Paste your process documentation here]</pre>
@@ -2048,42 +2112,53 @@ PROCESS TO CONVERT:
             <h3>💡 Tips for AI Conversion</h3>
             <ul>
                 <li>Provide clear, structured documentation (numbered steps work best)</li>
-                <li>Mention any known problems - AI will mark them as issues</li>
-                <li>Specify decision points clearly - AI will create proper branches</li>
-                <li>Include system names - AI will populate the systems field</li>
+                <li>Mention any known problems - AI will mark them as issues in the current state</li>
+                <li>Describe desired improvements - AI will create proposed blocks with fixes</li>
+                <li>Specify decision points clearly - AI will create proper branches with labeled connections</li>
+                <li>Include system names and responsible parties - AI will populate metadata fields</li>
+                <li>Add notes for context - AI can create helper blocks for documentation</li>
                 <li>Review the output before importing - AI may need corrections</li>
             </ul>
             
             <h3>Example Input</h3>
             <pre class="help-code">Order Processing Flow:
-1. Customer places order on website (Form)
-2. System validates payment (API) - ISSUE: 15% failure rate
-3. If valid, create order in database
-4. If invalid, show error to customer
+1. Customer places order on website (Form, User)
+2. System validates payment via Stripe API - ISSUE: 15% failure rate due to timeout
+3. If valid → create order in database
+4. If invalid → show error to customer
 5. Send confirmation email (Email)
-6. Notify warehouse (Webhook)</pre>
+6. Notify warehouse via webhook
+
+PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pre>
             
             <h3>Example Output</h3>
             <pre class="help-code">{
   "name": "Order Processing Flow",
+  "environment": "other",
   "current": {
     "blocks": [
-      {"id":"block_1","name":"Place Order","description":"Customer places order on website","x":100,"y":100,"outputs":1,"stepType":"form"},
-      {"id":"block_2","name":"Validate Payment","description":"System validates payment","x":100,"y":260,"outputs":2,"stepType":"api","issueType":"error","issueText":"15% failure rate"},
-      {"id":"block_3","name":"Create Order","description":"Create order in database","x":100,"y":420,"outputs":1,"stepType":"data"},
-      {"id":"block_4","name":"Show Error","description":"Show error to customer","x":350,"y":420,"outputs":1,"stepType":"action"},
-      {"id":"block_5","name":"Send Confirmation","description":"Send confirmation email","x":100,"y":580,"outputs":1,"stepType":"email"},
-      {"id":"block_6","name":"Notify Warehouse","description":"Notify warehouse","x":100,"y":740,"outputs":1,"stepType":"webhook"}
+      {"id":"block_1","name":"Place Order","description":"Customer places order on website","x":96,"y":96,"outputs":1,"stepType":"form","actor":"user"},
+      {"id":"block_2","name":"Validate Payment","description":"System validates payment via Stripe API","x":96,"y":264,"outputs":2,"stepType":"api","actor":"system","issueType":"error","issueText":"15% failure rate due to timeout","systems":"Stripe"},
+      {"id":"block_3","name":"Create Order","description":"Create order in database","x":96,"y":432,"outputs":1,"stepType":"data","actor":"system"},
+      {"id":"block_4","name":"Show Error","description":"Show error to customer","x":360,"y":432,"outputs":1,"stepType":"action","actor":"system"},
+      {"id":"block_5","name":"Send Confirmation","description":"Send confirmation email","x":96,"y":600,"outputs":1,"stepType":"email","actor":"system"},
+      {"id":"block_6","name":"Notify Warehouse","description":"Notify warehouse via webhook","x":96,"y":768,"outputs":1,"stepType":"webhook","actor":"system"}
     ],
     "connections": [
-      {"id":"conn_1","from":"block_1","to":"block_2","portIndex":0,"label":""},
+      {"id":"conn_1","from":"block_1","to":"block_2","portIndex":0},
       {"id":"conn_2","from":"block_2","to":"block_3","portIndex":0,"label":"Valid"},
       {"id":"conn_3","from":"block_2","to":"block_4","portIndex":1,"label":"Invalid"},
-      {"id":"conn_4","from":"block_3","to":"block_5","portIndex":0,"label":""},
-      {"id":"conn_5","from":"block_5","to":"block_6","portIndex":0,"label":""}
+      {"id":"conn_4","from":"block_3","to":"block_5","portIndex":0},
+      {"id":"conn_5","from":"block_5","to":"block_6","portIndex":0}
     ]
   },
-  "proposed": {"blocks":[],"connections":[]}
+  "proposed": {
+    "blocks": [
+      {"id":"block_2","name":"Validate Payment","description":"Validate with retry logic and exponential backoff","x":96,"y":264,"outputs":2,"stepType":"api","actor":"system","changeType":"fix","fixText":"Added retry logic with exponential backoff to handle timeouts","status":"todo","systems":"Stripe"}
+    ],
+    "connections": []
+  },
+  "issueFixLinks": [{"issueId":"block_2","fixId":"block_2"}]
 }</pre>
         </div>
     </div></div></div>
@@ -3244,6 +3319,67 @@ PROCESS TO CONVERT:
         loadFlows() { const saved = localStorage.getItem('fb_pro_flows'); this.flows = saved ? JSON.parse(saved) : {}; }
         saveFlows() { localStorage.setItem('fb_pro_flows', JSON.stringify(this.flows)); }
 
+        // Normalize block to ensure all properties exist with proper defaults
+        normalizeBlock(block, paneId = 'current') {
+            const isHelper = block.isHelper === true;
+            return {
+                // Required properties
+                id: block.id || 'block_' + Date.now(),
+                name: block.name || (isHelper ? 'Note' : 'Untitled'),
+                description: block.description || '',
+                x: this.snapToGrid(block.x ?? 96),
+                y: this.snapToGrid(block.y ?? 96),
+                
+                // Output ports (helpers have 0)
+                outputs: isHelper ? 0 : (block.outputs ?? 1),
+                
+                // Helper block flag
+                isHelper: isHelper,
+                
+                // Step type and actor
+                stepType: block.stepType || null,
+                actor: block.actor || null,
+                config: block.config || {},
+                
+                // Current pane: issues
+                issueType: block.issueType || null,
+                issueText: block.issueText || '',
+                
+                // Proposed pane: changes
+                changeType: paneId === 'proposed' ? (block.changeType || null) : null,
+                fixText: block.fixText || '',
+                status: paneId === 'proposed' ? (block.status || null) : null,
+                
+                // Metadata
+                owner: block.owner || '',
+                systems: block.systems || '',
+                timeEstimate: block.timeEstimate || '',
+                priority: block.priority || '',
+                
+                // Detail mode fields
+                preconditions: block.preconditions || '',
+                validation: block.validation || '',
+                errorPath: block.errorPath || '',
+                systemLink: block.systemLink || '',
+                
+                // Comments and attachments
+                comments: Array.isArray(block.comments) ? block.comments : [],
+                attachments: Array.isArray(block.attachments) ? block.attachments : []
+            };
+        }
+        
+        // Normalize connection to ensure all properties exist
+        normalizeConnection(conn) {
+            return {
+                id: conn.id || 'conn_' + Date.now(),
+                from: conn.from,
+                to: conn.to,
+                portIndex: conn.portIndex ?? 0,
+                label: conn.label || '',
+                waypoints: Array.isArray(conn.waypoints) ? conn.waypoints : undefined
+            };
+        }
+
         // Undo/Redo functionality
         saveState(action = 'change') {
             if (this.isUndoRedo) return; // Don't save during undo/redo operations
@@ -3453,28 +3589,31 @@ PROCESS TO CONVERT:
             this.blockIdCounter = 0;
             this.selectedBlock = null;
             this.issueFixLinks = flow.issueFixLinks || [];
+            
+            // Load current blocks with normalization
             (flow.current?.blocks || []).forEach(block => {
-                const b = { ...block, comments: block.comments || [] };
-                // Snap to grid on load
-                b.x = this.snapToGrid(b.x);
-                b.y = this.snapToGrid(b.y);
+                const b = this.normalizeBlock(block, 'current');
                 this.current.blocks.set(b.id, b);
                 this.renderBlock(b, 'current');
                 const num = parseInt(b.id.split('_')[1]) || 0;
                 if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
             });
-            this.current.connections = [...(flow.current?.connections || [])];
+            
+            // Load current connections with normalization
+            this.current.connections = (flow.current?.connections || []).map(c => this.normalizeConnection(c));
+            
+            // Load proposed blocks with normalization
             (flow.proposed?.blocks || []).forEach(block => {
-                const b = { ...block, comments: block.comments || [] };
-                // Snap to grid on load
-                b.x = this.snapToGrid(b.x);
-                b.y = this.snapToGrid(b.y);
+                const b = this.normalizeBlock(block, 'proposed');
                 this.proposed.blocks.set(b.id, b);
                 this.renderBlock(b, 'proposed');
                 const num = parseInt(b.id.split('_')[1]) || 0;
                 if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
             });
-            this.proposed.connections = [...(flow.proposed?.connections || [])];
+            
+            // Load proposed connections with normalization
+            this.proposed.connections = (flow.proposed?.connections || []).map(c => this.normalizeConnection(c));
+            
             this.updateConnections('current');
             this.updateConnections('proposed');
             this.updateFlowSelector();
@@ -4125,16 +4264,16 @@ PROCESS TO CONVERT:
                 // Merge: add new blocks, update changed blocks, keep removed blocks
                 const { added, changed } = this.importDiffData;
                 
-                // Add new blocks
+                // Add new blocks with normalization
                 added.forEach(b => {
                     const isCurrentPane = (data.current?.blocks || []).some(cb => cb.id === b.id);
                     const pane = isCurrentPane ? this.current : this.proposed;
                     const paneId = isCurrentPane ? 'current' : 'proposed';
-                    // Snap to grid
-                    const block = { ...b, comments: b.comments || [], x: this.snapToGrid(b.x), y: this.snapToGrid(b.y) };
-                    pane.blocks.set(b.id, block);
+                    // Normalize block to ensure all properties exist
+                    const block = this.normalizeBlock(b, paneId);
+                    pane.blocks.set(block.id, block);
                     this.renderBlock(block, paneId);
-                    const num = parseInt(b.id.split('_')[1]) || 0;
+                    const num = parseInt(block.id.split('_')[1]) || 0;
                     if (num >= this.blockIdCounter) this.blockIdCounter = num + 1;
                 });
                 
@@ -4152,19 +4291,20 @@ PROCESS TO CONVERT:
                                 mergedComments.push(newComment);
                             }
                         });
-                        const merged = { ...b, x: existing.x, y: existing.y, comments: mergedComments };
+                        // Normalize merged block
+                        const merged = this.normalizeBlock({ ...b, x: existing.x, y: existing.y, comments: mergedComments }, paneId);
                         pane.blocks.set(b.id, merged);
                         this.updateBlockElement(merged, paneId);
                     }
                 });
                 
-                // Merge connections
+                // Merge connections with normalization
                 ['current', 'proposed'].forEach(paneKey => {
                     const importConns = data[paneKey]?.connections || [];
                     const pane = paneKey === 'current' ? this.current : this.proposed;
                     importConns.forEach(ic => {
                         if (!pane.connections.some(c => c.from === ic.from && c.to === ic.to && c.portIndex === ic.portIndex)) {
-                            pane.connections.push(ic);
+                            pane.connections.push(this.normalizeConnection(ic));
                         }
                     });
                     this.updateConnections(paneKey);
@@ -4194,20 +4334,19 @@ PROCESS TO CONVERT:
                 data.updatedAt = new Date().toISOString();
                 data.environment = data.environment || 'other';
                 
-                // Snap all blocks to grid before saving
+                // Normalize all blocks and connections before saving
+                // This ensures all properties exist with proper defaults
                 if (data.current?.blocks) {
-                    data.current.blocks = data.current.blocks.map(b => ({
-                        ...b,
-                        x: this.snapToGrid(b.x || 96),
-                        y: this.snapToGrid(b.y || 96)
-                    }));
+                    data.current.blocks = data.current.blocks.map(b => this.normalizeBlock(b, 'current'));
+                }
+                if (data.current?.connections) {
+                    data.current.connections = data.current.connections.map(c => this.normalizeConnection(c));
                 }
                 if (data.proposed?.blocks) {
-                    data.proposed.blocks = data.proposed.blocks.map(b => ({
-                        ...b,
-                        x: this.snapToGrid(b.x || 96),
-                        y: this.snapToGrid(b.y || 96)
-                    }));
+                    data.proposed.blocks = data.proposed.blocks.map(b => this.normalizeBlock(b, 'proposed'));
+                }
+                if (data.proposed?.connections) {
+                    data.proposed.connections = data.proposed.connections.map(c => this.normalizeConnection(c));
                 }
                 
                 this.driveFlows[id] = data;
