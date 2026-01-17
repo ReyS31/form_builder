@@ -7075,7 +7075,6 @@ ANALYSIS REQUIREMENTS:
             
             // Use html2canvas to capture the flow canvas
             if (!window.html2canvas) {
-                // Dynamically load html2canvas if not present
                 await new Promise((resolve, reject) => {
                     const script = document.createElement('script');
                     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
@@ -7086,73 +7085,124 @@ ANALYSIS REQUIREMENTS:
             }
             
             const capturePane = async (paneId, label) => {
-                const canvas = document.getElementById(paneId === 'current' ? 'currentCanvas' : 'proposedCanvas');
-                const blocksContainer = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
-                const connectionsSvg = document.getElementById(paneId === 'current' ? 'currentConnectionsSvg' : 'proposedConnectionsSvg');
                 const pane = this.getPane(paneId);
                 
-                if (!canvas || pane.blocks.size === 0) {
+                if (pane.blocks.size === 0) {
                     return null;
                 }
                 
-                // Calculate bounds of all blocks and connections
-                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
-                pane.blocks.forEach(block => {
-                    minX = Math.min(minX, block.x);
-                    minY = Math.min(minY, block.y);
-                    maxX = Math.max(maxX, block.x + 280); // Block width + margin
-                    maxY = Math.max(maxY, block.y + 180); // Block height + margin
+                // Build block info map with actual heights from DOM
+                const blockInfo = new Map();
+                pane.blocks.forEach((block, id) => {
+                    const el = document.getElementById(this.getDomId(id, paneId));
+                    blockInfo.set(id, {
+                        ...block,
+                        width: el ? el.offsetWidth : 260,
+                        height: el ? el.offsetHeight : 160
+                    });
                 });
                 
-                // Also consider connection waypoints
-                pane.connections.forEach(conn => {
-                    if (conn.waypoints) {
-                        conn.waypoints.forEach(wp => {
-                            minX = Math.min(minX, wp.x - 20);
-                            maxX = Math.max(maxX, wp.x + 20);
-                            minY = Math.min(minY, wp.y - 20);
-                            maxY = Math.max(maxY, wp.y + 20);
-                        });
-                    }
+                // Calculate bounds
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                blockInfo.forEach(block => {
+                    minX = Math.min(minX, block.x);
+                    minY = Math.min(minY, block.y);
+                    maxX = Math.max(maxX, block.x + block.width);
+                    maxY = Math.max(maxY, block.y + block.height + 20);
                 });
                 
                 // Add padding
                 const padding = 60;
-                minX = Math.max(0, minX - padding);
-                minY = Math.max(0, minY - padding);
+                const headerHeight = 50;
+                minX -= padding;
+                minY -= padding;
                 maxX += padding;
                 maxY += padding;
                 
                 const width = maxX - minX;
-                const height = maxY - minY;
+                const height = maxY - minY + headerHeight;
+                
+                // Offset function
+                const offsetX = (x) => x - minX;
+                const offsetY = (y) => y - minY + headerHeight;
                 
                 // Create wrapper
                 const wrapper = document.createElement('div');
-                wrapper.style.cssText = `position:fixed;left:-9999px;width:${width}px;height:${height}px;background:#1a1a2e;overflow:hidden;`;
+                wrapper.style.cssText = `position:fixed;left:-9999px;width:${width}px;height:${height}px;background:#1a1a2e;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;`;
                 
-                // Clone and position SVG connections
-                const svgClone = connectionsSvg.cloneNode(true);
-                svgClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;transform:translate(${-minX}px,${-minY}px);pointer-events:none;`;
-                svgClone.setAttribute('width', width);
-                svgClone.setAttribute('height', height);
-                wrapper.appendChild(svgClone);
+                // Create SVG for connections FIRST (behind blocks)
+                const svgNS = 'http://www.w3.org/2000/svg';
+                const svg = document.createElementNS(svgNS, 'svg');
+                svg.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;pointer-events:none;`;
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
                 
-                // Clone and position blocks
+                // Draw connections with offset coordinates
+                pane.connections.forEach(conn => {
+                    const fromBlock = blockInfo.get(conn.from);
+                    const toBlock = blockInfo.get(conn.to);
+                    if (!fromBlock || !toBlock) return;
+                    
+                    // Calculate port positions (centered, output at bottom, input at top)
+                    const x1 = offsetX(fromBlock.x + fromBlock.width / 2);
+                    const y1 = offsetY(fromBlock.y + fromBlock.height);
+                    const x2 = offsetX(toBlock.x + toBlock.width / 2);
+                    const y2 = offsetY(toBlock.y);
+                    
+                    // Build bezier path
+                    const dy = y2 - y1;
+                    const controlDist = Math.max(30, Math.abs(dy) * 0.4);
+                    const pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
+                    
+                    const path = document.createElementNS(svgNS, 'path');
+                    path.setAttribute('d', pathD);
+                    path.setAttribute('fill', 'none');
+                    path.setAttribute('stroke', '#475569');
+                    path.setAttribute('stroke-width', '2');
+                    svg.appendChild(path);
+                    
+                    // Add label if exists
+                    if (conn.label) {
+                        const labelX = (x1 + x2) / 2;
+                        const labelY = (y1 + y2) / 2 - 8;
+                        const text = document.createElementNS(svgNS, 'text');
+                        text.setAttribute('x', labelX);
+                        text.setAttribute('y', labelY);
+                        text.setAttribute('fill', '#94a3b8');
+                        text.setAttribute('font-size', '11');
+                        text.setAttribute('text-anchor', 'middle');
+                        text.textContent = conn.label;
+                        svg.appendChild(text);
+                    }
+                });
+                wrapper.appendChild(svg);
+                
+                // Clone blocks container and shift positions
+                const blocksContainer = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
                 const blocksClone = blocksContainer.cloneNode(true);
-                blocksClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;transform:translate(${-minX}px,${-minY}px);`;
+                blocksClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;`;
+                blocksClone.id = ''; // Remove ID to avoid conflicts
+                
+                // Shift each block position
+                blocksClone.querySelectorAll('.block').forEach(blockEl => {
+                    const left = parseFloat(blockEl.style.left) || 0;
+                    const top = parseFloat(blockEl.style.top) || 0;
+                    blockEl.style.left = offsetX(left) + 'px';
+                    blockEl.style.top = offsetY(top) + 'px';
+                });
                 wrapper.appendChild(blocksClone);
                 
-                // Add title header
+                // Add header
                 const header = document.createElement('div');
-                header.style.cssText = `position:absolute;top:0;left:0;right:0;height:40px;background:linear-gradient(180deg,rgba(26,26,46,0.95) 0%,rgba(26,26,46,0) 100%);padding:10px 15px;z-index:1000;`;
+                header.style.cssText = `position:absolute;top:0;left:0;right:0;height:${headerHeight}px;background:#1a1a2e;padding:15px 20px;z-index:1000;border-bottom:1px solid #334155;box-sizing:border-box;`;
                 
                 const title = document.createElement('div');
-                title.style.cssText = 'color:#fff;font-size:14px;font-weight:600;font-family:system-ui;';
+                title.style.cssText = 'color:#fff;font-size:16px;font-weight:600;';
                 title.textContent = `${flow.name} - ${label}`;
                 header.appendChild(title);
                 
                 const dateEl = document.createElement('div');
-                dateEl.style.cssText = 'position:absolute;top:10px;right:15px;color:#64748b;font-size:10px;font-family:system-ui;';
+                dateEl.style.cssText = 'position:absolute;top:15px;right:20px;color:#64748b;font-size:11px;';
                 dateEl.textContent = new Date().toLocaleString();
                 header.appendChild(dateEl);
                 
@@ -7166,16 +7216,7 @@ ANALYSIS REQUIREMENTS:
                         useCORS: true,
                         logging: false,
                         width: width,
-                        height: height,
-                        onclone: (clonedDoc) => {
-                            // Ensure SVG paths are visible
-                            const paths = clonedDoc.querySelectorAll('path.connection');
-                            paths.forEach(path => {
-                                path.style.stroke = '#475569';
-                                path.style.strokeWidth = '2';
-                                path.style.fill = 'none';
-                            });
-                        }
+                        height: height
                     });
                     
                     document.body.removeChild(wrapper);
