@@ -7182,160 +7182,33 @@ ANALYSIS REQUIREMENTS:
                 const wrapper = document.createElement('div');
                 wrapper.style.cssText = `position:fixed;left:-9999px;width:${width}px;height:${height}px;background:#1a1a2e;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;`;
                 
-                // Create SVG for connections FIRST (behind blocks)
-                const svgNS = 'http://www.w3.org/2000/svg';
-                const svg = document.createElementNS(svgNS, 'svg');
-                svg.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;pointer-events:none;`;
-                svg.setAttribute('width', width);
-                svg.setAttribute('height', height);
+                // Clone the actual connections SVG from the canvas
+                // This preserves the exact same paths that are displayed
+                const originalSvg = document.getElementById(`${paneId}ConnectionsSvg`);
+                const svgClone = originalSvg.cloneNode(true);
+                svgClone.id = ''; // Remove ID
+                svgClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;pointer-events:none;overflow:visible;`;
+                svgClone.setAttribute('width', width);
+                svgClone.setAttribute('height', height);
                 
-                // Build connection info maps (same logic as updateConnections)
-                const outgoingByPort = new Map();
-                const incomingByBlock = new Map();
+                // The original SVG paths use canvas coordinates (block.x, block.y)
+                // We need to shift them by applying a transform to account for:
+                // - Removing minX/minY offset (to start at 0)
+                // - Adding headerHeight for the title bar
+                const translateX = -minX;
+                const translateY = -minY + headerHeight;
                 
-                pane.connections.forEach(conn => {
-                    const fromBlock = blockInfo.get(conn.from);
-                    const toBlock = blockInfo.get(conn.to);
-                    if (!fromBlock || !toBlock) return;
-                    
-                    // Track outgoing connections by port
-                    const portKey = `${conn.from}:${conn.portIndex || 0}`;
-                    if (!outgoingByPort.has(portKey)) outgoingByPort.set(portKey, []);
-                    outgoingByPort.get(portKey).push({
-                        conn,
-                        toX: toBlock.x,
-                        toY: toBlock.y
-                    });
-                    
-                    // Track incoming connections by block
-                    if (!incomingByBlock.has(conn.to)) incomingByBlock.set(conn.to, []);
-                    incomingByBlock.get(conn.to).push({
-                        conn,
-                        fromX: fromBlock.x,
-                        fromY: fromBlock.y
-                    });
-                });
+                // Apply transform to the SVG's content
+                const gWrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                gWrapper.setAttribute('transform', `translate(${translateX}, ${translateY})`);
                 
-                // Sort and assign indices
-                outgoingByPort.forEach((conns, portKey) => {
-                    conns.sort((a, b) => a.toX - b.toX);
-                    conns.forEach((c, idx) => {
-                        c.outputIndex = idx;
-                        c.outputTotal = conns.length;
-                    });
-                });
+                // Move all children into the transform group
+                while (svgClone.firstChild) {
+                    gWrapper.appendChild(svgClone.firstChild);
+                }
+                svgClone.appendChild(gWrapper);
                 
-                incomingByBlock.forEach((conns, blockId) => {
-                    conns.sort((a, b) => a.fromX - b.fromX);
-                    conns.forEach((c, idx) => {
-                        c.inputIndex = idx;
-                        c.inputTotal = conns.length;
-                    });
-                });
-                
-                // Draw connections with proper spreading
-                pane.connections.forEach(conn => {
-                    const fromBlock = blockInfo.get(conn.from);
-                    const toBlock = blockInfo.get(conn.to);
-                    if (!fromBlock || !toBlock) return;
-                    
-                    // Get spreading info
-                    const portKey = `${conn.from}:${conn.portIndex || 0}`;
-                    const outgoingInfo = outgoingByPort.get(portKey)?.find(c => c.conn === conn);
-                    const outputIndex = outgoingInfo?.outputIndex || 0;
-                    const outputTotal = outgoingInfo?.outputTotal || 1;
-                    
-                    const incomingInfo = incomingByBlock.get(conn.to)?.find(c => c.conn === conn);
-                    const inputIndex = incomingInfo?.inputIndex || 0;
-                    const inputTotal = incomingInfo?.inputTotal || 1;
-                    
-                    // Calculate spread for multiple outputs
-                    const spreadWidth = Math.min(60, outputTotal * 20);
-                    const outputOffset = outputTotal > 1 
-                        ? (outputIndex - (outputTotal - 1) / 2) * (spreadWidth / (outputTotal - 1 || 1))
-                        : 0;
-                    
-                    // Calculate OUTPUT position (bottom center of block with spread)
-                    const x1 = offsetX(fromBlock.x + fromBlock.width / 2 + outputOffset);
-                    const y1 = offsetY(fromBlock.y + fromBlock.height + 7);
-                    
-                    // Calculate INPUT position (top center with spread for multiple inputs)
-                    const inputSpacing = Math.min(40, toBlock.width / (inputTotal + 1));
-                    const inputStartX = toBlock.x + (toBlock.width - (inputTotal - 1) * inputSpacing) / 2;
-                    const x2 = offsetX(inputStartX + inputIndex * inputSpacing);
-                    const y2 = offsetY(toBlock.y - 7);
-                    
-                    // Build bezier path (same logic as updateConnections)
-                    const dy = y2 - y1;
-                    const dx = x2 - x1;
-                    let pathD;
-                    
-                    if (dy > 30) {
-                        // Going DOWN - smooth bezier
-                        const controlDist = Math.max(30, Math.min(Math.abs(dy) * 0.35, 60));
-                        pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
-                    } else if (dy < -30) {
-                        // Going UP - route around
-                        const sideOffset = dx > 0 ? 50 : -50;
-                        pathD = `M${x1},${y1} L${x1},${y1 + 25} L${x1 + sideOffset},${y1 + 25} L${x1 + sideOffset},${y2 - 25} L${x2},${y2 - 25} L${x2},${y2}`;
-                    } else {
-                        // SAME LEVEL - horizontal S-curve
-                        if (Math.abs(dx) < 30) {
-                            const sign = dx >= 0 ? 1 : -1;
-                            const midY = Math.max(y1, y2) + 40;
-                            pathD = `M${x1},${y1} C${x1 + sign * 60},${midY} ${x2 + sign * 60},${midY} ${x2},${y2}`;
-                        } else {
-                            const midY = Math.max(y1, y2) + 40;
-                            pathD = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
-                        }
-                    }
-                    
-                    const path = document.createElementNS(svgNS, 'path');
-                    path.setAttribute('d', pathD);
-                    path.setAttribute('fill', 'none');
-                    path.setAttribute('stroke', '#475569');
-                    path.setAttribute('stroke-width', '2');
-                    svg.appendChild(path);
-                    
-                    // Add arrowhead at the end
-                    const arrowSize = 6;
-                    const arrowPath = document.createElementNS(svgNS, 'path');
-                    arrowPath.setAttribute('d', `M${x2 - arrowSize},${y2 - arrowSize} L${x2},${y2} L${x2 + arrowSize},${y2 - arrowSize}`);
-                    arrowPath.setAttribute('fill', 'none');
-                    arrowPath.setAttribute('stroke', '#475569');
-                    arrowPath.setAttribute('stroke-width', '2');
-                    arrowPath.setAttribute('stroke-linecap', 'round');
-                    arrowPath.setAttribute('stroke-linejoin', 'round');
-                    svg.appendChild(arrowPath);
-                    
-                    // Add label if exists
-                    if (conn.label) {
-                        // Calculate label position along the path
-                        const labelX = (x1 + x2) / 2;
-                        const labelY = dy > 30 ? (y1 + y2) / 2 : Math.max(y1, y2) + 20;
-                        
-                        // Label background
-                        const labelBg = document.createElementNS(svgNS, 'rect');
-                        const labelWidth = conn.label.length * 7 + 8;
-                        labelBg.setAttribute('x', labelX - labelWidth / 2);
-                        labelBg.setAttribute('y', labelY - 10);
-                        labelBg.setAttribute('width', labelWidth);
-                        labelBg.setAttribute('height', 16);
-                        labelBg.setAttribute('fill', '#1a1a2e');
-                        labelBg.setAttribute('rx', '3');
-                        svg.appendChild(labelBg);
-                        
-                        const text = document.createElementNS(svgNS, 'text');
-                        text.setAttribute('x', labelX);
-                        text.setAttribute('y', labelY + 3);
-                        text.setAttribute('fill', '#94a3b8');
-                        text.setAttribute('font-size', '11');
-                        text.setAttribute('text-anchor', 'middle');
-                        text.textContent = conn.label;
-                        svg.appendChild(text);
-                    }
-                });
-                wrapper.appendChild(svg);
+                wrapper.appendChild(svgClone);
                 
                 // Clone blocks container and shift positions
                 const blocksContainer = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
