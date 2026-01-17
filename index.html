@@ -1566,7 +1566,13 @@
             </div>
             <div class="login-loading" id="loginLoading">
                 <div class="spinner"></div>
-                <span style="color: var(--text-muted);">Signing in...</span>
+                <span class="login-loading-text" style="color: var(--text-muted); font-size: 14px;">Signing in...</span>
+                <div class="login-loading-progress" style="display: none; width: 200px; margin-top: 12px;">
+                    <div style="height: 4px; background: var(--border-subtle); border-radius: 2px; overflow: hidden;">
+                        <div class="login-progress-bar" style="height: 100%; background: var(--accent); width: 0%; transition: width 0.3s ease;"></div>
+                    </div>
+                    <div class="login-loading-detail" style="margin-top: 8px; font-size: 11px; color: var(--text-muted); text-align: center;"></div>
+                </div>
             </div>
             <div class="login-footer">Only authorized team members can access this tool.</div>
         </div>
@@ -1792,6 +1798,12 @@
             <div class="export-option" data-export="report"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div><div class="export-option-info"><div class="export-option-name">Change Report (HTML)</div><div class="export-option-desc">Detailed report of all issues and fixes</div></div></div>
             <div class="export-option" data-export="summary"><div class="export-option-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg></div><div class="export-option-info"><div class="export-option-name">Executive Summary</div><div class="export-option-desc">High-level overview for stakeholders</div></div></div>
         </div>
+        <div class="section-divider"><div class="section-title">Visual Export (PNG)</div></div>
+        <div class="export-options">
+            <div class="export-option" data-export="png-current"><div class="export-option-icon" style="background:var(--orange-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--orange)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="export-option-info"><div class="export-option-name">Current Flow (PNG)</div><div class="export-option-desc">Visual snapshot of the AS-IS flow canvas</div></div></div>
+            <div class="export-option" data-export="png-proposed"><div class="export-option-icon" style="background:var(--green-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="export-option-info"><div class="export-option-name">Proposed Flow (PNG)</div><div class="export-option-desc">Visual snapshot of the TO-BE flow canvas</div></div></div>
+            <div class="export-option" data-export="png-both"><div class="export-option-icon" style="background:var(--accent-bg);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div><div class="export-option-info"><div class="export-option-name">Both Flows (PNG)</div><div class="export-option-desc">Side-by-side visual of both canvases</div></div></div>
+        </div>
     </div></div></div>
     <div class="modal-overlay" id="validationModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Validation Results</span><button class="modal-close" id="closeValidationModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="validationModalBody"></div></div></div>
     <div class="modal-overlay" id="importModal"><div class="modal lg"><div class="modal-header"><span class="modal-title">Import Analysis</span><button class="modal-close" id="closeImportModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" id="importModalBody"></div><div class="modal-footer" id="importModalFooter"></div></div></div>
@@ -1799,7 +1811,8 @@
         <div class="help-tabs">
             <button class="help-tab active" data-help="guide">User Guide</button>
             <button class="help-tab" data-help="import">Import Format</button>
-            <button class="help-tab" data-help="ai">AI Prompt</button>
+            <button class="help-tab" data-help="ai">AI Prompt (Flow)</button>
+            <button class="help-tab" data-help="aiBrief">AI Prompt (Brief)</button>
         </div>
         <div class="help-panel active" id="helpGuide">
             <h3>🎯 What is FlowBuilder Pro?</h3>
@@ -1885,6 +1898,9 @@
                 <tr><td><strong>Current PDF</strong></td><td>Export AS-IS flow with all step details</td></tr>
                 <tr><td><strong>Proposed PDF</strong></td><td>Export TO-BE flow with all step details</td></tr>
                 <tr><td><strong>Comparison PDF</strong></td><td>Side-by-side view with change summary</td></tr>
+                <tr><td><strong>Current PNG</strong></td><td>Visual snapshot of the AS-IS flow canvas</td></tr>
+                <tr><td><strong>Proposed PNG</strong></td><td>Visual snapshot of the TO-BE flow canvas</td></tr>
+                <tr><td><strong>Both PNG</strong></td><td>Side-by-side visual of both canvases</td></tr>
                 <tr><td><strong>JSON</strong></td><td>Full data backup for re-import</td></tr>
                 <tr><td><strong>HTML Report</strong></td><td>Detailed issues and fixes report</td></tr>
             </table>
@@ -2015,19 +2031,21 @@
         </div>
         
         <div class="help-panel" id="helpAi">
-            <h3>🤖 AI Prompt for Converting Process Documentation</h3>
-            <p>Copy this prompt and give it to an AI along with your process documentation:</p>
+            <h3>🤖 AI Prompt for Converting Process Documentation to Flow</h3>
+            <p>Copy this prompt and give it to an AI along with your process documentation. The output will work with auto-layout.</p>
             
             <div class="help-prompt">
-                <button class="btn btn-primary" id="copyAiPromptBtn" style="margin-bottom:12px;">📋 Copy Prompt</button>
+                <button class="btn btn-primary" id="copyAiPromptBtn" style="margin-bottom:12px;">📋 Copy Flow Prompt</button>
                 <pre class="help-code" id="aiPromptText">Convert the following process documentation into FlowBuilder Pro JSON format.
 
 INSTRUCTIONS:
 1. Create a JSON object with this structure:
 {
+  "id": "flow_[timestamp]",
   "name": "Process Name",
-  "description": "Optional description of the flow",
-  "environment": "other",
+  "description": "Description of the flow",
+  "environment": "exhibitor",
+  "flowStatus": "draft",
   "current": { "blocks": [], "connections": [] },
   "proposed": { "blocks": [], "connections": [] },
   "issueFixLinks": []
@@ -2038,134 +2056,275 @@ INSTRUCTIONS:
   "id": "block_N",           // Unique ID like "block_1", "block_2", etc.
   "name": "Step Name",       // Short title (max 30 chars)
   "description": "Details",  // What happens in this step
-  "x": 96,                   // X position (use 96 for main column, 360 for branches)
-  "y": N * 168,              // Y position (168px spacing between steps, start at 96)
+  "x": 96,                   // X position (96 for main column, 432 for branches)
+  "y": 96 + (N-1) * 168,     // Y position (168px spacing, start at 96)
   "outputs": 1,              // Number of outgoing connections (2+ for decisions)
   "stepType": "action",      // One of: action, decision, api, email, form, data, delay, webhook
-  "actor": null,             // Who performs: "user", "system", "admin", or null
-  "issueType": null,         // "error" or "warning" if there's a problem
+  "issueType": null,         // "error" or "warning" if there's a problem (or null)
   "issueText": "",           // Description of the problem
-  "owner": "",               // Person/team responsible
-  "timeEstimate": "",        // Duration like "5 min" or "2 hours"
-  "systems": "",             // Related systems like "CRM, Database"
-  "priority": ""             // "low", "medium", "high", "critical"
+  "owner": "",               // Person/team/system responsible
+  "timeEstimate": "",        // Duration like "5 min", "Instant", "1-24 hours"
+  "systems": ""              // Related systems like "CRM, Database"
 }
 
-3. For PROPOSED improvements, create blocks in proposed.blocks with these additional fields:
+3. For PROPOSED improvements, create blocks in proposed.blocks with additional fields:
 {
+  "id": "block_pN",          // Use "block_p1", "block_p2" etc. for proposed blocks
   ...all fields above...,
-  "changeType": "fix",       // One of: "fix", "new", "modified", "removed"
+  "changeType": "fix",       // One of: "fix", "new", "improved", "removed", or null
   "fixText": "",             // Description of what's being fixed/improved
-  "status": "todo"           // One of: "todo", "in-progress", "done", "blocked"
+  "status": null             // One of: "todo", "in-progress", "done", "blocked", or null
 }
 
 4. For each connection between steps, create a connection object:
 {
-  "id": "conn_N",
+  "id": "conn_N",            // For current: "conn_1", "conn_2". For proposed: "conn_p1", "conn_p2"
   "from": "block_X",         // Source block ID
   "to": "block_Y",           // Target block ID  
-  "portIndex": 0,            // Output port: 0 for first, 1 for second, etc.
-  "label": ""                // Optional label like "Yes", "No", "On Error"
+  "portIndex": 0,            // Output port: 0 for first/Yes/Success, 1 for second/No/Failure
+  "label": ""                // Optional label like "Success", "Blocked", "Gives Up"
 }
 
 5. To link issues in current to fixes in proposed, add to issueFixLinks:
-{
-  "issueId": "block_2",      // Block ID in current with the issue
-  "fixId": "block_2"         // Block ID in proposed that fixes it
-}
-
-6. For helper/note blocks (non-connecting informational text):
-{
-  "id": "block_N",
-  "name": "Note",
-  "description": "Helpful context about this section...",
-  "x": 400, "y": 96,
-  "isHelper": true,
-  "outputs": 0
-}
+[
+  { "issueId": "block_2", "fixId": "block_p2" }
+]
 
 LAYOUT RULES:
 - Main flow column: x=96
-- Branch/alternate path: x=360, x=624 for additional branches
-- Vertical spacing: 168px between steps (y = 96, 264, 432, 600, ...)
+- Branch/alternate path: x=432 (offset by 336px)
+- Vertical spacing: 168px between steps (y = 96, 264, 432, 600, 768, 936, 1104, ...)
 - Decision blocks should have outputs: 2 (or more) for each branch
 - Use portIndex 0 for "Yes/Success" path, portIndex 1 for "No/Failure" path
+- After import, use auto-layout button to clean up positioning
 
 STEP TYPES:
 - action: Manual task or activity
 - decision: Yes/No or branching logic (set outputs: 2+)
 - api: API call or integration
-- email: Sending email
+- email: Sending email or communication
 - form: User input/form submission
-- data: Database operation
+- data: Database/data operation
 - delay: Waiting period
 - webhook: External notification
 
-ACTORS:
-- user: End user/customer performs this step
-- system: Automated/system action
-- admin: Administrator/staff action
-- null: Actor not specified
+ISSUE TYPES (current pane only):
+- "error": A critical problem that needs fixing (shown in red)
+- "warning": A potential concern (shown in orange)
+- null: No issue
+
+CHANGE TYPES (proposed pane only):
+- "fix": Resolves an issue from current state
+- "new": A newly added step
+- "improved": Enhanced from current (shows as fix visually)
+- "removed": Step will be removed
+- null: Unchanged step
 
 OUTPUT FORMAT:
 Return ONLY valid JSON. No markdown, no explanations, no code blocks.
 Ensure all block IDs referenced in connections exist.
 Use double quotes for all strings.
+Use null (not "null") for empty optional fields.
 
 PROCESS TO CONVERT:
 [Paste your process documentation here]</pre>
             </div>
             
+            <h3>📥 Import Instructions</h3>
+            <ol>
+                <li>Copy the AI's JSON output (make sure it's pure JSON, no markdown)</li>
+                <li>Click <strong>Import Flow</strong> button in the dashboard or use File → Import</li>
+                <li>Paste the JSON or select a .json file</li>
+                <li>Review the import preview and click Import</li>
+                <li>Click the <strong>Auto-Layout</strong> button (grid icon in zoom controls) to arrange blocks</li>
+            </ol>
+            
             <h3>💡 Tips for AI Conversion</h3>
             <ul>
                 <li>Provide clear, structured documentation (numbered steps work best)</li>
-                <li>Mention any known problems - AI will mark them as issues in the current state</li>
-                <li>Describe desired improvements - AI will create proposed blocks with fixes</li>
+                <li>Mention any known problems - AI will mark them as issues with issueType and issueText</li>
+                <li>Describe desired improvements - AI will create proposed blocks with changeType and fixText</li>
                 <li>Specify decision points clearly - AI will create proper branches with labeled connections</li>
-                <li>Include system names and responsible parties - AI will populate metadata fields</li>
-                <li>Add notes for context - AI can create helper blocks for documentation</li>
-                <li>Review the output before importing - AI may need corrections</li>
+                <li>Include system names and responsible parties - AI will populate owner and systems fields</li>
+                <li>After import, always run auto-layout to clean up the visual arrangement</li>
             </ul>
             
-            <h3>Example Input</h3>
-            <pre class="help-code">Order Processing Flow:
-1. Customer places order on website (Form, User)
-2. System validates payment via Stripe API - ISSUE: 15% failure rate due to timeout
-3. If valid → create order in database
-4. If invalid → show error to customer
-5. Send confirmation email (Email)
-6. Notify warehouse via webhook
-
-PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pre>
-            
-            <h3>Example Output</h3>
+            <h3>Example: Current vs Proposed Analysis</h3>
             <pre class="help-code">{
-  "name": "Order Processing Flow",
-  "environment": "other",
+  "id": "flow_1737100000001",
+  "name": "Order Processing",
+  "description": "E-commerce order flow with payment issue analysis",
+  "environment": "exhibitor",
+  "flowStatus": "draft",
   "current": {
     "blocks": [
-      {"id":"block_1","name":"Place Order","description":"Customer places order on website","x":96,"y":96,"outputs":1,"stepType":"form","actor":"user"},
-      {"id":"block_2","name":"Validate Payment","description":"System validates payment via Stripe API","x":96,"y":264,"outputs":2,"stepType":"api","actor":"system","issueType":"error","issueText":"15% failure rate due to timeout","systems":"Stripe"},
-      {"id":"block_3","name":"Create Order","description":"Create order in database","x":96,"y":432,"outputs":1,"stepType":"data","actor":"system"},
-      {"id":"block_4","name":"Show Error","description":"Show error to customer","x":360,"y":432,"outputs":1,"stepType":"action","actor":"system"},
-      {"id":"block_5","name":"Send Confirmation","description":"Send confirmation email","x":96,"y":600,"outputs":1,"stepType":"email","actor":"system"},
-      {"id":"block_6","name":"Notify Warehouse","description":"Notify warehouse via webhook","x":96,"y":768,"outputs":1,"stepType":"webhook","actor":"system"}
+      {"id":"block_1","name":"Place Order","description":"Customer submits order","x":96,"y":96,"outputs":1,"stepType":"form","issueType":null,"issueText":"","owner":"User","timeEstimate":"2 min","systems":"Website"},
+      {"id":"block_2","name":"Validate Payment","description":"System validates via Stripe","x":96,"y":264,"outputs":2,"stepType":"api","issueType":"error","issueText":"15% timeout failures causing lost sales","owner":"Payment Service","timeEstimate":"3-5 sec","systems":"Stripe API"},
+      {"id":"block_3","name":"Create Order","description":"Order saved to database","x":96,"y":432,"outputs":1,"stepType":"data","issueType":null,"issueText":"","owner":"System","timeEstimate":"Instant","systems":"Database"},
+      {"id":"block_4","name":"Payment Failed","description":"User sees generic error with no guidance","x":432,"y":432,"outputs":0,"stepType":"action","issueType":"warning","issueText":"Poor UX: No retry option shown","owner":"UI","timeEstimate":"","systems":""}
     ],
     "connections": [
-      {"id":"conn_1","from":"block_1","to":"block_2","portIndex":0},
-      {"id":"conn_2","from":"block_2","to":"block_3","portIndex":0,"label":"Valid"},
-      {"id":"conn_3","from":"block_2","to":"block_4","portIndex":1,"label":"Invalid"},
-      {"id":"conn_4","from":"block_3","to":"block_5","portIndex":0},
-      {"id":"conn_5","from":"block_5","to":"block_6","portIndex":0}
+      {"id":"conn_1","from":"block_1","to":"block_2","portIndex":0,"label":""},
+      {"id":"conn_2","from":"block_2","to":"block_3","portIndex":0,"label":"Success"},
+      {"id":"conn_3","from":"block_2","to":"block_4","portIndex":1,"label":"Failed"}
     ]
   },
   "proposed": {
     "blocks": [
-      {"id":"block_2","name":"Validate Payment","description":"Validate with retry logic and exponential backoff","x":96,"y":264,"outputs":2,"stepType":"api","actor":"system","changeType":"fix","fixText":"Added retry logic with exponential backoff to handle timeouts","status":"todo","systems":"Stripe"}
+      {"id":"block_p1","name":"Place Order","description":"Customer submits order","x":96,"y":96,"outputs":1,"stepType":"form","changeType":null,"fixText":"","status":null,"owner":"User","timeEstimate":"2 min","systems":"Website"},
+      {"id":"block_p2","name":"Validate Payment","description":"Validate with retry logic and exponential backoff","x":96,"y":264,"outputs":2,"stepType":"api","changeType":"improved","fixText":"Added 3x retry with exponential backoff, reducing failures to <2%","status":"todo","owner":"Payment Service","timeEstimate":"3-15 sec","systems":"Stripe API"},
+      {"id":"block_p3","name":"Create Order","description":"Order saved to database","x":96,"y":432,"outputs":1,"stepType":"data","changeType":null,"fixText":"","status":null,"owner":"System","timeEstimate":"Instant","systems":"Database"},
+      {"id":"block_p4","name":"Show Retry Option","description":"Clear error message with retry button and alternative payment methods","x":432,"y":432,"outputs":1,"stepType":"action","changeType":"new","fixText":"User-friendly error with actionable options","status":"todo","owner":"UI","timeEstimate":"","systems":""},
+      {"id":"block_p5","name":"User Retries","description":"User can click retry or choose different payment","x":432,"y":600,"outputs":0,"stepType":"form","changeType":"new","fixText":"Self-service recovery path","status":"todo","owner":"User","timeEstimate":"30 sec","systems":""}
     ],
-    "connections": []
+    "connections": [
+      {"id":"conn_p1","from":"block_p1","to":"block_p2","portIndex":0,"label":""},
+      {"id":"conn_p2","from":"block_p2","to":"block_p3","portIndex":0,"label":"Success"},
+      {"id":"conn_p3","from":"block_p2","to":"block_p4","portIndex":1,"label":"Failed"},
+      {"id":"conn_p4","from":"block_p4","to":"block_p5","portIndex":0,"label":""}
+    ]
   },
-  "issueFixLinks": [{"issueId":"block_2","fixId":"block_2"}]
+  "issueFixLinks": [
+    {"issueId":"block_2","fixId":"block_p2"},
+    {"issueId":"block_4","fixId":"block_p4"}
+  ]
+}</pre>
+        </div>
+        
+        <div class="help-panel" id="helpAiBrief">
+            <h3>📋 AI Prompt for Creating Analysis Briefs</h3>
+            <p>Use this prompt to create a structured brief that defines the scope of your process analysis before building flows.</p>
+            
+            <div class="help-prompt">
+                <button class="btn btn-primary" id="copyBriefPromptBtn" style="margin-bottom:12px;">📋 Copy Brief Prompt</button>
+                <pre class="help-code" id="briefPromptText">Create a FlowBuilder Pro Analysis Brief in JSON format from the following requirements.
+
+INSTRUCTIONS:
+Create a JSON object with this structure:
+{
+  "id": "brief_[timestamp]",
+  "name": "Analysis Brief Name",
+  "description": "High-level description of what's being analyzed",
+  "environment": "exhibitor",
+  "status": "draft",
+  "priority": "medium",
+  "goals": [
+    "Goal 1: What improvement are we trying to achieve?",
+    "Goal 2: Another measurable objective"
+  ],
+  "scope": {
+    "inScope": ["Process area 1", "Process area 2"],
+    "outOfScope": ["What we're NOT analyzing"]
+  },
+  "stakeholders": [
+    {"name": "Person/Team Name", "role": "Role description", "contact": "email@example.com"}
+  ],
+  "currentPainPoints": [
+    {"issue": "Problem description", "impact": "Business impact", "severity": "high"}
+  ],
+  "successMetrics": [
+    {"metric": "Metric name", "current": "Current value", "target": "Target value"}
+  ],
+  "constraints": ["Constraint 1", "Constraint 2"],
+  "timeline": {
+    "analysisStart": "YYYY-MM-DD",
+    "analysisEnd": "YYYY-MM-DD",
+    "implementationTarget": "YYYY-MM-DD"
+  },
+  "relatedFlows": [],
+  "notes": "Additional context or notes",
+  "createdAt": "[ISO timestamp]",
+  "updatedAt": "[ISO timestamp]"
+}
+
+FIELD GUIDELINES:
+
+environment: One of "exhibitor", "organizer", "ea", "valverde", "other"
+
+status: One of "draft", "in-review", "approved", "in-progress", "completed"
+
+priority: One of "low", "medium", "high", "critical"
+
+currentPainPoints.severity: One of "low", "medium", "high", "critical"
+
+goals: List 2-5 measurable improvement objectives
+
+scope.inScope: What processes/areas ARE being analyzed
+scope.outOfScope: What is explicitly NOT part of this analysis (prevents scope creep)
+
+successMetrics: Define how we'll measure improvement
+- current: baseline measurement
+- target: goal measurement
+
+OUTPUT FORMAT:
+Return ONLY valid JSON. No markdown, no explanations, no code blocks.
+Use double quotes for all strings.
+Use ISO format for dates: "YYYY-MM-DD" or "YYYY-MM-DDTHH:mm:ss.sssZ"
+
+ANALYSIS REQUIREMENTS:
+[Paste your analysis requirements here]</pre>
+            </div>
+            
+            <h3>📥 Brief Import Instructions</h3>
+            <ol>
+                <li>Copy the AI's JSON output</li>
+                <li>Click <strong>Import Brief</strong> button in the dashboard</li>
+                <li>Paste the JSON or select a .json file</li>
+                <li>The brief will appear in your Briefs section</li>
+                <li>You can then create flows that link to this brief</li>
+            </ol>
+            
+            <h3>💡 Tips for Brief Creation</h3>
+            <ul>
+                <li>Start with clear goals - what improvement are you trying to measure?</li>
+                <li>Define scope explicitly to prevent analysis creep</li>
+                <li>Include success metrics with current/target values for measurable outcomes</li>
+                <li>List stakeholders who need to be involved or informed</li>
+                <li>Document current pain points with their business impact</li>
+                <li>Set realistic timelines for analysis and implementation</li>
+            </ul>
+            
+            <h3>Example Brief</h3>
+            <pre class="help-code">{
+  "id": "brief_1737100000001",
+  "name": "Exhibitor Sign-In Connection Issues",
+  "description": "Analysis of the sign-in connection status indicator and firewall blocking issues",
+  "environment": "exhibitor",
+  "status": "draft",
+  "priority": "high",
+  "goals": [
+    "Reduce support tickets related to connection issues by 80%",
+    "Enable self-service resolution for firewall-blocked users",
+    "Improve user understanding of connection status"
+  ],
+  "scope": {
+    "inScope": ["Sign-in page", "Connection status indicator", "Port checking logic", "Error messaging"],
+    "outOfScope": ["Authentication flow", "Password reset", "Account creation"]
+  },
+  "stakeholders": [
+    {"name": "Support Team", "role": "Handles connection-related tickets", "contact": "support@toddoo.com"},
+    {"name": "Frontend Dev", "role": "Implements UI changes", "contact": "dev@toddoo.com"}
+  ],
+  "currentPainPoints": [
+    {"issue": "No visual feedback during connection check", "impact": "Users think system is frozen", "severity": "high"},
+    {"issue": "No guidance when all ports blocked", "impact": "Creates unnecessary support tickets", "severity": "critical"},
+    {"issue": "Users blame Toddoo instead of their firewall", "impact": "Reputation damage", "severity": "medium"}
+  ],
+  "successMetrics": [
+    {"metric": "Connection-related support tickets per week", "current": "15", "target": "3"},
+    {"metric": "Average time to resolve firewall issues", "current": "4 hours", "target": "10 minutes"},
+    {"metric": "User self-service resolution rate", "current": "0%", "target": "90%"}
+  ],
+  "constraints": ["Must work on all supported browsers", "Cannot require backend changes in Phase 1"],
+  "timeline": {
+    "analysisStart": "2025-01-15",
+    "analysisEnd": "2025-01-20",
+    "implementationTarget": "2025-02-01"
+  },
+  "relatedFlows": [],
+  "notes": "Based on support ticket analysis showing 40% of sign-in issues are firewall-related",
+  "createdAt": "2025-01-17T10:00:00.000Z",
+  "updatedAt": "2025-01-17T10:00:00.000Z"
 }</pre>
         </div>
     </div></div></div>
@@ -2694,6 +2853,7 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             if (savedToken) {
                 document.getElementById('loginContent').classList.add('hidden');
                 document.getElementById('loginLoading').classList.add('show');
+                this.updateLoadingProgress('Validating session...', 10);
                 try {
                     gapi.client.setToken({ access_token: savedToken });
                     // Test if token is still valid
@@ -2701,10 +2861,15 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                     const userInfo = JSON.parse(localStorage.getItem('fb_google_user') || '{}');
                     this.googleUser = userInfo;
                     this.authenticated = true;
+                    this.updateLoadingProgress('Finding FlowBuilder folder...', 25);
                     await this.ensureDriveFolder();
+                    this.updateLoadingProgress('Loading flows from Drive...', 45);
                     await this.loadDriveFlows();
+                    this.updateLoadingProgress('Loading briefs...', 70);
                     await this.loadBriefsFromDrive();
+                    this.updateLoadingProgress('Checking active sessions...', 90);
                     await this.loadEditingSessions();
+                    this.updateLoadingProgress('Ready!', 100);
                     this.initApp();
                 } catch (e) {
                     // Token expired or invalid
@@ -2714,6 +2879,18 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                     document.getElementById('loginLoading').classList.remove('show');
                 }
             }
+        }
+        
+        updateLoadingProgress(text, percent) {
+            const loadingText = document.querySelector('.login-loading-text');
+            const progressContainer = document.querySelector('.login-loading-progress');
+            const progressBar = document.querySelector('.login-progress-bar');
+            const detailText = document.querySelector('.login-loading-detail');
+            
+            if (loadingText) loadingText.textContent = 'Loading your workspace...';
+            if (progressContainer) progressContainer.style.display = 'block';
+            if (progressBar) progressBar.style.width = percent + '%';
+            if (detailText) detailText.textContent = text;
         }
         
         loadScript(src) {
@@ -2739,16 +2916,22 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             
             // Get user info
             try {
+                this.updateLoadingProgress('Getting user info...', 15);
                 const aboutResp = await gapi.client.drive.about.get({ fields: 'user' });
                 this.googleUser = aboutResp.result.user;
                 localStorage.setItem('fb_google_user', JSON.stringify(this.googleUser));
                 this.authenticated = true;
                 
                 // Find or create FlowBuilder folder
+                this.updateLoadingProgress('Finding FlowBuilder folder...', 30);
                 await this.ensureDriveFolder();
+                this.updateLoadingProgress('Loading flows from Drive...', 50);
                 await this.loadDriveFlows();
+                this.updateLoadingProgress('Loading briefs...', 75);
                 await this.loadBriefsFromDrive();
+                this.updateLoadingProgress('Checking active sessions...', 90);
                 await this.loadEditingSessions();
+                this.updateLoadingProgress('Ready!', 100);
                 
                 // Initialize the app now that we're authenticated
                 this.initApp();
@@ -3157,6 +3340,7 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             document.getElementById('closeHelpModal').addEventListener('click', () => this.hideModal('helpModal'));
             document.querySelectorAll('.help-tab').forEach(tab => tab.addEventListener('click', () => this.switchHelpTab(tab.dataset.help)));
             document.getElementById('copyAiPromptBtn')?.addEventListener('click', () => this.copyAiPrompt());
+            document.getElementById('copyBriefPromptBtn')?.addEventListener('click', () => this.copyBriefPrompt());
             document.getElementById('validateBtn')?.addEventListener('click', () => this.showValidationModal());
             document.getElementById('closeValidationModal').addEventListener('click', () => this.hideModal('validationModal'));
             document.getElementById('closeImportModal').addEventListener('click', () => this.hideModal('importModal'));
@@ -4819,8 +5003,15 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             if (block.isHelper) classes.push('helper-block');
             if (block.actor) classes.push('actor-' + block.actor);
             if (this.selectedBlock?.id === block.id && this.activePane === paneId) classes.push('selected');
-            if (paneId === 'current') { if (block.issueType === 'error') classes.push('issue-error'); else if (block.issueType === 'warning') classes.push('issue-warning'); }
-            else { if (block.changeType === 'fix' || block.fixText) classes.push('change-fix'); else if (block.changeType === 'new') classes.push('change-new'); else if (block.changeType === 'removed') classes.push('change-removed'); }
+            if (paneId === 'current') { 
+                if (block.issueType === 'error') classes.push('issue-error'); 
+                else if (block.issueType === 'warning') classes.push('issue-warning'); 
+            } else { 
+                // Proposed pane - handle change types
+                if (block.changeType === 'fix' || block.changeType === 'improved' || block.fixText) classes.push('change-fix'); 
+                else if (block.changeType === 'new') classes.push('change-new'); 
+                else if (block.changeType === 'removed') classes.push('change-removed'); 
+            }
             const hasLink = paneId === 'current' ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
             if (hasLink) classes.push('linked');
             return classes.join(' ');
@@ -4836,8 +5027,22 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             const typeInfo = block.stepType ? STEP_TYPES[block.stepType] : null;
             let badges = '';
             let annotation = '';
-            if (isCurrentPane) { if (block.issueType === 'error') badges += '<span class="block-badge issue">Issue</span>'; else if (block.issueType === 'warning') badges += '<span class="block-badge warning">Warning</span>'; if (block.issueText) annotation = `<div class="block-annotation ${block.issueType || 'issue'}">${block.issueText}</div>`; }
-            else { if (block.changeType === 'fix' || block.fixText) badges += '<span class="block-badge fix">Fix</span>'; else if (block.changeType === 'new') badges += '<span class="block-badge new">New</span>'; else if (block.changeType === 'removed') badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>'; if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; }
+            if (isCurrentPane) { 
+                if (block.issueType === 'error') badges += '<span class="block-badge issue">Issue</span>'; 
+                else if (block.issueType === 'warning') badges += '<span class="block-badge warning">Warning</span>'; 
+                if (block.issueText) annotation = `<div class="block-annotation ${block.issueType || 'issue'}">${block.issueText}</div>`; 
+            } else { 
+                // Proposed pane badges
+                if (block.changeType === 'fix' || block.changeType === 'improved' || block.fixText) {
+                    badges += `<span class="block-badge fix">${block.changeType === 'improved' ? 'Improved' : 'Fix'}</span>`;
+                } else if (block.changeType === 'new') {
+                    badges += '<span class="block-badge new">New</span>';
+                } else if (block.changeType === 'removed') {
+                    badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>';
+                }
+                if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; 
+                if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; 
+            }
             const hasLink = isCurrentPane ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
             if (hasLink) badges += '<span class="block-badge linked">🔗</span>';
             
@@ -5898,7 +6103,18 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             const promptText = document.getElementById('aiPromptText')?.textContent;
             if (promptText) {
                 navigator.clipboard.writeText(promptText).then(() => {
-                    this.toast('AI prompt copied to clipboard!', 'success');
+                    this.toast('Flow AI prompt copied to clipboard!', 'success');
+                }).catch(() => {
+                    this.toast('Failed to copy', 'error');
+                });
+            }
+        }
+        
+        copyBriefPrompt() {
+            const promptText = document.getElementById('briefPromptText')?.textContent;
+            if (promptText) {
+                navigator.clipboard.writeText(promptText).then(() => {
+                    this.toast('Brief AI prompt copied to clipboard!', 'success');
                 }).catch(() => {
                     this.toast('Failed to copy', 'error');
                 });
@@ -5914,6 +6130,9 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             else if (type === 'pdf-current') this.exportPDF('current');
             else if (type === 'pdf-proposed') this.exportPDF('proposed');
             else if (type === 'pdf-comparison') this.exportPDF('comparison');
+            else if (type === 'png-current') this.exportFlowPNG('current');
+            else if (type === 'png-proposed') this.exportFlowPNG('proposed');
+            else if (type === 'png-both') this.exportFlowPNG('both');
         }
 
         exportPDF(mode) {
@@ -5941,9 +6160,21 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                 green: [34, 197, 94],
                 orange: [249, 115, 22],
                 red: [239, 68, 68],
+                cyan: [6, 182, 212],
+                purple: [168, 85, 247],
                 gray: [100, 116, 139],
                 lightGray: [241, 245, 249],
-                dark: [26, 26, 46]
+                dark: [26, 26, 46],
+                white: [255, 255, 255]
+            };
+            
+            // Environment colors
+            const envColors = {
+                exhibitor: colors.green,
+                organizer: colors.primary,
+                ea: colors.orange,
+                valverde: colors.purple,
+                other: colors.gray
             };
             
             // Helper functions
@@ -5959,12 +6190,28 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             
             let yPos = margin;
             
+            // Header background
+            const headerHeight = flow.description ? 32 : 25;
+            setColor([248, 250, 252], 'fill');
+            pdf.rect(0, 0, pageWidth, headerHeight + margin, 'F');
+            
             // Title
-            pdf.setFontSize(20);
+            pdf.setFontSize(18);
             pdf.setFont('helvetica', 'bold');
             setColor(colors.dark, 'text');
-            pdf.text(flow.name || 'Process Flow', margin, yPos + 7);
-            yPos += 12;
+            pdf.text(flow.name || 'Process Flow', margin, yPos + 6);
+            
+            // Environment badge (top right)
+            const envText = (flow.environment || 'other').toUpperCase();
+            const envColor = envColors[flow.environment] || colors.gray;
+            pdf.setFontSize(8);
+            const envWidth = pdf.getTextWidth(envText) + 6;
+            setColor(envColor, 'fill');
+            pdf.roundedRect(pageWidth - margin - envWidth, yPos - 2, envWidth, 10, 2, 2, 'F');
+            setColor(colors.white, 'text');
+            pdf.text(envText, pageWidth - margin - envWidth + 3, yPos + 4);
+            
+            yPos += 10;
             
             // Subtitle based on mode
             pdf.setFontSize(11);
@@ -5974,16 +6221,30 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
                            mode === 'proposed' ? 'Proposed State (TO-BE)' : 
                            'Current vs Proposed Comparison';
             pdf.text(subtitle, margin, yPos);
-            yPos += 8;
             
-            // Date
+            // Date (right aligned)
+            const dateText = `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
             pdf.setFontSize(9);
-            pdf.text(`Generated: ${new Date().toLocaleString()}`, margin, yPos);
-            yPos += 10;
+            const dateWidth = pdf.getTextWidth(dateText);
+            pdf.text(dateText, pageWidth - margin - dateWidth, yPos);
+            
+            // Description if present
+            if (flow.description) {
+                yPos += 6;
+                pdf.setFontSize(9);
+                pdf.setFont('helvetica', 'italic');
+                setColor(colors.gray, 'text');
+                const descLines = pdf.splitTextToSize(flow.description, contentWidth);
+                pdf.text(descLines.slice(0, 2), margin, yPos); // Max 2 lines
+                yPos += Math.min(descLines.length, 2) * 4;
+            }
+            
+            yPos += 6;
             
             // Divider line
-            setColor(colors.primary, 'draw');
-            pdf.setLineWidth(0.5);
+            const lineColor = mode === 'current' ? colors.orange : mode === 'proposed' ? colors.green : colors.primary;
+            setColor(lineColor, 'draw');
+            pdf.setLineWidth(0.8);
             pdf.line(margin, yPos, pageWidth - margin, yPos);
             yPos += 8;
             
@@ -6786,6 +7047,168 @@ PROPOSED FIX: Add retry logic to payment validation with exponential backoff</pr
             }
             
             return y;
+        }
+        
+        async exportFlowPNG(mode) {
+            const flow = this.currentFlowIsDrive ? this.driveFlows[this.currentFlowId] : this.flows[this.currentFlowId];
+            const timestamp = new Date().toISOString().slice(0, 10);
+            const baseName = (flow.name || 'flow').replace(/\s+/g, '_');
+            
+            // Use html2canvas to capture the flow canvas
+            const html2canvasScript = document.querySelector('script[src*="html2canvas"]');
+            if (!window.html2canvas) {
+                // Dynamically load html2canvas if not present
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            }
+            
+            const capturePane = async (paneId, label) => {
+                const container = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
+                const pane = this.getPane(paneId);
+                
+                if (!container || pane.blocks.size === 0) {
+                    return null;
+                }
+                
+                // Calculate bounds of all blocks
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                pane.blocks.forEach(block => {
+                    minX = Math.min(minX, block.x);
+                    minY = Math.min(minY, block.y);
+                    maxX = Math.max(maxX, block.x + 260); // Block width
+                    maxY = Math.max(maxY, block.y + 150); // Approximate block height
+                });
+                
+                // Add padding
+                const padding = 40;
+                minX -= padding;
+                minY -= padding;
+                maxX += padding;
+                maxY += padding;
+                
+                // Create a temporary canvas element
+                const width = maxX - minX;
+                const height = maxY - minY;
+                
+                // Clone the blocks container
+                const clone = container.cloneNode(true);
+                clone.style.position = 'absolute';
+                clone.style.left = '0';
+                clone.style.top = '0';
+                clone.style.width = width + 'px';
+                clone.style.height = height + 'px';
+                clone.style.transform = `translate(${-minX}px, ${-minY}px)`;
+                clone.style.background = 'var(--bg-canvas)';
+                clone.style.overflow = 'visible';
+                
+                // Create wrapper for proper background
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'fixed';
+                wrapper.style.left = '-9999px';
+                wrapper.style.width = width + 'px';
+                wrapper.style.height = height + 'px';
+                wrapper.style.background = '#1a1a2e';
+                wrapper.style.overflow = 'hidden';
+                wrapper.appendChild(clone);
+                document.body.appendChild(wrapper);
+                
+                // Add title
+                const title = document.createElement('div');
+                title.style.cssText = 'position:absolute;top:10px;left:10px;color:#fff;font-size:16px;font-weight:600;font-family:system-ui;z-index:1000;';
+                title.textContent = `${flow.name} - ${label}`;
+                wrapper.appendChild(title);
+                
+                // Add timestamp
+                const date = document.createElement('div');
+                date.style.cssText = 'position:absolute;top:10px;right:10px;color:#64748b;font-size:11px;font-family:system-ui;z-index:1000;';
+                date.textContent = new Date().toLocaleString();
+                wrapper.appendChild(date);
+                
+                try {
+                    const canvas = await html2canvas(wrapper, {
+                        backgroundColor: '#1a1a2e',
+                        scale: 2, // Higher resolution
+                        useCORS: true,
+                        logging: false,
+                        width: width,
+                        height: height
+                    });
+                    
+                    document.body.removeChild(wrapper);
+                    return canvas;
+                } catch (err) {
+                    console.error('Canvas capture error:', err);
+                    document.body.removeChild(wrapper);
+                    return null;
+                }
+            };
+            
+            if (mode === 'both') {
+                // Capture both and combine
+                const currentCanvas = await capturePane('current', 'Current State (AS-IS)');
+                const proposedCanvas = await capturePane('proposed', 'Proposed State (TO-BE)');
+                
+                if (!currentCanvas && !proposedCanvas) {
+                    this.toast('No flows to export', 'error');
+                    return;
+                }
+                
+                // Combine the canvases side by side
+                const combinedCanvas = document.createElement('canvas');
+                const ctx = combinedCanvas.getContext('2d');
+                
+                const cw = currentCanvas ? currentCanvas.width : 0;
+                const ch = currentCanvas ? currentCanvas.height : 0;
+                const pw = proposedCanvas ? proposedCanvas.width : 0;
+                const ph = proposedCanvas ? proposedCanvas.height : 0;
+                
+                const gap = 40;
+                combinedCanvas.width = cw + pw + gap;
+                combinedCanvas.height = Math.max(ch, ph);
+                
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, combinedCanvas.width, combinedCanvas.height);
+                
+                if (currentCanvas) ctx.drawImage(currentCanvas, 0, 0);
+                if (proposedCanvas) ctx.drawImage(proposedCanvas, cw + gap, 0);
+                
+                // Add divider line
+                ctx.strokeStyle = '#374151';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(cw + gap/2, 20);
+                ctx.lineTo(cw + gap/2, combinedCanvas.height - 20);
+                ctx.stroke();
+                
+                combinedCanvas.toBlob(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${baseName}_comparison_${timestamp}.png`;
+                    a.click();
+                    this.toast('PNG exported', 'success');
+                }, 'image/png');
+                
+            } else {
+                const canvas = await capturePane(mode, mode === 'current' ? 'Current State (AS-IS)' : 'Proposed State (TO-BE)');
+                
+                if (!canvas) {
+                    this.toast(`No blocks in ${mode} pane to export`, 'error');
+                    return;
+                }
+                
+                canvas.toBlob(blob => {
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${baseName}_${mode}_${timestamp}.png`;
+                    a.click();
+                    this.toast('PNG exported', 'success');
+                }, 'image/png');
+            }
         }
 
         exportJSON() {
