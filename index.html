@@ -3088,12 +3088,14 @@ ANALYSIS REQUIREMENTS:
                         const flowData = typeof contentResp.body === 'string' ? JSON.parse(contentResp.body) : contentResp.body;
                         flowData.driveFileId = file.id;
                         flowData.isDrive = true;
+                        flowData._loadedFromDriveAt = new Date().toISOString();
                         this.driveFlows[flowData.id || file.id] = flowData;
                         
                         // Debug logging with positions
                         console.log('=== LOADED FROM DRIVE ===');
                         console.log('File:', file.name);
-                        console.log('  Modified:', file.modifiedTime);
+                        console.log('  Drive modified:', file.modifiedTime);
+                        console.log('  Flow updatedAt:', flowData.updatedAt);
                         console.log('  Current blocks:', (flowData.current?.blocks || []).length);
                         console.log('  Current connections:', (flowData.current?.connections || []).length);
                         // Log first few block positions
@@ -8269,9 +8271,13 @@ ANALYSIS REQUIREMENTS:
             // ----------------------------------------
             // STEP 6: Apply positions to blocks
             // ----------------------------------------
+            console.log('=== AUTO-LAYOUT POSITIONS ===');
             blocks.forEach(block => {
+                const oldX = block.x;
+                const oldY = block.y;
                 block.x = this.snapToGrid(blockX.get(block.id));
                 block.y = this.snapToGrid(blockY.get(block.id));
+                console.log(`  "${block.name}": (${oldX},${oldY}) -> (${block.x},${block.y})`);
             });
             
             // ----------------------------------------
