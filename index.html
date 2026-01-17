@@ -5502,43 +5502,44 @@ ANALYSIS REQUIREMENTS:
                 const toEl = blockElMap.get(conn.to);
                 if (!fromEl || !toEl || fromEl.dataset.pane !== paneId) return;
                 
-                const fromPort = fromEl.querySelector(`.port-out[data-index="${conn.portIndex}"]`) || fromEl.querySelector('.port-out');
-                if (!fromPort) return;
-                
-                const fromRect = fromPort.getBoundingClientRect();
-                const canvasRect = els.canvas.getBoundingClientRect();
-                // Account for BOTH pan and zoom when converting screen coords to canvas coords
-                const x1 = (fromRect.left + 7 - canvasRect.left - pane.panX) / pane.zoom;
-                const y1 = (fromRect.top + 7 - canvasRect.top - pane.panY) / pane.zoom;
-                
-                // Calculate input position - spread across the top of the block
+                const fromBlock = pane.blocks.get(conn.from);
                 const toBlock = pane.blocks.get(conn.to);
-                const incomingInfo = incomingByBlock.get(conn.to)?.find(c => c.conn === conn);
-                const inputIndex = incomingInfo?.inputIndex || 0;
-                const inputTotal = incomingInfo?.inputTotal || 1;
+                if (!fromBlock || !toBlock) return;
                 
-                const blockWidth = toEl.offsetWidth || 260;
-                const inputSpacing = Math.min(40, blockWidth / (inputTotal + 1));
-                const inputStartX = toBlock.x + (blockWidth - (inputTotal - 1) * inputSpacing) / 2;
-                const x2 = inputStartX + inputIndex * inputSpacing;
-                const y2 = toBlock.y - 2; // Just above the block
-                
-                // Create group for connection elements
-                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                group.classList.add('connection-group');
-                
+                // Calculate OUTPUT position from block data (canvas coordinates)
                 // Get outgoing info for spreading lines
                 const portKey = `${conn.from}:${conn.portIndex || 0}`;
                 const outgoingInfo = outgoingByPort.get(portKey)?.find(c => c.conn === conn);
                 const outputIndex = outgoingInfo?.outputIndex || 0;
                 const outputTotal = outgoingInfo?.outputTotal || 1;
                 
-                // Calculate horizontal offset to spread outgoing lines
-                // Center the spread around x1
-                const spreadWidth = Math.min(60, outputTotal * 20); // Max 60px total spread
+                const fromBlockWidth = fromEl.offsetWidth || 260;
+                const fromBlockHeight = fromEl.offsetHeight || 140;
+                
+                // Calculate spread for multiple outputs from same port
+                const spreadWidth = Math.min(60, outputTotal * 20);
                 const outputOffset = outputTotal > 1 
                     ? (outputIndex - (outputTotal - 1) / 2) * (spreadWidth / (outputTotal - 1 || 1))
                     : 0;
+                
+                // Output port position (center bottom of block, with spread offset)
+                const x1 = fromBlock.x + fromBlockWidth / 2 + outputOffset;
+                const y1 = fromBlock.y + fromBlockHeight + 7; // Below the block
+                
+                // Calculate INPUT position (canvas coordinates)
+                const incomingInfo = incomingByBlock.get(conn.to)?.find(c => c.conn === conn);
+                const inputIndex = incomingInfo?.inputIndex || 0;
+                const inputTotal = incomingInfo?.inputTotal || 1;
+                
+                const toBlockWidth = toEl.offsetWidth || 260;
+                const inputSpacing = Math.min(40, toBlockWidth / (inputTotal + 1));
+                const inputStartX = toBlock.x + (toBlockWidth - (inputTotal - 1) * inputSpacing) / 2;
+                const x2 = inputStartX + inputIndex * inputSpacing;
+                const y2 = toBlock.y - 7; // Above the block
+                
+                // Create group for connection elements
+                const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                group.classList.add('connection-group');
                 
                 // Get manual waypoints
                 const manualWaypoints = conn.waypoints || [];
@@ -5556,26 +5557,22 @@ ANALYSIS REQUIREMENTS:
                     const dx = x2 - x1;
                     
                     if (dy > 30) {
-                        // Going DOWN - use spread offset on control points
+                        // Going DOWN - smooth bezier
                         const controlDist = Math.max(30, Math.min(Math.abs(dy) * 0.35, 60));
-                        // Apply offset to the first control point to spread lines
-                        const x1Offset = x1 + outputOffset;
-                        pathD = `M${x1},${y1} C${x1Offset},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
+                        pathD = `M${x1},${y1} C${x1},${y1 + controlDist} ${x2},${y2 - controlDist} ${x2},${y2}`;
                     } else if (dy < -30) {
-                        // Going UP - route around with orthogonal path, apply offset
-                        const sideOffset = (dx > 0 ? 50 : -50) + outputOffset;
+                        // Going UP - route around with orthogonal path
+                        const sideOffset = dx > 0 ? 50 : -50;
                         pathD = `M${x1},${y1} L${x1},${y1 + 25} L${x1 + sideOffset},${y1 + 25} L${x1 + sideOffset},${y2 - 25} L${x2},${y2 - 25} L${x2},${y2}`;
                     } else {
-                        // SAME LEVEL - horizontal S-curve or route
+                        // SAME LEVEL - horizontal S-curve
                         if (Math.abs(dx) < 30) {
-                            // Very close horizontally, curve to side with offset
                             const sign = dx >= 0 ? 1 : -1;
-                            const midY = Math.max(y1, y2) + 30 + Math.abs(outputOffset);
-                            pathD = `M${x1},${y1} C${x1 + sign * 60 + outputOffset},${midY} ${x2 + sign * 60},${midY} ${x2},${y2}`;
+                            const midY = Math.max(y1, y2) + 40;
+                            pathD = `M${x1},${y1} C${x1 + sign * 60},${midY} ${x2 + sign * 60},${midY} ${x2},${y2}`;
                         } else {
-                            // Route down, across, up with S-curve feel
-                            const midY = Math.max(y1, y2) + 40 + Math.abs(outputOffset) * 0.5;
-                            pathD = `M${x1},${y1} C${x1 + outputOffset},${midY} ${x2},${midY} ${x2},${y2}`;
+                            const midY = Math.max(y1, y2) + 40;
+                            pathD = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
                         }
                     }
                 } else {
@@ -5953,11 +5950,11 @@ ANALYSIS REQUIREMENTS:
             return path;
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.getDomId(this.connectingFrom.id, paneId)); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left - pane.panX) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top - pane.panY) / pane.zoom; const x2 = (e.clientX - canvasRect.left - pane.panX) / pane.zoom; const y2 = (e.clientY - canvasRect.top - pane.panY) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.getDomId(this.connectingFrom.id, paneId)); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
-        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left - pane.panX) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top - pane.panY) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.getDomId(this.dragBlock.id, paneId)); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
+        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.getDomId(this.dragBlock.id, paneId)); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
         onCanvasMouseUp(e, paneId) { 
             const els = this.getPaneElements(paneId); 
             // Save state if block was actually moved
