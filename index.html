@@ -5027,12 +5027,14 @@ ANALYSIS REQUIREMENTS:
             const typeInfo = block.stepType ? STEP_TYPES[block.stepType] : null;
             let badges = '';
             let annotation = '';
+            
             if (isCurrentPane) { 
+                // Current pane - show issues
                 if (block.issueType === 'error') badges += '<span class="block-badge issue">Issue</span>'; 
                 else if (block.issueType === 'warning') badges += '<span class="block-badge warning">Warning</span>'; 
                 if (block.issueText) annotation = `<div class="block-annotation ${block.issueType || 'issue'}">${block.issueText}</div>`; 
             } else { 
-                // Proposed pane badges
+                // Proposed pane - show changes only (NOT issues)
                 if (block.changeType === 'fix' || block.changeType === 'improved' || block.fixText) {
                     badges += `<span class="block-badge fix">${block.changeType === 'improved' ? 'Improved' : 'Fix'}</span>`;
                 } else if (block.changeType === 'new') {
@@ -5040,20 +5042,35 @@ ANALYSIS REQUIREMENTS:
                 } else if (block.changeType === 'removed') {
                     badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>';
                 }
+                // Only show fixText annotation in proposed pane, NOT issueText
                 if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; 
                 if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; 
             }
             const hasLink = isCurrentPane ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
             if (hasLink) badges += '<span class="block-badge linked">🔗</span>';
             
-            // Actor indicator (defensive against unknown actor types)
+            // Actor indicator - check actor field first, then auto-detect from owner
             let actorHtml = '';
-            if (block.actor && ACTOR_TYPES[block.actor]) {
-                const actorInfo = ACTOR_TYPES[block.actor];
-                actorHtml = `<div class="actor-indicator ${block.actor}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${actorInfo.icon}</svg>${actorInfo.name}</div>`;
-            } else if (block.actor) {
+            let detectedActor = block.actor;
+            
+            // Auto-detect actor from owner field if actor not explicitly set
+            if (!detectedActor && block.owner) {
+                const ownerLower = block.owner.toLowerCase();
+                if (ownerLower === 'user' || ownerLower.includes('customer') || ownerLower.includes('exhibitor') || ownerLower.includes('visitor')) {
+                    detectedActor = 'user';
+                } else if (ownerLower === 'system' || ownerLower.includes('api') || ownerLower.includes('framework') || ownerLower.includes('service') || ownerLower.includes('.js') || ownerLower.includes('.php') || ownerLower === 'ui') {
+                    detectedActor = 'system';
+                } else if (ownerLower === 'admin' || ownerLower.includes('administrator') || ownerLower.includes('support') || ownerLower.includes('organizer')) {
+                    detectedActor = 'admin';
+                }
+            }
+            
+            if (detectedActor && ACTOR_TYPES[detectedActor]) {
+                const actorInfo = ACTOR_TYPES[detectedActor];
+                actorHtml = `<div class="actor-indicator ${detectedActor}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${actorInfo.icon}</svg>${actorInfo.name}</div>`;
+            } else if (detectedActor) {
                 // Unknown actor type - show generic indicator
-                actorHtml = `<div class="actor-indicator" style="background:var(--bg-tertiary);color:var(--text-secondary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${block.actor}</div>`;
+                actorHtml = `<div class="actor-indicator" style="background:var(--bg-tertiary);color:var(--text-secondary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${detectedActor}</div>`;
             }
             
             let metaHtml = '';
@@ -7055,7 +7072,6 @@ ANALYSIS REQUIREMENTS:
             const baseName = (flow.name || 'flow').replace(/\s+/g, '_');
             
             // Use html2canvas to capture the flow canvas
-            const html2canvasScript = document.querySelector('script[src*="html2canvas"]');
             if (!window.html2canvas) {
                 // Dynamically load html2canvas if not present
                 await new Promise((resolve, reject) => {
@@ -7068,79 +7084,100 @@ ANALYSIS REQUIREMENTS:
             }
             
             const capturePane = async (paneId, label) => {
-                const container = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
+                const canvas = document.getElementById(paneId === 'current' ? 'currentCanvas' : 'proposedCanvas');
+                const blocksContainer = document.getElementById(paneId === 'current' ? 'currentBlocksContainer' : 'proposedBlocksContainer');
+                const connectionsSvg = document.getElementById(paneId === 'current' ? 'currentConnectionsSvg' : 'proposedConnectionsSvg');
                 const pane = this.getPane(paneId);
                 
-                if (!container || pane.blocks.size === 0) {
+                if (!canvas || pane.blocks.size === 0) {
                     return null;
                 }
                 
-                // Calculate bounds of all blocks
+                // Calculate bounds of all blocks and connections
                 let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
                 pane.blocks.forEach(block => {
                     minX = Math.min(minX, block.x);
                     minY = Math.min(minY, block.y);
-                    maxX = Math.max(maxX, block.x + 260); // Block width
-                    maxY = Math.max(maxY, block.y + 150); // Approximate block height
+                    maxX = Math.max(maxX, block.x + 280); // Block width + margin
+                    maxY = Math.max(maxY, block.y + 180); // Block height + margin
+                });
+                
+                // Also consider connection waypoints
+                pane.connections.forEach(conn => {
+                    if (conn.waypoints) {
+                        conn.waypoints.forEach(wp => {
+                            minX = Math.min(minX, wp.x - 20);
+                            maxX = Math.max(maxX, wp.x + 20);
+                            minY = Math.min(minY, wp.y - 20);
+                            maxY = Math.max(maxY, wp.y + 20);
+                        });
+                    }
                 });
                 
                 // Add padding
-                const padding = 40;
-                minX -= padding;
-                minY -= padding;
+                const padding = 60;
+                minX = Math.max(0, minX - padding);
+                minY = Math.max(0, minY - padding);
                 maxX += padding;
                 maxY += padding;
                 
-                // Create a temporary canvas element
                 const width = maxX - minX;
                 const height = maxY - minY;
                 
-                // Clone the blocks container
-                const clone = container.cloneNode(true);
-                clone.style.position = 'absolute';
-                clone.style.left = '0';
-                clone.style.top = '0';
-                clone.style.width = width + 'px';
-                clone.style.height = height + 'px';
-                clone.style.transform = `translate(${-minX}px, ${-minY}px)`;
-                clone.style.background = 'var(--bg-canvas)';
-                clone.style.overflow = 'visible';
-                
-                // Create wrapper for proper background
+                // Create wrapper
                 const wrapper = document.createElement('div');
-                wrapper.style.position = 'fixed';
-                wrapper.style.left = '-9999px';
-                wrapper.style.width = width + 'px';
-                wrapper.style.height = height + 'px';
-                wrapper.style.background = '#1a1a2e';
-                wrapper.style.overflow = 'hidden';
-                wrapper.appendChild(clone);
+                wrapper.style.cssText = `position:fixed;left:-9999px;width:${width}px;height:${height}px;background:#1a1a2e;overflow:hidden;`;
+                
+                // Clone and position SVG connections
+                const svgClone = connectionsSvg.cloneNode(true);
+                svgClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;transform:translate(${-minX}px,${-minY}px);pointer-events:none;`;
+                svgClone.setAttribute('width', width);
+                svgClone.setAttribute('height', height);
+                wrapper.appendChild(svgClone);
+                
+                // Clone and position blocks
+                const blocksClone = blocksContainer.cloneNode(true);
+                blocksClone.style.cssText = `position:absolute;left:0;top:0;width:${width}px;height:${height}px;transform:translate(${-minX}px,${-minY}px);`;
+                wrapper.appendChild(blocksClone);
+                
+                // Add title header
+                const header = document.createElement('div');
+                header.style.cssText = `position:absolute;top:0;left:0;right:0;height:40px;background:linear-gradient(180deg,rgba(26,26,46,0.95) 0%,rgba(26,26,46,0) 100%);padding:10px 15px;z-index:1000;`;
+                
+                const title = document.createElement('div');
+                title.style.cssText = 'color:#fff;font-size:14px;font-weight:600;font-family:system-ui;';
+                title.textContent = `${flow.name} - ${label}`;
+                header.appendChild(title);
+                
+                const dateEl = document.createElement('div');
+                dateEl.style.cssText = 'position:absolute;top:10px;right:15px;color:#64748b;font-size:10px;font-family:system-ui;';
+                dateEl.textContent = new Date().toLocaleString();
+                header.appendChild(dateEl);
+                
+                wrapper.appendChild(header);
                 document.body.appendChild(wrapper);
                 
-                // Add title
-                const title = document.createElement('div');
-                title.style.cssText = 'position:absolute;top:10px;left:10px;color:#fff;font-size:16px;font-weight:600;font-family:system-ui;z-index:1000;';
-                title.textContent = `${flow.name} - ${label}`;
-                wrapper.appendChild(title);
-                
-                // Add timestamp
-                const date = document.createElement('div');
-                date.style.cssText = 'position:absolute;top:10px;right:10px;color:#64748b;font-size:11px;font-family:system-ui;z-index:1000;';
-                date.textContent = new Date().toLocaleString();
-                wrapper.appendChild(date);
-                
                 try {
-                    const canvas = await html2canvas(wrapper, {
+                    const resultCanvas = await html2canvas(wrapper, {
                         backgroundColor: '#1a1a2e',
-                        scale: 2, // Higher resolution
+                        scale: 2,
                         useCORS: true,
                         logging: false,
                         width: width,
-                        height: height
+                        height: height,
+                        onclone: (clonedDoc) => {
+                            // Ensure SVG paths are visible
+                            const paths = clonedDoc.querySelectorAll('path.connection');
+                            paths.forEach(path => {
+                                path.style.stroke = '#475569';
+                                path.style.strokeWidth = '2';
+                                path.style.fill = 'none';
+                            });
+                        }
                     });
                     
                     document.body.removeChild(wrapper);
-                    return canvas;
+                    return resultCanvas;
                 } catch (err) {
                     console.error('Canvas capture error:', err);
                     document.body.removeChild(wrapper);
@@ -7148,8 +7185,9 @@ ANALYSIS REQUIREMENTS:
                 }
             };
             
+            this.toast('Generating PNG...', 'info');
+            
             if (mode === 'both') {
-                // Capture both and combine
                 const currentCanvas = await capturePane('current', 'Current State (AS-IS)');
                 const proposedCanvas = await capturePane('proposed', 'Proposed State (TO-BE)');
                 
@@ -7158,7 +7196,6 @@ ANALYSIS REQUIREMENTS:
                     return;
                 }
                 
-                // Combine the canvases side by side
                 const combinedCanvas = document.createElement('canvas');
                 const ctx = combinedCanvas.getContext('2d');
                 
@@ -7167,7 +7204,7 @@ ANALYSIS REQUIREMENTS:
                 const pw = proposedCanvas ? proposedCanvas.width : 0;
                 const ph = proposedCanvas ? proposedCanvas.height : 0;
                 
-                const gap = 40;
+                const gap = 60;
                 combinedCanvas.width = cw + pw + gap;
                 combinedCanvas.height = Math.max(ch, ph);
                 
@@ -7180,9 +7217,10 @@ ANALYSIS REQUIREMENTS:
                 // Add divider line
                 ctx.strokeStyle = '#374151';
                 ctx.lineWidth = 2;
+                ctx.setLineDash([8, 4]);
                 ctx.beginPath();
-                ctx.moveTo(cw + gap/2, 20);
-                ctx.lineTo(cw + gap/2, combinedCanvas.height - 20);
+                ctx.moveTo(cw + gap/2, 30);
+                ctx.lineTo(cw + gap/2, combinedCanvas.height - 30);
                 ctx.stroke();
                 
                 combinedCanvas.toBlob(blob => {
@@ -7194,14 +7232,14 @@ ANALYSIS REQUIREMENTS:
                 }, 'image/png');
                 
             } else {
-                const canvas = await capturePane(mode, mode === 'current' ? 'Current State (AS-IS)' : 'Proposed State (TO-BE)');
+                const resultCanvas = await capturePane(mode, mode === 'current' ? 'Current State (AS-IS)' : 'Proposed State (TO-BE)');
                 
-                if (!canvas) {
+                if (!resultCanvas) {
                     this.toast(`No blocks in ${mode} pane to export`, 'error');
                     return;
                 }
                 
-                canvas.toBlob(blob => {
+                resultCanvas.toBlob(blob => {
                     const a = document.createElement('a');
                     a.href = URL.createObjectURL(blob);
                     a.download = `${baseName}_${mode}_${timestamp}.png`;
