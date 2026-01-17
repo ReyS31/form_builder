@@ -3843,6 +3843,7 @@ ANALYSIS REQUIREMENTS:
             // Load proposed connections with normalization
             this.proposed.connections = (flow.proposed?.connections || []).map(c => this.normalizeConnection(c));
             
+            // Initial connection draw (may be slightly off until zoomToFit)
             this.updateConnections('current');
             this.updateConnections('proposed');
             this.updateFlowSelector();
@@ -3875,7 +3876,17 @@ ANALYSIS REQUIREMENTS:
             // Update brief reference in sidebar
             this.updateBriefReference();
             
-            setTimeout(() => { this.zoomToFit('current'); this.zoomToFit('proposed'); }, 100);
+            // IMPORTANT: After zoomToFit changes the view, re-render connections
+            // Connection coordinates depend on current zoom/pan state
+            setTimeout(() => { 
+                this.zoomToFit('current'); 
+                this.zoomToFit('proposed'); 
+                // Re-render connections with correct zoom/pan applied
+                requestAnimationFrame(() => {
+                    this.updateConnections('current');
+                    this.updateConnections('proposed');
+                });
+            }, 100);
         }
 
         async saveCurrentFlow() {
@@ -5496,8 +5507,9 @@ ANALYSIS REQUIREMENTS:
                 
                 const fromRect = fromPort.getBoundingClientRect();
                 const canvasRect = els.canvas.getBoundingClientRect();
-                const x1 = (fromRect.left + 7 - canvasRect.left) / pane.zoom;
-                const y1 = (fromRect.top + 7 - canvasRect.top) / pane.zoom;
+                // Account for BOTH pan and zoom when converting screen coords to canvas coords
+                const x1 = (fromRect.left + 7 - canvasRect.left - pane.panX) / pane.zoom;
+                const y1 = (fromRect.top + 7 - canvasRect.top - pane.panY) / pane.zoom;
                 
                 // Calculate input position - spread across the top of the block
                 const toBlock = pane.blocks.get(conn.to);
@@ -5941,11 +5953,11 @@ ANALYSIS REQUIREMENTS:
             return path;
         }
 
-        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.getDomId(this.connectingFrom.id, paneId)); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top) / pane.zoom; const x2 = (e.clientX - canvasRect.left) / pane.zoom; const y2 = (e.clientY - canvasRect.top) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
+        drawTempConnection(e, paneId) { this.removeTempConnection(paneId); if (!this.connectingFrom || this.connectingPane !== paneId) return; const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const fromEl = document.getElementById(this.getDomId(this.connectingFrom.id, paneId)); const port = fromEl?.querySelector(`.port-out[data-index="${this.connectingPortIndex}"]`) || fromEl?.querySelector('.port-out'); if (!port) return; const rect = port.getBoundingClientRect(); const canvasRect = els.canvas.getBoundingClientRect(); const x1 = (rect.left + 7 - canvasRect.left - pane.panX) / pane.zoom; const y1 = (rect.top + 7 - canvasRect.top - pane.panY) / pane.zoom; const x2 = (e.clientX - canvasRect.left - pane.panX) / pane.zoom; const y2 = (e.clientY - canvasRect.top - pane.panY) / pane.zoom; const path = document.createElementNS('http://www.w3.org/2000/svg', 'path'); path.setAttribute('d', `M${x1},${y1} C${x1},${y1 + Math.abs(y2-y1)*0.4} ${x2},${y2 - Math.abs(y2-y1)*0.4} ${x2},${y2}`); path.classList.add('temp-connection'); path.id = `tempConnection_${paneId}`; els.connectionsSvg.appendChild(path); }
         removeTempConnection(paneId) { document.getElementById(`tempConnection_${paneId}`)?.remove(); }
 
         onCanvasMouseDown(e, paneId) { const els = this.getPaneElements(paneId); if (e.target === els.canvasArea || e.target.closest('.canvas-container')) { const pane = this.getPane(paneId); this.isPanning = true; this.panningPane = paneId; this.panStart = { x: e.clientX - pane.panX, y: e.clientY - pane.panY }; els.canvasArea.style.cursor = 'grabbing'; } }
-        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.getDomId(this.dragBlock.id, paneId)); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
+        onCanvasMouseMove(e, paneId) { if (this.isDragging && this.dragBlock && this.dragPane === paneId) { const pane = this.getPane(paneId); const els = this.getPaneElements(paneId); const rect = els.canvas.getBoundingClientRect(); let x = (e.clientX - rect.left - pane.panX) / pane.zoom - this.dragOffset.x; let y = (e.clientY - rect.top - pane.panY) / pane.zoom - this.dragOffset.y; x = Math.round(x / 24) * 24; y = Math.round(y / 24) * 24; this.dragBlock.x = x; this.dragBlock.y = y; const el = document.getElementById(this.getDomId(this.dragBlock.id, paneId)); if (el) { el.style.left = x + 'px'; el.style.top = y + 'px'; } this.updateConnections(paneId); this.updateMinimap(); } if (this.isPanning && this.panningPane === paneId) { const pane = this.getPane(paneId); pane.panX = e.clientX - this.panStart.x; pane.panY = e.clientY - this.panStart.y; this.applyTransform(paneId); this.updateMinimap(); } if (this.isConnecting && this.connectingPane === paneId) this.drawTempConnection(e, paneId); }
         onCanvasMouseUp(e, paneId) { 
             const els = this.getPaneElements(paneId); 
             // Save state if block was actually moved
