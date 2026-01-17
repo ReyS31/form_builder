@@ -502,11 +502,12 @@
         }
         .block:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); z-index: 15; }
         .block.selected { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); z-index: 20; }
-        .block.issue-error { border-left: 4px solid var(--red); }
-        .block.issue-warning { border-left: 4px solid var(--orange); }
-        .block.change-fix { border-left: 4px solid var(--green); }
-        .block.change-new { border-left: 4px solid var(--cyan); border-style: dashed; border-left-style: solid; }
-        .block.change-removed { opacity: 0.5; border-left: 4px solid var(--red); border-style: dashed; border-left-style: solid; }
+        /* Status classes - visual handled by .block-status-banner in CSS */
+        .block.issue-error { }
+        .block.issue-warning { }
+        .block.change-fix { }
+        .block.change-new { }
+        .block.change-removed { opacity: 0.6; }
         .block.linked { box-shadow: 0 0 0 2px var(--purple), 0 0 8px rgba(168,85,247,0.2); }
         .block.multi-selected { outline: 2px solid var(--cyan); outline-offset: 2px; }
         .block.search-highlight { outline: 2px solid var(--accent); outline-offset: 3px; animation: pulse-outline 1.5s ease infinite; }
@@ -916,15 +917,19 @@
         .connection:hover { stroke: var(--accent); stroke-width: 3; }
         .temp-connection { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; fill: none; opacity: 0.7; }
 
-        .block { position: absolute; width: 260px; background: var(--bg-secondary); border: 2px solid var(--border-subtle); border-radius: 10px; cursor: move; user-select: none; z-index: 10; }
+        .block { position: absolute; width: 260px; background: var(--bg-secondary); border: 2px solid var(--border-subtle); border-radius: 10px; cursor: move; user-select: none; z-index: 10; overflow: hidden; }
         .block:hover { border-color: var(--border-default); z-index: 20; }
         .block.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2); z-index: 30; }
-        .block.issue-error { border-left: 4px solid var(--red); }
-        .block.issue-warning { border-left: 4px solid var(--orange); }
-        .block.change-fix { border-left: 4px solid var(--green); }
-        .block.change-new { border-left: 4px solid var(--cyan); border-style: dashed; border-left-style: solid; }
-        .block.change-removed { opacity: 0.5; border-left: 4px solid var(--red); border-style: dashed; border-left-style: solid; }
         .block.linked { box-shadow: 0 0 0 2px var(--purple), 0 0 10px rgba(168, 85, 247, 0.3); }
+        
+        /* STATUS BANNER - Dominant visual indicator at top of block */
+        .block-status-banner { display: none; padding: 4px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .block.issue-error .block-status-banner { display: flex; align-items: center; gap: 4px; background: var(--red); color: white; }
+        .block.issue-warning .block-status-banner { display: flex; align-items: center; gap: 4px; background: var(--orange); color: white; }
+        .block.change-fix .block-status-banner { display: flex; align-items: center; gap: 4px; background: var(--green); color: white; }
+        .block.change-new .block-status-banner { display: flex; align-items: center; gap: 4px; background: var(--cyan); color: white; }
+        .block.change-removed .block-status-banner { display: flex; align-items: center; gap: 4px; background: var(--red); color: white; opacity: 0.7; }
+        .block-status-banner svg { width: 12px; height: 12px; }
         
         .block-header { padding: 8px 10px; border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; gap: 6px; }
         .block-icon { width: 24px; height: 24px; background: var(--bg-tertiary); border-radius: 5px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -977,20 +982,13 @@
         .block.helper-block .block-title { color: var(--purple); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
         .block.helper-block .block-body { padding: 0 8px 8px; }
         .block.helper-block .block-description { color: var(--text-secondary); font-size: 11px; -webkit-line-clamp: 5; }
-        .block.helper-block .port-in, .block.helper-block .port-out, .block.helper-block .block-outputs, .block.helper-block .add-output { display: none; }
+        .block.helper-block .port-in, .block.helper-block .port-out, .block.helper-block .block-outputs, .block.helper-block .add-output, .block.helper-block .block-status-banner { display: none; }
         
-        /* Actor type stripes */
-        .block.actor-user { border-left: 4px solid #0ea5e9; }
-        .block.actor-user .block-header { background: linear-gradient(90deg, rgba(14, 165, 233, 0.08) 0%, transparent 100%); }
-        .block.actor-system { border-left: 4px solid #a855f7; }
-        .block.actor-system .block-header { background: linear-gradient(90deg, rgba(168, 85, 247, 0.08) 0%, transparent 100%); }
-        .block.actor-admin { border-left: 4px solid #f59e0b; }
-        .block.actor-admin .block-header { background: linear-gradient(90deg, rgba(245, 158, 11, 0.08) 0%, transparent 100%); }
-        
-        .actor-indicator { display: flex; align-items: center; gap: 3px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-right: auto; padding: 2px 5px; border-radius: 3px; }
-        .actor-indicator.user { background: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
-        .actor-indicator.system { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
-        .actor-indicator.admin { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+        /* ACTOR INDICATOR - Subtle, secondary indicator */
+        .actor-indicator { display: flex; align-items: center; gap: 3px; font-size: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; }
+        .actor-indicator.user { background: rgba(14, 165, 233, 0.12); color: #0ea5e9; }
+        .actor-indicator.system { background: rgba(168, 85, 247, 0.12); color: #a855f7; }
+        .actor-indicator.admin { background: rgba(245, 158, 11, 0.12); color: #f59e0b; }
         .actor-indicator svg { width: 9px; height: 9px; }
         
         /* Actor legend */
@@ -5027,28 +5025,34 @@ ANALYSIS REQUIREMENTS:
             const typeInfo = block.stepType ? STEP_TYPES[block.stepType] : null;
             let badges = '';
             let annotation = '';
+            let statusBannerHtml = '';
             
             if (isCurrentPane) { 
-                // Current pane - left border stripe indicates issue type, no badge needed
-                // Only show annotation if there's issue text
+                // Current pane - show status banner for issues
+                if (block.issueType === 'error') {
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Issue</div>`;
+                } else if (block.issueType === 'warning') {
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Warning</div>`;
+                }
                 if (block.issueText) annotation = `<div class="block-annotation ${block.issueType || 'issue'}">${block.issueText}</div>`; 
             } else { 
-                // Proposed pane - show change type badges (Fix/New/Improved)
-                if (block.changeType === 'fix' || block.changeType === 'improved' || block.fixText) {
-                    badges += `<span class="block-badge fix">${block.changeType === 'improved' ? 'Improved' : 'Fix'}</span>`;
+                // Proposed pane - show status banner for changes
+                if (block.changeType === 'fix' || block.fixText) {
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Fix</div>`;
+                } else if (block.changeType === 'improved') {
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>Improved</div>`;
                 } else if (block.changeType === 'new') {
-                    badges += '<span class="block-badge new">New</span>';
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New</div>`;
                 } else if (block.changeType === 'removed') {
-                    badges += '<span class="block-badge" style="background:var(--red-dim);color:var(--red);">Del</span>';
+                    statusBannerHtml = `<div class="block-status-banner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/></svg>Removed</div>`;
                 }
-                // Only show fixText annotation in proposed pane
                 if (block.fixText) annotation = `<div class="block-annotation fix">${block.fixText}</div>`; 
                 if (block.status) badges += `<span class="block-badge status">${block.status}</span>`; 
             }
             const hasLink = isCurrentPane ? this.issueFixLinks.some(l => l.issueId === block.id) : this.issueFixLinks.some(l => l.fixId === block.id);
             if (hasLink) badges += '<span class="block-badge linked">🔗</span>';
             
-            // Actor indicator - check actor field first, then auto-detect from owner
+            // Actor indicator - subtle, secondary visual
             let actorHtml = '';
             let detectedActor = block.actor;
             
@@ -5068,13 +5072,12 @@ ANALYSIS REQUIREMENTS:
                 const actorInfo = ACTOR_TYPES[detectedActor];
                 actorHtml = `<div class="actor-indicator ${detectedActor}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${actorInfo.icon}</svg>${actorInfo.name}</div>`;
             } else if (detectedActor) {
-                // Unknown actor type - show generic indicator
                 actorHtml = `<div class="actor-indicator" style="background:var(--bg-tertiary);color:var(--text-secondary);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>${detectedActor}</div>`;
             }
             
             let metaHtml = '';
             if (block.owner || block.timeEstimate) { metaHtml = '<div class="block-meta">'; if (block.owner) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>${block.owner}</span>`; if (block.timeEstimate) metaHtml += `<span class="block-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>${block.timeEstimate}</span>`; metaHtml += '</div>'; }
-            return `<div class="block-header"><div class="block-icon ${typeInfo ? 'typed' : ''}" style="${typeInfo ? `background:${typeInfo.color}` : ''}"><svg viewBox="0 0 24 24">${typeInfo ? typeInfo.icon : '<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>'}</svg></div><div class="block-title">${block.name || 'Untitled'}</div>${actorHtml}<div class="block-badges">${badges}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'No description'}</div>${annotation}${metaHtml}</div><div class="port-in" data-port="in"></div><div class="block-outputs">${Array(block.outputs || 1).fill(0).map((_, i) => `<div class="port-out" data-port="out" data-index="${i}"></div>`).join('')}</div><div class="add-output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
+            return `${statusBannerHtml}<div class="block-header"><div class="block-icon ${typeInfo ? 'typed' : ''}" style="${typeInfo ? `background:${typeInfo.color}` : ''}"><svg viewBox="0 0 24 24">${typeInfo ? typeInfo.icon : '<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>'}</svg></div><div class="block-title">${block.name || 'Untitled'}</div>${actorHtml}<div class="block-badges">${badges}</div></div><div class="block-body"><div class="block-description ${block.description ? '' : 'empty'}">${block.description || 'No description'}</div>${annotation}${metaHtml}</div><div class="port-in" data-port="in"></div><div class="block-outputs">${Array(block.outputs || 1).fill(0).map((_, i) => `<div class="port-out" data-port="out" data-index="${i}"></div>`).join('')}</div><div class="add-output"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>`;
         }
 
         bindBlockEvents(el, block, paneId) {
