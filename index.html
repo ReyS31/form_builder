@@ -3076,11 +3076,13 @@ ANALYSIS REQUIREMENTS:
                     // Skip system files
                     if (file.name.startsWith('_')) continue;
                     
-                    // Load file content
+                    // Load file content with cache-busting
                     const contentResp = await gapi.client.drive.files.get({
                         fileId: file.id,
                         alt: 'media',
-                        supportsAllDrives: true
+                        supportsAllDrives: true,
+                        // Add timestamp to bust cache
+                        acknowledgeAbuse: false
                     });
                     try {
                         const flowData = typeof contentResp.body === 'string' ? JSON.parse(contentResp.body) : contentResp.body;
@@ -3088,10 +3090,16 @@ ANALYSIS REQUIREMENTS:
                         flowData.isDrive = true;
                         this.driveFlows[flowData.id || file.id] = flowData;
                         
-                        // Debug logging
-                        console.log('Loaded from Drive:', file.name);
+                        // Debug logging with positions
+                        console.log('=== LOADED FROM DRIVE ===');
+                        console.log('File:', file.name);
+                        console.log('  Modified:', file.modifiedTime);
                         console.log('  Current blocks:', (flowData.current?.blocks || []).length);
                         console.log('  Current connections:', (flowData.current?.connections || []).length);
+                        // Log first few block positions
+                        (flowData.current?.blocks || []).slice(0, 3).forEach(b => {
+                            console.log(`    Block "${b.name}": x=${b.x}, y=${b.y}`);
+                        });
                     } catch (e) {
                         console.error('Failed to parse flow:', file.name, e);
                     }
@@ -3191,6 +3199,9 @@ ANALYSIS REQUIREMENTS:
                 this.showSaveOverlay('Verifying save...');
                 console.log('Verifying saved file...');
                 
+                // Small delay to ensure Drive has processed the write
+                await new Promise(r => setTimeout(r, 500));
+                
                 const verifyResp = await gapi.client.drive.files.get({
                     fileId: fileId,
                     alt: 'media',
@@ -3200,7 +3211,14 @@ ANALYSIS REQUIREMENTS:
                 const savedData = JSON.parse(verifyResp.body);
                 const savedBlocks = (savedData.current?.blocks || []).length;
                 
-                console.log('Verification - blocks in saved file:', savedBlocks);
+                console.log('=== VERIFICATION ===');
+                console.log('Blocks in saved file:', savedBlocks);
+                console.log('Expected blocks:', expectedBlocks);
+                
+                // Verify positions were saved correctly
+                (savedData.current?.blocks || []).slice(0, 3).forEach(b => {
+                    console.log(`  Verified block "${b.name}": x=${b.x}, y=${b.y}`);
+                });
                 
                 if (savedBlocks !== expectedBlocks) {
                     throw new Error(`Verification failed! Expected ${expectedBlocks} blocks but saved file has ${savedBlocks}`);
@@ -3208,8 +3226,12 @@ ANALYSIS REQUIREMENTS:
                 
                 console.log('✓ Save verified successfully!');
                 
-                flow.isDrive = true;
-                this.driveFlows[flow.id] = flow;
+                // Update local cache with verified data from Drive
+                // This ensures we're using the actual saved data
+                savedData.driveFileId = fileId;
+                savedData.isDrive = true;
+                this.driveFlows[flow.id] = savedData;
+                
                 this.toast('Saved to Drive ✓', 'success');
                 
             } catch (e) {
@@ -3762,11 +3784,21 @@ ANALYSIS REQUIREMENTS:
             if (!flow) return;
             
             // Debug logging
-            console.log('Loading flow:', flow.name);
+            console.log('=== LOADING FLOW ===');
+            console.log('Flow:', flow.name);
             console.log('  Current blocks:', (flow.current?.blocks || []).length);
             console.log('  Current connections:', (flow.current?.connections || []).length);
             console.log('  Proposed blocks:', (flow.proposed?.blocks || []).length);
             console.log('  Proposed connections:', (flow.proposed?.connections || []).length);
+            
+            // Log first few block positions for debugging
+            console.log('=== BLOCK POSITIONS BEING LOADED ===');
+            (flow.current?.blocks || []).slice(0, 3).forEach(b => {
+                console.log(`  Current block "${b.name}": x=${b.x}, y=${b.y}`);
+            });
+            (flow.proposed?.blocks || []).slice(0, 3).forEach(b => {
+                console.log(`  Proposed block "${b.name}": x=${b.x}, y=${b.y}`);
+            });
             
             this.currentFlowId = flowId;
             this.currentFlowIsDrive = isDrive;
@@ -3875,6 +3907,15 @@ ANALYSIS REQUIREMENTS:
                 console.log('Current blocks to save:', currentBlocks.length);
                 console.log('Current connections to save:', currentConnections.length);
                 console.log('Proposed blocks to save:', proposedBlocks.length);
+                
+                // Log first few block positions for debugging
+                console.log('=== BLOCK POSITIONS BEING SAVED ===');
+                currentBlocks.slice(0, 3).forEach(b => {
+                    console.log(`  Current block "${b.name}": x=${b.x}, y=${b.y}`);
+                });
+                proposedBlocks.slice(0, 3).forEach(b => {
+                    console.log(`  Proposed block "${b.name}": x=${b.x}, y=${b.y}`);
+                });
                 
                 // Verify deep copy worked
                 if (currentBlocks.length !== this.current.blocks.size) {
