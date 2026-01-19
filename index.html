@@ -10369,4 +10369,21 @@ ANALYSIS REQUIREMENTS:
                 cb.addEventListener('click', async () => {
                     const idx = parseInt(cb.dataset.idx);
                     brief.criteria[idx].checked = !brief.criteria[idx].checked;
-                    brief.updatedAt = new Date().toIS
+                    brief.updatedAt = new Date().toISOString();
+                    this.briefs[brief.id] = brief;
+                    await this.saveBriefsToDrive();
+                    this.updateBriefReference();
+                });
+            });
+        }
+        
+        showImageViewer(dataUrl) {
+            document.getElementById('imageViewerImg').src = dataUrl;
+            document.getElementById('imageViewer').classList.add('show');
+        }
+    }
+
+    new FlowBuilder();
+    </script>
+</body>
+</html>
