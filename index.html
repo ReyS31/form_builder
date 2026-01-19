@@ -1547,6 +1547,385 @@
         /* Button icon style */
         .btn-icon { padding: 6px; min-width: auto; }
         .btn-icon svg { margin: 0; }
+        
+        /* ===== TIER SYSTEM STYLES ===== */
+        .tier-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .tier-badge.tier-0 { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .tier-badge.tier-1 { background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+        .tier-badge.tier-2 { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid rgba(249, 115, 22, 0.3); }
+        .tier-badge.tier-unset { background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+        
+        .tier-selector { display: flex; gap: 8px; margin: 12px 0; }
+        .tier-option {
+            flex: 1;
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .tier-option:hover { border-color: var(--border-default); background: var(--bg-elevated); }
+        .tier-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .tier-option.tier-0.selected { border-color: #ef4444; background: rgba(239, 68, 68, 0.1); }
+        .tier-option.tier-1.selected { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .tier-option.tier-2.selected { border-color: #f97316; background: rgba(249, 115, 22, 0.1); }
+        .tier-option-label { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+        .tier-option-desc { font-size: 10px; color: var(--text-muted); line-height: 1.3; }
+        .tier-option.tier-0 .tier-option-label { color: #ef4444; }
+        .tier-option.tier-1 .tier-option-label { color: #22c55e; }
+        .tier-option.tier-2 .tier-option-label { color: #f97316; }
+        
+        /* Tier 2 Triggers Checklist */
+        .tier-triggers { background: var(--bg-tertiary); border-radius: 8px; padding: 12px; margin-top: 12px; }
+        .tier-triggers-header { font-size: 11px; font-weight: 600; color: var(--orange); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .tier-triggers-header svg { width: 14px; height: 14px; }
+        .tier-trigger-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 8px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .tier-trigger-item:hover { background: var(--bg-elevated); }
+        .tier-trigger-item.checked { background: rgba(249, 115, 22, 0.1); }
+        .tier-trigger-check {
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-default);
+            border-radius: 4px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 1px;
+        }
+        .tier-trigger-check.checked { background: var(--orange); border-color: var(--orange); }
+        .tier-trigger-check svg { width: 10px; height: 10px; color: white; display: none; }
+        .tier-trigger-check.checked svg { display: block; }
+        .tier-trigger-content { flex: 1; }
+        .tier-trigger-label { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+        .tier-trigger-desc { font-size: 10px; color: var(--text-muted); margin-top: 2px; line-height: 1.3; }
+        
+        .tier-warning-banner {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(239, 68, 68, 0.1));
+            border: 1px solid rgba(249, 115, 22, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .tier-warning-banner svg { width: 20px; height: 20px; color: var(--orange); flex-shrink: 0; }
+        .tier-warning-banner-text { font-size: 12px; color: var(--text-primary); }
+        .tier-warning-banner-text strong { color: var(--orange); }
+        
+        /* ===== RACI ROLES STYLES ===== */
+        .raci-role-selector {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .raci-role-option {
+            padding: 10px 8px;
+            background: var(--bg-tertiary);
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+        .raci-role-option:hover { border-color: var(--border-default); }
+        .raci-role-option.selected { border-color: var(--accent); background: var(--accent-bg); }
+        .raci-role-option.hanko.selected { border-color: #6366f1; background: rgba(99, 102, 241, 0.1); }
+        .raci-role-option.roger.selected { border-color: #22c55e; background: rgba(34, 197, 94, 0.1); }
+        .raci-role-option.olivier.selected { border-color: #f97316; background: rgba(249, 115, 22, 0.1); }
+        .raci-role-option.jakarta.selected { border-color: #06b6d4; background: rgba(6, 182, 212, 0.1); }
+        .raci-role-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            margin: 0 auto 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .raci-role-icon svg { width: 16px; height: 16px; }
+        .raci-role-option.hanko .raci-role-icon { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
+        .raci-role-option.roger .raci-role-icon { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .raci-role-option.olivier .raci-role-icon { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .raci-role-option.jakarta .raci-role-icon { background: rgba(6, 182, 212, 0.2); color: #06b6d4; }
+        .raci-role-name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+        .raci-role-title { font-size: 9px; color: var(--text-muted); }
+        
+        /* RACI Assignment Grid */
+        .raci-assignment {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .raci-assignment-header { font-size: 11px; font-weight: 600; color: var(--cyan); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+        .raci-assignment-grid { display: grid; grid-template-columns: auto repeat(4, 1fr); gap: 4px; align-items: center; }
+        .raci-assignment-label { font-size: 10px; color: var(--text-muted); padding: 6px 8px; }
+        .raci-assignment-role { font-size: 9px; font-weight: 600; text-align: center; padding: 4px; color: var(--text-muted); }
+        .raci-assignment-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.15s;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        .raci-assignment-cell:hover { background: var(--bg-elevated); }
+        .raci-assignment-cell.active { font-weight: 700; }
+        .raci-assignment-cell.R { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .raci-assignment-cell.A { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .raci-assignment-cell.C { background: rgba(249, 115, 22, 0.2); color: #f97316; }
+        .raci-assignment-cell.I { background: rgba(107, 114, 128, 0.2); color: #9ca3af; }
+        
+        /* ===== APPROVAL WORKFLOW STYLES ===== */
+        .approval-section {
+            background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary));
+            border: 1px solid var(--border-subtle);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+        .approval-section-header {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .approval-section-header svg { width: 16px; height: 16px; color: var(--purple); }
+        .approval-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .approval-card {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-subtle);
+            border-radius: 8px;
+            padding: 14px;
+            transition: all 0.2s;
+        }
+        .approval-card.pending { border-color: var(--orange); border-style: dashed; }
+        .approval-card.approved { border-color: var(--green); background: rgba(34, 197, 94, 0.05); }
+        .approval-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .approval-card-role { font-size: 12px; font-weight: 600; }
+        .approval-card-role.hanko { color: #6366f1; }
+        .approval-card-role.roger { color: #22c55e; }
+        .approval-card-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+        .approval-card-status.pending { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
+        .approval-card-status.approved { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        .approval-card-desc { font-size: 10px; color: var(--text-muted); margin-bottom: 10px; }
+        .approval-card-time { font-size: 9px; color: var(--text-muted); margin-top: 6px; }
+        .approval-btn {
+            width: 100%;
+            padding: 8px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+        .approval-btn.approve { background: var(--green); color: white; }
+        .approval-btn.approve:hover { background: #16a34a; }
+        .approval-btn.revoke { background: var(--bg-tertiary); color: var(--text-muted); border: 1px solid var(--border-subtle); }
+        .approval-btn.revoke:hover { background: var(--red-dim); color: var(--red); border-color: var(--red); }
+        .approval-btn svg { width: 12px; height: 12px; }
+        
+        .go-no-go-section {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(239, 68, 68, 0.05));
+            border: 2px solid var(--green);
+            border-radius: 10px;
+            padding: 16px;
+            margin: 16px 0;
+            text-align: center;
+        }
+        .go-no-go-section.blocked { border-color: var(--red); background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05)); }
+        .go-no-go-title { font-size: 14px; font-weight: 600; color: var(--green); margin-bottom: 8px; }
+        .go-no-go-section.blocked .go-no-go-title { color: var(--red); }
+        .go-no-go-status { font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; }
+        .go-no-go-buttons { display: flex; gap: 10px; justify-content: center; }
+        .go-btn {
+            padding: 10px 24px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .go-btn.go { background: var(--green); color: white; }
+        .go-btn.go:hover { background: #16a34a; }
+        .go-btn.no-go { background: var(--bg-tertiary); color: var(--red); border: 1px solid var(--red); }
+        .go-btn.no-go:hover { background: var(--red); color: white; }
+        .go-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        
+        /* ===== TIER 2 ARTIFACT SECTIONS ===== */
+        .artifact-section {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 12px;
+            border-left: 3px solid var(--border-subtle);
+        }
+        .artifact-section.required { border-left-color: var(--orange); }
+        .artifact-section.complete { border-left-color: var(--green); }
+        .artifact-section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .artifact-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .artifact-section-title svg { width: 14px; height: 14px; }
+        .artifact-section-status { font-size: 9px; padding: 2px 6px; border-radius: 4px; }
+        .artifact-section-status.required { background: rgba(249, 115, 22, 0.2); color: var(--orange); }
+        .artifact-section-status.complete { background: rgba(34, 197, 94, 0.2); color: var(--green); }
+        
+        /* Impact Matrix */
+        .impact-matrix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        .impact-category {
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            padding: 10px;
+        }
+        .impact-category-label { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+        .impact-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+        .impact-tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .impact-tag .remove { cursor: pointer; color: var(--text-muted); }
+        .impact-tag .remove:hover { color: var(--red); }
+        .impact-add-input {
+            width: 100%;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border: 1px dashed var(--border-subtle);
+            border-radius: 4px;
+            color: var(--text-primary);
+            font-size: 10px;
+            margin-top: 6px;
+        }
+        .impact-add-input:focus { border-color: var(--accent); outline: none; }
+        
+        /* Data Model Section */
+        .data-model-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .data-model-column { background: var(--bg-secondary); border-radius: 6px; padding: 10px; }
+        .data-model-column-header { font-size: 10px; font-weight: 600; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+        .data-model-column.global .data-model-column-header { color: var(--purple); }
+        .data-model-column.tenant .data-model-column-header { color: var(--cyan); }
+        .entity-list { display: flex; flex-direction: column; gap: 4px; }
+        .entity-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            font-size: 11px;
+        }
+        .entity-item .remove { cursor: pointer; color: var(--text-muted); font-size: 10px; }
+        .entity-item .remove:hover { color: var(--red); }
+        
+        /* Rollout Plan */
+        .rollout-phases { display: flex; flex-direction: column; gap: 8px; }
+        .rollout-phase {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            border-left: 3px solid var(--accent);
+        }
+        .rollout-phase-number {
+            width: 24px;
+            height: 24px;
+            background: var(--accent);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            flex-shrink: 0;
+        }
+        .rollout-phase-content { flex: 1; }
+        .rollout-phase-name { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+        .rollout-phase-desc { font-size: 10px; color: var(--text-muted); }
+        
+        /* Artifact Progress */
+        .artifact-progress {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+        .artifact-progress-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+        .artifact-progress-title { font-size: 11px; font-weight: 600; color: var(--text-secondary); }
+        .artifact-progress-count { font-size: 11px; color: var(--text-muted); }
+        .artifact-progress-bar { height: 6px; background: var(--bg-secondary); border-radius: 3px; overflow: hidden; }
+        .artifact-progress-fill { height: 100%; background: linear-gradient(90deg, var(--green), var(--cyan)); border-radius: 3px; transition: width 0.3s; }
+        .artifact-checklist { margin-top: 10px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px; }
+        .artifact-check-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+        .artifact-check-item.complete { color: var(--green); }
+        .artifact-check-item svg { width: 10px; height: 10px; }
 </style>
 </head>
 <body>
@@ -2215,7 +2594,7 @@ Create a JSON object with this structure:
     "outOfScope": ["What we're NOT analyzing"]
   },
   "stakeholders": [
-    {"name": "Person/Team Name", "role": "Role description", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="9efbf3fff7f2defbe6fff3eef2fbb0fdf1f3">[email&#160;protected]</a>"}
+    {"name": "Person/Team Name", "role": "Role description", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2f4a424e46436f4a574e425f434a014c4042">[email&#160;protected]</a>"}
   ],
   "currentPainPoints": [
     {"issue": "Problem description", "impact": "Business impact", "severity": "high"}
@@ -2300,8 +2679,8 @@ ANALYSIS REQUIREMENTS:
     "outOfScope": ["Authentication flow", "Password reset", "Account creation"]
   },
   "stakeholders": [
-    {"name": "Support Team", "role": "Handles connection-related tickets", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4d7d1d4d4cbd6d0e4d0cbc0c0cbcb8ac7cbc9">[email&#160;protected]</a>"},
-    {"name": "Frontend Dev", "role": "Implements UI changes", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2c48495a6c584348484343024f4341">[email&#160;protected]</a>"}
+    {"name": "Support Team", "role": "Handles connection-related tickets", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5724222727382523172338333338387934383a">[email&#160;protected]</a>"},
+    {"name": "Frontend Dev", "role": "Implements UI changes", "contact": "<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4420213204302b20202b2b6a272b29">[email&#160;protected]</a>"}
   ],
   "currentPainPoints": [
     {"issue": "No visual feedback during connection check", "impact": "Users think system is frozen", "severity": "high"},
@@ -2400,8 +2779,9 @@ ANALYSIS REQUIREMENTS:
     </div></div></div>
     
     <!-- Brief Modal -->
-    <div class="modal-overlay" id="briefModal"><div class="modal xl"><div class="modal-header"><span class="modal-title" id="briefModalTitle">New Project Brief</span><button class="modal-close" id="closeBriefModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body">
+    <div class="modal-overlay" id="briefModal"><div class="modal xl"><div class="modal-header"><span class="modal-title" id="briefModalTitle">New Project Brief</span><button class="modal-close" id="closeBriefModal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div><div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <div class="brief-editor">
+            <!-- Title and Status Row -->
             <div class="form-row" style="gap:12px;">
                 <div class="form-group" style="flex:2;">
                     <label class="form-label">Brief Title</label>
@@ -2419,32 +2799,275 @@ ANALYSIS REQUIREMENTS:
                 </div>
             </div>
             
+            <!-- TIER SELECTION -->
+            <div class="brief-section" style="background: linear-gradient(135deg, var(--bg-tertiary), var(--bg-secondary)); border: 1px solid var(--border-subtle);">
+                <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>Delivery Tier Classification</div>
+                <div class="tier-selector" id="tierSelector">
+                    <div class="tier-option tier-0" data-tier="0">
+                        <div class="tier-option-label">Tier 0</div>
+                        <div class="tier-option-desc">Emergency Hotfix<br/>Production broken</div>
+                    </div>
+                    <div class="tier-option tier-1" data-tier="1">
+                        <div class="tier-option-label">Tier 1</div>
+                        <div class="tier-option-desc">Low-risk Change<br/>Limited blast radius</div>
+                    </div>
+                    <div class="tier-option tier-2" data-tier="2">
+                        <div class="tier-option-label">Tier 2</div>
+                        <div class="tier-option-desc">High-risk Platform<br/>Full brief required</div>
+                    </div>
+                </div>
+                <input type="hidden" id="briefTier" value="" />
+                
+                <!-- Tier 2 Triggers Checklist -->
+                <div class="tier-triggers" id="tier2Triggers" style="display:none;">
+                    <div class="tier-triggers-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Tier 2 Triggers (check all that apply)</div>
+                    <div id="tier2TriggersList"></div>
+                </div>
+            </div>
+            
+            <!-- Artifact Progress (for Tier 2) -->
+            <div class="artifact-progress" id="artifactProgress" style="display:none;">
+                <div class="artifact-progress-header">
+                    <div class="artifact-progress-title">📋 Required Artifacts</div>
+                    <div class="artifact-progress-count" id="artifactProgressCount">0/9 complete</div>
+                </div>
+                <div class="artifact-progress-bar"><div class="artifact-progress-fill" id="artifactProgressFill" style="width:0%"></div></div>
+                <div class="artifact-checklist" id="artifactChecklist"></div>
+            </div>
+            
+            <!-- Tier Warning Banner (shown for Tier 2) -->
+            <div class="tier-warning-banner" id="tierWarningBanner" style="display:none;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                <div class="tier-warning-banner-text"><strong>Tier 2 - High Risk Platform Change</strong><br/>All required artifacts must be completed before development starts. Two-key Go/No-Go required for production.</div>
+            </div>
+            
+            <!-- Problem Statement -->
             <div class="brief-section">
                 <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Problem Statement</div>
                 <textarea class="form-input" id="briefProblem" rows="3" placeholder="What problem are we solving? Why does it matter?"></textarea>
             </div>
             
+            <!-- Success Criteria (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="successCriteriaSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Success Criteria</div>
+                    <span class="artifact-section-status required" id="successCriteriaStatus">Required</span>
+                </div>
+                <textarea class="form-input" id="briefSuccessCriteria" rows="2" placeholder="What measurable outcomes define success?"></textarea>
+            </div>
+            
+            <!-- Customer Impact Statement (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="customerImpactSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Customer Impact Statement</div>
+                    <span class="artifact-section-status required" id="customerImpactStatus">Required</span>
+                </div>
+                <textarea class="form-input" id="briefCustomerImpact" rows="2" placeholder="What changes for customers? What will they see differently?"></textarea>
+            </div>
+            
+            <!-- Participants -->
             <div class="brief-section">
-                <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Participants</div>
+                <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Participants (RACI Roles)</div>
                 <div class="brief-participants" id="briefParticipants"></div>
                 <div class="form-row" style="gap:8px; margin-top:8px;">
-                    <input type="text" class="form-input" id="briefNewParticipant" placeholder="Name" style="flex:2;" />
                     <select class="form-input" id="briefParticipantRole" style="flex:1;">
-                        <option value="decision">Decision</option>
-                        <option value="product">Product</option>
-                        <option value="dev">Developer</option>
-                        <option value="review">Review</option>
-                        <option value="stakeholder">Stakeholder</option>
+                        <option value="hanko">Hanko (CPO) - Product</option>
+                        <option value="roger">Roger (CTO) - Tech</option>
+                        <option value="olivier">Olivier (Ops) - Customer</option>
+                        <option value="jakarta">Jakarta Eng - Dev</option>
+                    </select>
+                    <select class="form-input" id="briefParticipantRaci" style="flex:1;">
+                        <option value="A">A - Accountable</option>
+                        <option value="R">R - Responsible</option>
+                        <option value="C">C - Consulted</option>
+                        <option value="I">I - Informed</option>
                     </select>
                     <button class="btn" id="briefAddParticipant"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
                 </div>
             </div>
             
+            <!-- Data Model Boundaries (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="dataModelSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Data Model Boundaries</div>
+                    <span class="artifact-section-status required" id="dataModelStatus">Required</span>
+                </div>
+                <div class="data-model-grid">
+                    <div class="data-model-column global">
+                        <div class="data-model-column-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>Global (Cross-tenant)</div>
+                        <div class="entity-list" id="globalEntitiesList"></div>
+                        <input type="text" class="impact-add-input" id="addGlobalEntity" placeholder="Add global entity..." />
+                    </div>
+                    <div class="data-model-column tenant">
+                        <div class="data-model-column-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>Tenant-local</div>
+                        <div class="entity-list" id="tenantEntitiesList"></div>
+                        <input type="text" class="impact-add-input" id="addTenantEntity" placeholder="Add tenant entity..." />
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label class="form-label" style="font-size:10px;">Entity Relationships & Notes</label>
+                    <textarea class="form-input" id="briefDataModelNotes" rows="2" placeholder="Describe entity relationships and boundaries..."></textarea>
+                </div>
+            </div>
+            
+            <!-- Security/Privacy Constraints (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="securitySection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Security/Privacy Constraints</div>
+                    <span class="artifact-section-status required" id="securityStatus">Required</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Multi-tenant Exposure Rules</label>
+                    <textarea class="form-input" id="briefMultiTenantExposure" rows="2" placeholder="What can/cannot be seen across tenants?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Data Isolation Requirements</label>
+                    <textarea class="form-input" id="briefDataIsolation" rows="2" placeholder="How is data isolated between tenants?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Audit Requirements</label>
+                    <textarea class="form-input" id="briefAuditRequirements" rows="2" placeholder="What needs to be logged/audited?"></textarea>
+                </div>
+            </div>
+            
+            <!-- Impact Matrix (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="impactMatrixSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Impact Matrix</div>
+                    <span class="artifact-section-status required" id="impactMatrixStatus">Required</span>
+                </div>
+                <div class="impact-matrix">
+                    <div class="impact-category">
+                        <div class="impact-category-label">Screens Affected</div>
+                        <div class="impact-tags" id="impactScreens"></div>
+                        <input type="text" class="impact-add-input" id="addImpactScreen" placeholder="Add screen..." />
+                    </div>
+                    <div class="impact-category">
+                        <div class="impact-category-label">Flows Affected</div>
+                        <div class="impact-tags" id="impactFlows"></div>
+                        <input type="text" class="impact-add-input" id="addImpactFlow" placeholder="Add flow..." />
+                    </div>
+                    <div class="impact-category">
+                        <div class="impact-category-label">Integrations Affected</div>
+                        <div class="impact-tags" id="impactIntegrations"></div>
+                        <input type="text" class="impact-add-input" id="addImpactIntegration" placeholder="Add integration..." />
+                    </div>
+                    <div class="impact-category">
+                        <div class="impact-category-label">APIs Affected</div>
+                        <div class="impact-tags" id="impactApis"></div>
+                        <input type="text" class="impact-add-input" id="addImpactApi" placeholder="Add API..." />
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Agreed Solution -->
             <div class="brief-section">
                 <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>Agreed Solution</div>
                 <textarea class="form-input" id="briefSolution" rows="4" placeholder="What did we agree to build/change?&#10;1. ...&#10;2. ...&#10;3. ..."></textarea>
             </div>
             
+            <!-- Migration/Rollout Plan (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="rolloutSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Migration & Rollout Plan</div>
+                    <span class="artifact-section-status required" id="rolloutStatus">Required</span>
+                </div>
+                <div class="form-row" style="gap:10px; margin-bottom:10px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                        <input type="checkbox" id="briefBackfillRequired" /> Backfill Required
+                    </label>
+                </div>
+                <div class="form-group" id="backfillDescGroup" style="display:none;">
+                    <label class="form-label" style="font-size:10px;">Backfill Description</label>
+                    <textarea class="form-input" id="briefBackfillDescription" rows="2" placeholder="What data needs to be backfilled?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Feature Flags</label>
+                    <div class="impact-tags" id="featureFlagsList"></div>
+                    <input type="text" class="impact-add-input" id="addFeatureFlag" placeholder="Add feature flag..." />
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Rollout Phases</label>
+                    <div class="rollout-phases" id="rolloutPhasesList"></div>
+                    <div class="form-row" style="gap:6px; margin-top:8px;">
+                        <input type="text" class="form-input" id="addRolloutPhaseName" placeholder="Phase name..." style="flex:1;" />
+                        <input type="text" class="form-input" id="addRolloutPhaseDesc" placeholder="Description..." style="flex:2;" />
+                        <button class="btn" id="addRolloutPhaseBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Monitoring & Alerts</label>
+                    <textarea class="form-input" id="briefMonitoring" rows="2" placeholder="What metrics/alerts to watch?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Rollback Procedure</label>
+                    <textarea class="form-input" id="briefRollbackProcedure" rows="2" placeholder="How to rollback if needed?"></textarea>
+                </div>
+            </div>
+            
+            <!-- Test Plan (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="testPlanSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/></svg>Test Plan</div>
+                    <span class="artifact-section-status required" id="testPlanStatus">Required</span>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Unit Tests</label>
+                    <textarea class="form-input" id="briefUnitTests" rows="2" placeholder="New unit tests required..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Integration Tests</label>
+                    <textarea class="form-input" id="briefIntegrationTests" rows="2" placeholder="Integration test scenarios..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Regression Tests (from Impact Matrix)</label>
+                    <textarea class="form-input" id="briefRegressionTests" rows="2" placeholder="Which existing flows need regression testing?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Daily Smoke Tests</label>
+                    <div class="form-row" style="gap:10px; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="smokeCart" /> Cart/Checkout</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="smokeQuotes" /> Quotation Accept</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="smokeRegistration" /> Registration</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="smokePortal" /> Portal Login</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Customer Communication (Tier 2 required) -->
+            <div class="artifact-section tier2-section" id="customerCommsSection" style="display:none;">
+                <div class="artifact-section-header">
+                    <div class="artifact-section-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Customer Communication</div>
+                    <span class="artifact-section-status required" id="customerCommsStatus">Required</span>
+                </div>
+                <div class="form-row" style="gap:20px; margin-bottom:10px;">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                        <input type="checkbox" id="briefReleaseNotesRequired" /> Release Notes Required
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                        <input type="checkbox" id="briefPreCommRequired" /> Pre-communication Required
+                    </label>
+                </div>
+                <div class="form-group" id="releaseNotesGroup" style="display:none;">
+                    <label class="form-label" style="font-size:10px;">Release Notes Draft</label>
+                    <textarea class="form-input" id="briefReleaseNotes" rows="3" placeholder="Customer-facing release notes..."></textarea>
+                </div>
+                <div class="form-group" id="preCommGroup" style="display:none;">
+                    <label class="form-label" style="font-size:10px;">Pre-communication Plan</label>
+                    <textarea class="form-input" id="briefPreCommPlan" rows="2" placeholder="How/when to communicate to customers before release?"></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size:10px;">Impacted Customer Types</label>
+                    <div class="form-row" style="gap:10px; flex-wrap:wrap;">
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="custExhibitors" /> Exhibitors</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="custOrganizers" /> Organizers</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="custEAs" /> Exhibition Authorities</label>
+                        <label style="display:flex; align-items:center; gap:4px; font-size:10px; cursor:pointer;"><input type="checkbox" id="custInternal" /> Internal Users</label>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Acceptance Criteria -->
             <div class="brief-section">
                 <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Acceptance Criteria</div>
                 <div class="brief-criteria-list" id="briefCriteria"></div>
@@ -2454,11 +3077,42 @@ ANALYSIS REQUIREMENTS:
                 </div>
             </div>
             
+            <!-- TWO-KEY APPROVAL (Tier 2 only) -->
+            <div class="approval-section tier2-section" id="approvalSection" style="display:none;">
+                <div class="approval-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>Two-Key Go/No-Go Approval (Tier 2 Required)</div>
+                <div class="approval-cards">
+                    <div class="approval-card" id="productApprovalCard">
+                        <div class="approval-card-header">
+                            <span class="approval-card-role hanko">Product (Hanko)</span>
+                            <span class="approval-card-status pending" id="productApprovalStatus">Pending</span>
+                        </div>
+                        <div class="approval-card-desc">Owns: Customer impact, behavior changes, comms readiness</div>
+                        <button class="approval-btn approve" id="productApproveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve for Production</button>
+                        <div class="approval-card-time" id="productApprovalTime"></div>
+                    </div>
+                    <div class="approval-card" id="techApprovalCard">
+                        <div class="approval-card-header">
+                            <span class="approval-card-role roger">Tech (Roger)</span>
+                            <span class="approval-card-status pending" id="techApprovalStatus">Pending</span>
+                        </div>
+                        <div class="approval-card-desc">Owns: Architecture, security, migration strategy, rollout</div>
+                        <button class="approval-btn approve" id="techApproveBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve for Production</button>
+                        <div class="approval-card-time" id="techApprovalTime"></div>
+                    </div>
+                </div>
+                <div class="go-no-go-section blocked" id="goNoGoSection">
+                    <div class="go-no-go-title" id="goNoGoTitle">⏳ Awaiting Approvals</div>
+                    <div class="go-no-go-status" id="goNoGoStatus">Both Product and Tech approval required before production deployment</div>
+                </div>
+            </div>
+            
+            <!-- Discussion Notes -->
             <div class="brief-section">
                 <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>Discussion Notes</div>
                 <textarea class="form-input" id="briefNotes" rows="4" placeholder="Key points from the discussion...&#10;• ...&#10;• ...&#10;• Agreed that..."></textarea>
             </div>
             
+            <!-- Linked Flows -->
             <div class="brief-section">
                 <div class="brief-section-header"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Linked Flows</div>
                 <div class="brief-linked-flows" id="briefLinkedFlows"></div>
@@ -2467,6 +3121,7 @@ ANALYSIS REQUIREMENTS:
         </div>
     </div><div class="modal-footer">
         <button class="btn" id="deleteBriefBtn" style="color:var(--red); margin-right:auto;">Delete Brief</button>
+        <button class="btn" id="exportBriefBtn" title="Export brief as JSON"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export</button>
         <button class="btn" id="importBriefBtn" title="Import brief from JSON file"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Import</button>
         <button class="btn" id="cancelBriefBtn">Cancel</button>
         <button class="btn btn-primary" id="saveBriefBtn">Save Brief</button>
@@ -2560,10 +3215,143 @@ ANALYSIS REQUIREMENTS:
         webhook: { name: 'Webhook', color: '#eab308', icon: '<path d="M10 13a5 5 0 007.54.54l3-3" stroke="currentColor" stroke-width="2" fill="none"/>' }
     };
     
+    // Legacy ACTOR_TYPES kept for backward compatibility
     const ACTOR_TYPES = {
         user: { name: 'User', color: '#0ea5e9', icon: '<path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>' },
         system: { name: 'System', color: '#a855f7', icon: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/>' },
         admin: { name: 'Admin', color: '#f59e0b', icon: '<path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>' }
+    };
+    
+    // ===== RACI ROLES - Toddoo Team Structure =====
+    const RACI_ROLES = {
+        hanko: { 
+            name: 'Hanko (CPO)', 
+            shortName: 'CPO',
+            color: '#6366f1',
+            owns: ['Product direction', 'Scope & priorities', 'Customer impact', 'Acceptance criteria', 'Customer comms'],
+            icon: '<path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>'
+        },
+        roger: { 
+            name: 'Roger (CTO)', 
+            shortName: 'CTO',
+            color: '#22c55e',
+            owns: ['System architecture', 'Data model boundaries', 'Security/privacy', 'Migration strategy', 'Definition of ready'],
+            icon: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/><circle cx="12" cy="12" r="3"/>'
+        },
+        olivier: { 
+            name: 'Olivier (Ops)', 
+            shortName: 'Ops',
+            color: '#f97316',
+            owns: ['Customer feedback loop', 'Onboarding/support insights', 'Test planning & execution', 'Operational readiness'],
+            icon: '<path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/>'
+        },
+        jakarta: { 
+            name: 'Jakarta Engineering', 
+            shortName: 'Eng',
+            color: '#06b6d4',
+            owns: ['Implementation', 'Unit tests', 'Raises blockers', 'Supports fixes/rollbacks'],
+            icon: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>'
+        }
+    };
+    
+    // ===== TIER SYSTEM =====
+    const TIERS = {
+        0: {
+            name: 'Tier 0',
+            label: 'Emergency Hotfix',
+            color: '#ef4444',
+            when: 'Production is broken or revenue/operations are blocked',
+            goal: 'Restore service fast, then document and review retro',
+            requiredArtifacts: ['symptom', 'rootCause', 'change'],
+            recommendedArtifacts: ['smokeChecks', 'incidentReviewDate']
+        },
+        1: {
+            name: 'Tier 1',
+            label: 'Low-risk Change',
+            color: '#22c55e',
+            when: 'Local bugfix or small improvement with limited blast radius',
+            goal: 'Ship daily updates safely with minimal overhead',
+            requiredArtifacts: ['whatChanges', 'why', 'testSteps', 'rollback'],
+            recommendedArtifacts: ['impactedAreas']
+        },
+        2: {
+            name: 'Tier 2',
+            label: 'High-risk Platform Change',
+            color: '#f97316',
+            when: 'Identity, billing/VAT, access/teams, portal aggregation, Exact sync, migrations, or cross-tenant/security-sensitive changes',
+            goal: 'Prevent assumption-driven implementations and regressions',
+            requiredArtifacts: [
+                'problem', 'successCriteria', 'customerImpactStatement',
+                'dataModel', 'securityPrivacy', 'impactMatrix',
+                'rolloutPlan', 'testPlan', 'customerComms'
+            ],
+            approvals: ['productApproval', 'techApproval']
+        }
+    };
+    
+    // Tier 2 Trigger Checks (from RACI Section 3.2)
+    const TIER_2_TRIGGERS = [
+        {
+            id: 'identity',
+            label: 'Identity changes',
+            description: 'Customer identity resolution/matching, global identifiers, duplicate checks, URL/domain validation',
+            keywords: ['identity', 'customer matching', 'duplicate', 'domain validation', 'url validation', 'global identifier']
+        },
+        {
+            id: 'billing',
+            label: 'Billing/VAT changes',
+            description: 'Billing identity selection, VAT/tax calculation, invoice/quotation generation, document immutability/audit trail',
+            keywords: ['billing', 'vat', 'tax', 'invoice', 'quotation', 'audit', 'document immutability']
+        },
+        {
+            id: 'access',
+            label: 'Access/Teams changes',
+            description: 'Teams/coordinators/access control, membership requests, organizer overrides',
+            keywords: ['access', 'team', 'permission', 'coordinator', 'membership', 'organizer override']
+        },
+        {
+            id: 'portal',
+            label: 'Portal aggregation',
+            description: 'Portal aggregation across multiple sellers/tenants',
+            keywords: ['portal', 'aggregation', 'multi-seller', 'multi-tenant portal']
+        },
+        {
+            id: 'migration',
+            label: 'Schema/Migration changes',
+            description: 'Schema migration, backfill, changes to historical behavior or reporting',
+            keywords: ['migration', 'schema', 'backfill', 'historical', 'reporting change']
+        },
+        {
+            id: 'integration',
+            label: 'Integration contract changes',
+            description: 'Exact Online sync, partner ingestion, API contract changes',
+            keywords: ['exact', 'integration', 'sync', 'api contract', 'partner ingestion']
+        },
+        {
+            id: 'crossTenant',
+            label: 'Cross-tenant exposure',
+            description: 'Changes that could expose cross-tenant information or change authorization rules',
+            keywords: ['cross-tenant', 'authorization', 'exposure', 'security rule', 'tenant isolation']
+        }
+    ];
+    
+    // Delivery Statuses (expanded for RACI workflow)
+    const DELIVERY_STATUSES = {
+        'draft': { label: 'Draft', color: '#6b7280', phase: 'planning' },
+        'tier-classification': { label: 'Tier Classification', color: '#f59e0b', phase: 'planning' },
+        'artifacts-required': { label: 'Artifacts Required', color: '#f59e0b', phase: 'planning' },
+        'ready-for-dev': { label: 'Ready for Dev', color: '#22c55e', phase: 'planning' },
+        'in-development': { label: 'In Development', color: '#3b82f6', phase: 'implementation' },
+        'code-review': { label: 'Code Review', color: '#8b5cf6', phase: 'implementation' },
+        'staging-deploy': { label: 'Staging Deploy', color: '#f97316', phase: 'validation' },
+        'regression-testing': { label: 'Regression Testing', color: '#f97316', phase: 'validation' },
+        'awaiting-product-approval': { label: 'Awaiting Product Approval', color: '#ec4899', phase: 'approval' },
+        'awaiting-tech-approval': { label: 'Awaiting Tech Approval', color: '#ec4899', phase: 'approval' },
+        'go-no-go': { label: 'Go/No-Go Decision', color: '#ef4444', phase: 'approval' },
+        'production-deploy': { label: 'Production Deploy', color: '#22c55e', phase: 'release' },
+        'monitoring': { label: 'Monitoring', color: '#06b6d4', phase: 'release' },
+        'complete': { label: 'Complete', color: '#10b981', phase: 'complete' },
+        'rollback-executed': { label: 'Rollback Executed', color: '#ef4444', phase: 'complete' }
     };
     
     const TEMPLATES = [
@@ -2746,18 +3534,102 @@ ANALYSIS REQUIREMENTS:
             document.getElementById('cancelBriefBtn')?.addEventListener('click', () => this.hideModal('briefModal'));
             document.getElementById('saveBriefBtn')?.addEventListener('click', () => this.saveBrief());
             document.getElementById('deleteBriefBtn')?.addEventListener('click', () => this.deleteBrief());
+            document.getElementById('exportBriefBtn')?.addEventListener('click', () => this.exportBrief());
             document.getElementById('importBriefBtn')?.addEventListener('click', () => document.getElementById('importBriefInput').click());
             document.getElementById('importBriefInput')?.addEventListener('change', e => this.importBrief(e));
             document.getElementById('briefAddParticipant')?.addEventListener('click', () => this.addBriefParticipant());
-            document.getElementById('briefNewParticipant')?.addEventListener('keydown', e => {
-                if (e.key === 'Enter') this.addBriefParticipant();
-            });
             document.getElementById('briefAddCriteria')?.addEventListener('click', () => this.addBriefCriteria());
             document.getElementById('briefNewCriteria')?.addEventListener('keydown', e => {
                 if (e.key === 'Enter') this.addBriefCriteria();
             });
             document.getElementById('briefLinkFlowBtn')?.addEventListener('click', () => this.showLinkFlowModal());
             document.getElementById('closeLinkFlowModal')?.addEventListener('click', () => this.hideModal('linkFlowModal'));
+            
+            // RACI Tier selector events
+            document.querySelectorAll('.tier-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    const tier = parseInt(opt.dataset.tier);
+                    this.selectTier(tier);
+                });
+            });
+            
+            // RACI Data model inputs
+            document.getElementById('addGlobalEntity')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                    if (!this.editingBrief.dataModel) this.editingBrief.dataModel = { globalEntities: [], tenantEntities: [], notes: '' };
+                    if (!this.editingBrief.dataModel.globalEntities) this.editingBrief.dataModel.globalEntities = [];
+                    this.editingBrief.dataModel.globalEntities.push(e.target.value.trim());
+                    e.target.value = '';
+                    this.renderDataModelEntities();
+                    this.updateArtifactProgress();
+                }
+            });
+            document.getElementById('addTenantEntity')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                    if (!this.editingBrief.dataModel) this.editingBrief.dataModel = { globalEntities: [], tenantEntities: [], notes: '' };
+                    if (!this.editingBrief.dataModel.tenantEntities) this.editingBrief.dataModel.tenantEntities = [];
+                    this.editingBrief.dataModel.tenantEntities.push(e.target.value.trim());
+                    e.target.value = '';
+                    this.renderDataModelEntities();
+                    this.updateArtifactProgress();
+                }
+            });
+            
+            // RACI Impact matrix inputs
+            ['Screen', 'Flow', 'Integration', 'Api'].forEach(cat => {
+                document.getElementById('addImpact' + cat)?.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && e.target.value.trim()) {
+                        const key = cat.toLowerCase() + 's';
+                        if (!this.editingBrief.impactMatrix) this.editingBrief.impactMatrix = {};
+                        if (!this.editingBrief.impactMatrix[key]) this.editingBrief.impactMatrix[key] = [];
+                        this.editingBrief.impactMatrix[key].push(e.target.value.trim());
+                        e.target.value = '';
+                        this.renderImpactMatrix();
+                        this.updateArtifactProgress();
+                    }
+                });
+            });
+            
+            // RACI Feature flags input
+            document.getElementById('addFeatureFlag')?.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && e.target.value.trim()) {
+                    if (!this.editingBrief.rollout) this.editingBrief.rollout = { featureFlags: [], phases: [] };
+                    if (!this.editingBrief.rollout.featureFlags) this.editingBrief.rollout.featureFlags = [];
+                    this.editingBrief.rollout.featureFlags.push(e.target.value.trim());
+                    e.target.value = '';
+                    this.renderFeatureFlags();
+                }
+            });
+            
+            // RACI Rollout phase button
+            document.getElementById('addRolloutPhaseBtn')?.addEventListener('click', () => {
+                const nameInput = document.getElementById('rolloutPhaseName');
+                const descInput = document.getElementById('rolloutPhaseDesc');
+                if (nameInput?.value.trim()) {
+                    if (!this.editingBrief.rollout) this.editingBrief.rollout = { featureFlags: [], phases: [] };
+                    if (!this.editingBrief.rollout.phases) this.editingBrief.rollout.phases = [];
+                    this.editingBrief.rollout.phases.push({ name: nameInput.value.trim(), description: descInput?.value.trim() || '' });
+                    nameInput.value = '';
+                    if (descInput) descInput.value = '';
+                    this.renderRolloutPhases();
+                    this.updateArtifactProgress();
+                }
+            });
+            
+            // RACI Approval buttons
+            document.getElementById('productApproveBtn')?.addEventListener('click', () => this.toggleProductApproval());
+            document.getElementById('techApproveBtn')?.addEventListener('click', () => this.toggleTechApproval());
+            
+            // RACI Backfill and comms checkboxes
+            document.getElementById('briefBackfillRequired')?.addEventListener('change', () => this.toggleBackfillDesc());
+            document.getElementById('briefReleaseNotesRequired')?.addEventListener('change', () => this.toggleCommsFields());
+            document.getElementById('briefPreCommRequired')?.addEventListener('change', () => this.toggleCommsFields());
+            
+            // RACI Artifact progress updates on text changes
+            ['briefProblem', 'briefSuccessCriteria', 'briefCustomerImpact', 'briefMultiTenantExposure', 
+             'briefDataIsolation', 'briefRollbackProcedure', 'briefUnitTests'].forEach(id => {
+                document.getElementById(id)?.addEventListener('input', () => this.updateArtifactProgress());
+            });
             
             // Conflict modal events
             document.getElementById('closeEditingConflictModal')?.addEventListener('click', () => this.hideModal('editingConflictModal'));
@@ -7466,22 +8338,57 @@ ANALYSIS REQUIREMENTS:
                     const progress = criteria.length > 0 ? Math.round((checkedCriteria / criteria.length) * 100) : 0;
                     const participants = brief.participants || [];
                     
+                    // Tier badge HTML
+                    const tierBadge = brief.tier !== null && brief.tier !== undefined
+                        ? `<span class="tier-badge tier-${brief.tier}">Tier ${brief.tier}</span>`
+                        : `<span class="tier-badge tier-unset">No Tier</span>`;
+                    
+                    // Approval status for Tier 2
+                    let approvalHtml = '';
+                    if (brief.tier === 2) {
+                        const productOk = brief.approvals?.product?.approved;
+                        const techOk = brief.approvals?.tech?.approved;
+                        if (productOk && techOk) {
+                            approvalHtml = `<div class="brief-card-meta-item" style="color:var(--green);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>Go/No-Go Ready</div>`;
+                        } else {
+                            const pending = [];
+                            if (!productOk) pending.push('Product');
+                            if (!techOk) pending.push('Tech');
+                            approvalHtml = `<div class="brief-card-meta-item" style="color:var(--orange);"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Awaiting ${pending.join(', ')}</div>`;
+                        }
+                    }
+                    
+                    // RACI participants display
+                    const raciParticipants = participants.map(p => {
+                        const roleInfo = RACI_ROLES[p.role];
+                        if (roleInfo) {
+                            return `<span style="color:${roleInfo.color};" title="${roleInfo.name} (${p.raci || 'C'})">${roleInfo.shortName}</span>`;
+                        }
+                        return `<span>${p.name || p.role}</span>`;
+                    }).join(', ');
+                    
                     html += `
-                        <div class="brief-card" data-brief-id="${brief.id}">
+                        <div class="brief-card" data-brief-id="${brief.id}" style="${brief.tier === 2 ? 'border-left-color: var(--orange);' : brief.tier === 0 ? 'border-left-color: var(--red);' : ''}">
                             <div class="brief-card-header">
                                 <div class="brief-card-name">${this.escapeHtml(brief.title || 'Untitled Brief')}</div>
-                                <div class="brief-card-status ${statusColors[brief.status] || 'draft'}">${brief.status || 'draft'}</div>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    ${tierBadge}
+                                    <div class="brief-card-status ${statusColors[brief.status] || 'draft'}">${brief.status || 'draft'}</div>
+                                </div>
                             </div>
                             <div class="brief-card-problem">${this.escapeHtml(brief.problem || 'No problem statement')}</div>
                             <div class="brief-card-meta">
-                                <div class="brief-card-meta-item">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                                    ${participants.length} participant${participants.length !== 1 ? 's' : ''}
-                                </div>
+                                ${participants.length > 0 ? `
+                                    <div class="brief-card-meta-item">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                        ${raciParticipants}
+                                    </div>
+                                ` : ''}
                                 <div class="brief-card-meta-item">
                                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
                                     ${checkedCriteria}/${criteria.length} criteria
                                 </div>
+                                ${approvalHtml}
                             </div>
                             ${linkedFlows.length > 0 ? `
                                 <div class="brief-card-flows">
@@ -8386,22 +9293,34 @@ ANALYSIS REQUIREMENTS:
             this.currentBriefId = briefId;
             
             if (briefId && this.briefs[briefId]) {
-                // Edit existing brief
-                this.editingBrief = { ...this.briefs[briefId] };
+                // Edit existing brief - deep copy
+                this.editingBrief = JSON.parse(JSON.stringify(this.briefs[briefId]));
                 document.getElementById('briefModalTitle').textContent = 'Edit Project Brief';
                 document.getElementById('deleteBriefBtn').style.display = 'block';
             } else {
-                // New brief
+                // New brief with full RACI structure
                 this.editingBrief = {
                     id: 'brief_' + Date.now(),
                     title: '',
                     status: 'draft',
+                    tier: null, // 0, 1, or 2
+                    tier2Triggers: {},
                     problem: '',
+                    successCriteria: '',
+                    customerImpact: '',
                     solution: '',
                     notes: '',
                     participants: [],
                     criteria: [],
                     linkedFlows: [],
+                    // Tier 2 artifacts
+                    dataModel: { globalEntities: [], tenantEntities: [], notes: '' },
+                    security: { multiTenantExposure: '', dataIsolation: '', auditRequirements: '' },
+                    impactMatrix: { screens: [], flows: [], integrations: [], apis: [] },
+                    rollout: { backfillRequired: false, backfillDescription: '', featureFlags: [], phases: [], monitoring: '', rollbackProcedure: '' },
+                    testPlan: { unitTests: '', integrationTests: '', regressionTests: '', smokeTests: { cart: false, quotes: false, registration: false, portal: false } },
+                    customerComms: { releaseNotesRequired: false, releaseNotes: '', preCommRequired: false, preCommPlan: '', impactedCustomerTypes: [] },
+                    approvals: { product: { approved: false, approvedAt: null }, tech: { approved: false, approvedAt: null } },
                     createdAt: new Date().toISOString(),
                     updatedAt: new Date().toISOString()
                 };
@@ -8409,31 +9328,326 @@ ANALYSIS REQUIREMENTS:
                 document.getElementById('deleteBriefBtn').style.display = 'none';
             }
             
-            // Populate form
+            // Ensure nested objects exist for legacy briefs
+            if (!this.editingBrief.dataModel) this.editingBrief.dataModel = { globalEntities: [], tenantEntities: [], notes: '' };
+            if (!this.editingBrief.security) this.editingBrief.security = {};
+            if (!this.editingBrief.impactMatrix) this.editingBrief.impactMatrix = { screens: [], flows: [], integrations: [], apis: [] };
+            if (!this.editingBrief.rollout) this.editingBrief.rollout = { featureFlags: [], phases: [] };
+            if (!this.editingBrief.testPlan) this.editingBrief.testPlan = { smokeTests: {} };
+            if (!this.editingBrief.customerComms) this.editingBrief.customerComms = { impactedCustomerTypes: [] };
+            if (!this.editingBrief.approvals) this.editingBrief.approvals = { product: {}, tech: {} };
+            
+            // Populate basic form fields
             document.getElementById('briefTitle').value = this.editingBrief.title || '';
             document.getElementById('briefStatus').value = this.editingBrief.status || 'draft';
             document.getElementById('briefProblem').value = this.editingBrief.problem || '';
             document.getElementById('briefSolution').value = this.editingBrief.solution || '';
             document.getElementById('briefNotes').value = this.editingBrief.notes || '';
             
+            // Tier selection
+            document.getElementById('briefTier').value = this.editingBrief.tier ?? '';
+            this.renderTierSelector();
+            
+            // Tier 2 specific fields
+            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+            const setCheck = (id, val) => { const el = document.getElementById(id); if (el) el.checked = !!val; };
+            
+            setVal('briefSuccessCriteria', this.editingBrief.successCriteria);
+            setVal('briefCustomerImpact', this.editingBrief.customerImpact);
+            setVal('briefDataModelNotes', this.editingBrief.dataModel?.notes);
+            setVal('briefMultiTenantExposure', this.editingBrief.security?.multiTenantExposure);
+            setVal('briefDataIsolation', this.editingBrief.security?.dataIsolation);
+            setVal('briefAuditRequirements', this.editingBrief.security?.auditRequirements);
+            setCheck('briefBackfillRequired', this.editingBrief.rollout?.backfillRequired);
+            setVal('briefBackfillDescription', this.editingBrief.rollout?.backfillDescription);
+            setVal('briefMonitoring', this.editingBrief.rollout?.monitoring);
+            setVal('briefRollbackProcedure', this.editingBrief.rollout?.rollbackProcedure);
+            setVal('briefUnitTests', this.editingBrief.testPlan?.unitTests);
+            setVal('briefIntegrationTests', this.editingBrief.testPlan?.integrationTests);
+            setVal('briefRegressionTests', this.editingBrief.testPlan?.regressionTests);
+            setCheck('smokeCart', this.editingBrief.testPlan?.smokeTests?.cart);
+            setCheck('smokeQuotes', this.editingBrief.testPlan?.smokeTests?.quotes);
+            setCheck('smokeRegistration', this.editingBrief.testPlan?.smokeTests?.registration);
+            setCheck('smokePortal', this.editingBrief.testPlan?.smokeTests?.portal);
+            setCheck('briefReleaseNotesRequired', this.editingBrief.customerComms?.releaseNotesRequired);
+            setVal('briefReleaseNotes', this.editingBrief.customerComms?.releaseNotes);
+            setCheck('briefPreCommRequired', this.editingBrief.customerComms?.preCommRequired);
+            setVal('briefPreCommPlan', this.editingBrief.customerComms?.preCommPlan);
+            setCheck('custExhibitors', (this.editingBrief.customerComms?.impactedCustomerTypes || []).includes('exhibitors'));
+            setCheck('custOrganizers', (this.editingBrief.customerComms?.impactedCustomerTypes || []).includes('organizers'));
+            setCheck('custEAs', (this.editingBrief.customerComms?.impactedCustomerTypes || []).includes('eas'));
+            setCheck('custInternal', (this.editingBrief.customerComms?.impactedCustomerTypes || []).includes('internal'));
+            
+            // Render dynamic sections
             this.renderBriefParticipants();
             this.renderBriefCriteria();
             this.renderBriefLinkedFlows();
+            this.renderTier2Triggers();
+            this.renderDataModelEntities();
+            this.renderImpactMatrix();
+            this.renderFeatureFlags();
+            this.renderRolloutPhases();
+            this.renderApprovals();
+            this.updateTier2Visibility();
+            this.updateArtifactProgress();
+            this.toggleBackfillDesc();
+            this.toggleCommsFields();
             
             this.showModal('briefModal');
+        }
+        
+        renderTierSelector() {
+            const selector = document.getElementById('tierSelector');
+            if (!selector) return;
+            const currentTier = this.editingBrief?.tier;
+            selector.querySelectorAll('.tier-option').forEach(opt => {
+                const tier = parseInt(opt.dataset.tier);
+                opt.classList.toggle('selected', tier === currentTier);
+            });
+        }
+        
+        selectTier(tier) {
+            this.editingBrief.tier = tier;
+            this.renderTierSelector();
+            this.updateTier2Visibility();
+            this.updateArtifactProgress();
+            if (tier === 2) this.autoDetectTier2Triggers();
+        }
+        
+        renderTier2Triggers() {
+            const container = document.getElementById('tier2TriggersList');
+            if (!container) return;
+            container.innerHTML = TIER_2_TRIGGERS.map(trigger => {
+                const checked = this.editingBrief?.tier2Triggers?.[trigger.id] || false;
+                return `<div class="tier-trigger-item ${checked ? 'checked' : ''}" data-trigger="${trigger.id}">
+                    <div class="tier-trigger-check ${checked ? 'checked' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <div class="tier-trigger-content"><div class="tier-trigger-label">${trigger.label}</div><div class="tier-trigger-desc">${trigger.description}</div></div>
+                </div>`;
+            }).join('');
+            container.querySelectorAll('.tier-trigger-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const triggerId = item.dataset.trigger;
+                    if (!this.editingBrief.tier2Triggers) this.editingBrief.tier2Triggers = {};
+                    this.editingBrief.tier2Triggers[triggerId] = !this.editingBrief.tier2Triggers[triggerId];
+                    this.renderTier2Triggers();
+                });
+            });
+        }
+        
+        autoDetectTier2Triggers() {
+            const text = ((this.editingBrief?.problem || '') + ' ' + (this.editingBrief?.solution || '') + ' ' + (this.editingBrief?.title || '')).toLowerCase();
+            TIER_2_TRIGGERS.forEach(trigger => {
+                if (trigger.keywords.some(kw => text.includes(kw.toLowerCase())) && !this.editingBrief?.tier2Triggers?.[trigger.id]) {
+                    if (!this.editingBrief.tier2Triggers) this.editingBrief.tier2Triggers = {};
+                    this.editingBrief.tier2Triggers[trigger.id] = true;
+                }
+            });
+            this.renderTier2Triggers();
+        }
+        
+        updateTier2Visibility() {
+            const isTier2 = this.editingBrief?.tier === 2;
+            const show = el => { if (el) el.style.display = isTier2 ? 'block' : 'none'; };
+            const showFlex = el => { if (el) el.style.display = isTier2 ? 'flex' : 'none'; };
+            show(document.getElementById('tier2Triggers'));
+            show(document.getElementById('tierWarningBanner'));
+            show(document.getElementById('artifactProgress'));
+            document.querySelectorAll('.tier2-section').forEach(el => el.style.display = isTier2 ? 'block' : 'none');
+        }
+        
+        updateArtifactProgress() {
+            if (this.editingBrief?.tier !== 2) return;
+            const b = this.editingBrief;
+            const artifacts = [
+                { id: 'problem', label: 'Problem', check: () => (b.problem || '').trim().length > 0 },
+                { id: 'successCriteria', label: 'Success Criteria', check: () => (b.successCriteria || '').trim().length > 0 },
+                { id: 'customerImpact', label: 'Customer Impact', check: () => (b.customerImpact || '').trim().length > 0 },
+                { id: 'dataModel', label: 'Data Model', check: () => (b.dataModel?.globalEntities?.length > 0 || b.dataModel?.tenantEntities?.length > 0) },
+                { id: 'security', label: 'Security', check: () => (b.security?.multiTenantExposure || '').trim().length > 0 },
+                { id: 'impactMatrix', label: 'Impact Matrix', check: () => (b.impactMatrix?.screens?.length > 0 || b.impactMatrix?.flows?.length > 0) },
+                { id: 'rollout', label: 'Rollout Plan', check: () => (b.rollout?.phases?.length > 0 || (b.rollout?.rollbackProcedure || '').trim().length > 0) },
+                { id: 'testPlan', label: 'Test Plan', check: () => (b.testPlan?.unitTests || '').trim().length > 0 },
+                { id: 'customerComms', label: 'Customer Comms', check: () => b.customerComms?.releaseNotesRequired || b.customerComms?.preCommRequired }
+            ];
+            const complete = artifacts.filter(a => a.check()).length;
+            const total = artifacts.length;
+            const countEl = document.getElementById('artifactProgressCount');
+            const fillEl = document.getElementById('artifactProgressFill');
+            const checklistEl = document.getElementById('artifactChecklist');
+            if (countEl) countEl.textContent = `${complete}/${total} complete`;
+            if (fillEl) fillEl.style.width = `${Math.round((complete / total) * 100)}%`;
+            if (checklistEl) checklistEl.innerHTML = artifacts.map(a => `<div class="artifact-check-item ${a.check() ? 'complete' : ''}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${a.check() ? '<polyline points="20 6 9 17 4 12"/>' : '<circle cx="12" cy="12" r="10"/>'}</svg>${a.label}</div>`).join('');
+        }
+        
+        renderDataModelEntities() {
+            const renderList = (containerId, entities, type) => {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+                container.innerHTML = (entities || []).map((e, i) => `<div class="entity-item"><span>${this.escapeHtml(e)}</span><span class="remove" data-idx="${i}" data-type="${type}">×</span></div>`).join('') || `<div style="font-size:10px;color:var(--text-muted);padding:4px;">No ${type} entities</div>`;
+                container.querySelectorAll('.remove').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        const arr = btn.dataset.type === 'global' ? this.editingBrief.dataModel.globalEntities : this.editingBrief.dataModel.tenantEntities;
+                        arr.splice(parseInt(btn.dataset.idx), 1);
+                        this.renderDataModelEntities();
+                        this.updateArtifactProgress();
+                    });
+                });
+            };
+            renderList('globalEntitiesList', this.editingBrief?.dataModel?.globalEntities, 'global');
+            renderList('tenantEntitiesList', this.editingBrief?.dataModel?.tenantEntities, 'tenant');
+        }
+        
+        renderImpactMatrix() {
+            ['screens', 'flows', 'integrations', 'apis'].forEach(cat => {
+                const container = document.getElementById(`impact${cat.charAt(0).toUpperCase() + cat.slice(1)}`);
+                if (!container) return;
+                const items = this.editingBrief?.impactMatrix?.[cat] || [];
+                container.innerHTML = items.map((item, i) => `<div class="impact-tag"><span>${this.escapeHtml(item)}</span><span class="remove" data-idx="${i}" data-cat="${cat}">×</span></div>`).join('');
+                container.querySelectorAll('.remove').forEach(btn => {
+                    btn.addEventListener('click', e => {
+                        e.stopPropagation();
+                        this.editingBrief.impactMatrix[btn.dataset.cat].splice(parseInt(btn.dataset.idx), 1);
+                        this.renderImpactMatrix();
+                        this.updateArtifactProgress();
+                    });
+                });
+            });
+        }
+        
+        renderFeatureFlags() {
+            const container = document.getElementById('featureFlagsList');
+            if (!container) return;
+            const flags = this.editingBrief?.rollout?.featureFlags || [];
+            container.innerHTML = flags.map((f, i) => `<div class="impact-tag"><span>${this.escapeHtml(f)}</span><span class="remove" data-idx="${i}">×</span></div>`).join('');
+            container.querySelectorAll('.remove').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    this.editingBrief.rollout.featureFlags.splice(parseInt(btn.dataset.idx), 1);
+                    this.renderFeatureFlags();
+                });
+            });
+        }
+        
+        renderRolloutPhases() {
+            const container = document.getElementById('rolloutPhasesList');
+            if (!container) return;
+            const phases = this.editingBrief?.rollout?.phases || [];
+            container.innerHTML = phases.map((p, i) => `<div class="rollout-phase"><div class="rollout-phase-number">${i + 1}</div><div class="rollout-phase-content"><div class="rollout-phase-name">${this.escapeHtml(p.name)}</div><div class="rollout-phase-desc">${this.escapeHtml(p.description || '')}</div></div><span class="remove" data-idx="${i}" style="cursor:pointer;color:var(--text-muted);">×</span></div>`).join('') || '<div style="font-size:10px;color:var(--text-muted);padding:4px;">No phases defined</div>';
+            container.querySelectorAll('.remove').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    e.stopPropagation();
+                    this.editingBrief.rollout.phases.splice(parseInt(btn.dataset.idx), 1);
+                    this.renderRolloutPhases();
+                    this.updateArtifactProgress();
+                });
+            });
+        }
+        
+        toggleBackfillDesc() {
+            const el = document.getElementById('backfillDescGroup');
+            if (el) el.style.display = document.getElementById('briefBackfillRequired')?.checked ? 'block' : 'none';
+        }
+        
+        toggleCommsFields() {
+            const rn = document.getElementById('releaseNotesGroup');
+            const pc = document.getElementById('preCommGroup');
+            if (rn) rn.style.display = document.getElementById('briefReleaseNotesRequired')?.checked ? 'block' : 'none';
+            if (pc) pc.style.display = document.getElementById('briefPreCommRequired')?.checked ? 'block' : 'none';
+        }
+        
+        renderApprovals() {
+            const productApproval = this.editingBrief?.approvals?.product || {};
+            const techApproval = this.editingBrief?.approvals?.tech || {};
+            
+            // Product approval
+            const productCard = document.getElementById('productApprovalCard');
+            const productStatus = document.getElementById('productApprovalStatus');
+            const productBtn = document.getElementById('productApproveBtn');
+            const productTime = document.getElementById('productApprovalTime');
+            if (productCard && productStatus && productBtn) {
+                if (productApproval.approved) {
+                    productCard.classList.remove('pending'); productCard.classList.add('approved');
+                    productStatus.textContent = 'Approved'; productStatus.className = 'approval-card-status approved';
+                    productBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Revoke'; productBtn.className = 'approval-btn revoke';
+                    if (productTime) productTime.textContent = `Approved ${this.formatTimeAgo(new Date(productApproval.approvedAt))}`;
+                } else {
+                    productCard.classList.add('pending'); productCard.classList.remove('approved');
+                    productStatus.textContent = 'Pending'; productStatus.className = 'approval-card-status pending';
+                    productBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve'; productBtn.className = 'approval-btn approve';
+                    if (productTime) productTime.textContent = '';
+                }
+            }
+            
+            // Tech approval
+            const techCard = document.getElementById('techApprovalCard');
+            const techStatus = document.getElementById('techApprovalStatus');
+            const techBtn = document.getElementById('techApproveBtn');
+            const techTime = document.getElementById('techApprovalTime');
+            if (techCard && techStatus && techBtn) {
+                if (techApproval.approved) {
+                    techCard.classList.remove('pending'); techCard.classList.add('approved');
+                    techStatus.textContent = 'Approved'; techStatus.className = 'approval-card-status approved';
+                    techBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Revoke'; techBtn.className = 'approval-btn revoke';
+                    if (techTime) techTime.textContent = `Approved ${this.formatTimeAgo(new Date(techApproval.approvedAt))}`;
+                } else {
+                    techCard.classList.add('pending'); techCard.classList.remove('approved');
+                    techStatus.textContent = 'Pending'; techStatus.className = 'approval-card-status pending';
+                    techBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>Approve'; techBtn.className = 'approval-btn approve';
+                    if (techTime) techTime.textContent = '';
+                }
+            }
+            
+            // Go/No-Go section
+            const goNoGo = document.getElementById('goNoGoSection');
+            const goNoGoTitle = document.getElementById('goNoGoTitle');
+            const goNoGoStatus = document.getElementById('goNoGoStatus');
+            if (goNoGo && goNoGoTitle && goNoGoStatus) {
+                if (productApproval.approved && techApproval.approved) {
+                    goNoGo.classList.remove('blocked');
+                    goNoGoTitle.textContent = '✅ Ready for Production';
+                    goNoGoStatus.textContent = 'Both Product and Tech have approved.';
+                } else {
+                    goNoGo.classList.add('blocked');
+                    goNoGoTitle.textContent = '⏳ Awaiting Approvals';
+                    const missing = [];
+                    if (!productApproval.approved) missing.push('Product');
+                    if (!techApproval.approved) missing.push('Tech');
+                    goNoGoStatus.textContent = `Waiting for: ${missing.join(' and ')}`;
+                }
+            }
+        }
+        
+        toggleProductApproval() {
+            if (!this.editingBrief.approvals) this.editingBrief.approvals = { product: {}, tech: {} };
+            const a = this.editingBrief.approvals.product;
+            if (a.approved) { a.approved = false; a.approvedAt = null; }
+            else { a.approved = true; a.approvedAt = new Date().toISOString(); }
+            this.renderApprovals();
+        }
+        
+        toggleTechApproval() {
+            if (!this.editingBrief.approvals) this.editingBrief.approvals = { product: {}, tech: {} };
+            const a = this.editingBrief.approvals.tech;
+            if (a.approved) { a.approved = false; a.approvedAt = null; }
+            else { a.approved = true; a.approvedAt = new Date().toISOString(); }
+            this.renderApprovals();
         }
         
         renderBriefParticipants() {
             const container = document.getElementById('briefParticipants');
             const participants = this.editingBrief?.participants || [];
             
-            container.innerHTML = participants.map((p, idx) => `
-                <div class="brief-participant">
-                    <span>${this.escapeHtml(p.name)}</span>
-                    <span class="brief-participant-role">(${p.role})</span>
-                    <span class="brief-participant-remove" data-idx="${idx}">×</span>
-                </div>
-            `).join('');
+            container.innerHTML = participants.map((p, idx) => {
+                const roleInfo = RACI_ROLES[p.role] || { name: p.role || 'Unknown', color: '#6b7280' };
+                return `
+                    <div class="brief-participant" style="border-left:3px solid ${roleInfo.color};">
+                        <span>${this.escapeHtml(roleInfo.name)}</span>
+                        <span class="brief-participant-role" style="background:${roleInfo.color}20;color:${roleInfo.color};">${p.raci || 'C'}</span>
+                        <span class="brief-participant-remove" data-idx="${idx}">×</span>
+                    </div>
+                `;
+            }).join('');
             
             container.querySelectorAll('.brief-participant-remove').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -8444,16 +9658,22 @@ ANALYSIS REQUIREMENTS:
         }
         
         addBriefParticipant() {
-            const nameInput = document.getElementById('briefNewParticipant');
             const roleSelect = document.getElementById('briefParticipantRole');
-            const name = nameInput.value.trim();
+            const raciSelect = document.getElementById('briefParticipantRaci');
+            const role = roleSelect.value;
+            const raci = raciSelect.value;
             
-            if (!name) return;
+            if (!role) return;
             
+            // Check if this role already exists
             if (!this.editingBrief.participants) this.editingBrief.participants = [];
-            this.editingBrief.participants.push({ name, role: roleSelect.value });
+            const existing = this.editingBrief.participants.find(p => p.role === role);
+            if (existing) {
+                existing.raci = raci;
+            } else {
+                this.editingBrief.participants.push({ role, raci });
+            }
             
-            nameInput.value = '';
             this.renderBriefParticipants();
         }
         
@@ -8579,13 +9799,63 @@ ANALYSIS REQUIREMENTS:
                 return;
             }
             
-            // Update from form
+            // Update basic form fields
             this.editingBrief.title = document.getElementById('briefTitle').value.trim() || 'Untitled Brief';
             this.editingBrief.status = document.getElementById('briefStatus').value;
             this.editingBrief.problem = document.getElementById('briefProblem').value.trim();
             this.editingBrief.solution = document.getElementById('briefSolution').value.trim();
             this.editingBrief.notes = document.getElementById('briefNotes').value.trim();
             this.editingBrief.updatedAt = new Date().toISOString();
+            
+            // Save tier (already updated via selectTier)
+            // tier2Triggers already updated via renderTier2Triggers click handlers
+            
+            // Save Tier 2 artifact fields
+            const getVal = id => document.getElementById(id)?.value?.trim() || '';
+            const getCheck = id => document.getElementById(id)?.checked || false;
+            
+            this.editingBrief.successCriteria = getVal('briefSuccessCriteria');
+            this.editingBrief.customerImpact = getVal('briefCustomerImpact');
+            
+            // Data model
+            if (!this.editingBrief.dataModel) this.editingBrief.dataModel = {};
+            this.editingBrief.dataModel.notes = getVal('briefDataModelNotes');
+            
+            // Security
+            if (!this.editingBrief.security) this.editingBrief.security = {};
+            this.editingBrief.security.multiTenantExposure = getVal('briefMultiTenantExposure');
+            this.editingBrief.security.dataIsolation = getVal('briefDataIsolation');
+            this.editingBrief.security.auditRequirements = getVal('briefAuditRequirements');
+            
+            // Rollout
+            if (!this.editingBrief.rollout) this.editingBrief.rollout = {};
+            this.editingBrief.rollout.backfillRequired = getCheck('briefBackfillRequired');
+            this.editingBrief.rollout.backfillDescription = getVal('briefBackfillDescription');
+            this.editingBrief.rollout.monitoring = getVal('briefMonitoring');
+            this.editingBrief.rollout.rollbackProcedure = getVal('briefRollbackProcedure');
+            
+            // Test plan
+            if (!this.editingBrief.testPlan) this.editingBrief.testPlan = {};
+            this.editingBrief.testPlan.unitTests = getVal('briefUnitTests');
+            this.editingBrief.testPlan.integrationTests = getVal('briefIntegrationTests');
+            this.editingBrief.testPlan.regressionTests = getVal('briefRegressionTests');
+            if (!this.editingBrief.testPlan.smokeTests) this.editingBrief.testPlan.smokeTests = {};
+            this.editingBrief.testPlan.smokeTests.cart = getCheck('smokeCart');
+            this.editingBrief.testPlan.smokeTests.quotes = getCheck('smokeQuotes');
+            this.editingBrief.testPlan.smokeTests.registration = getCheck('smokeRegistration');
+            this.editingBrief.testPlan.smokeTests.portal = getCheck('smokePortal');
+            
+            // Customer comms
+            if (!this.editingBrief.customerComms) this.editingBrief.customerComms = {};
+            this.editingBrief.customerComms.releaseNotesRequired = getCheck('briefReleaseNotesRequired');
+            this.editingBrief.customerComms.releaseNotes = getVal('briefReleaseNotes');
+            this.editingBrief.customerComms.preCommRequired = getCheck('briefPreCommRequired');
+            this.editingBrief.customerComms.preCommPlan = getVal('briefPreCommPlan');
+            this.editingBrief.customerComms.impactedCustomerTypes = [];
+            if (getCheck('custExhibitors')) this.editingBrief.customerComms.impactedCustomerTypes.push('exhibitors');
+            if (getCheck('custOrganizers')) this.editingBrief.customerComms.impactedCustomerTypes.push('organizers');
+            if (getCheck('custEAs')) this.editingBrief.customerComms.impactedCustomerTypes.push('eas');
+            if (getCheck('custInternal')) this.editingBrief.customerComms.impactedCustomerTypes.push('internal');
             
             // Deep copy the brief to store
             this.briefs[this.editingBrief.id] = JSON.parse(JSON.stringify(this.editingBrief));
@@ -8614,6 +9884,33 @@ ANALYSIS REQUIREMENTS:
             if (success) {
                 this.toast('Brief deleted', 'success');
             }
+        }
+        
+        exportBrief() {
+            if (!this.editingBrief) {
+                this.toast('No brief to export', 'error');
+                return;
+            }
+            
+            // Create export object with all fields
+            const briefExport = {
+                ...this.editingBrief,
+                exportedAt: new Date().toISOString(),
+                exportVersion: '2.1', // RACI v2.1 format
+                raciRoles: RACI_ROLES,
+                tiers: TIERS
+            };
+            
+            const json = JSON.stringify(briefExport, null, 2);
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `brief_${(this.editingBrief.title || 'untitled').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            this.toast('Brief exported', 'success');
         }
         
         async saveBriefsToDrive() {
